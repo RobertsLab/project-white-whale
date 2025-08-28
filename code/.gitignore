@@ -1,0 +1,19 @@
+# Logs
+*.log
+download_methylation_data.log
+
+# Downloaded data and test outputs
+methylation_data/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db

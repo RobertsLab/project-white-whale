@@ -1,0 +1,10 @@
+# Python requirements for DNA methylation data downloader
+# No special Python packages required - uses only standard library
+
+# External tools required:
+# - SRA Toolkit (https://github.com/ncbi/sra-tools)
+# - NCBI Entrez Direct (https://www.ncbi.nlm.nih.gov/books/NBK179288/)
+
+# Optional tools for enhanced functionality:
+# - parallel (GNU parallel for faster downloads)
+# - pigz (parallel gzip for compression)
