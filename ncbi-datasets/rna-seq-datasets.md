@@ -19,7 +19,9 @@
 **Tissue types**: Gill, mantle, gonad, hemolymph
 **Environmental conditions**: Temperature stress (cold/heat shock)
 **Estimated file size**: ~80-150 GB total
+**Example BioProjects**: PRJNA248740, PRJNA394425
 **Notes**: Various accessions across multiple BioProjects
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+temperature
 
 ### 3. Salinity Stress Response Studies
 **Description**: Studies on salinity adaptation and stress
@@ -27,6 +29,8 @@
 **Tissue types**: Gill, mantle, digestive gland
 **Environmental conditions**: Various salinity levels
 **Estimated file size**: ~60-120 GB total
+**Example BioProjects**: PRJNA506631, PRJNA413624
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+salinity
 
 ### 4. Pathogen Response Studies
 **Description**: Immune response to bacterial and viral pathogens
@@ -34,6 +38,8 @@
 **Tissue types**: Hemolymph, gill, digestive gland
 **Environmental conditions**: Pathogen challenge experiments
 **Estimated file size**: ~70-100 GB total
+**Example BioProjects**: PRJNA422851, PRJNA381456
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+pathogen
 
 ### 5. Reproductive Development Studies
 **Description**: Gonadal development and reproductive cycles
@@ -41,6 +47,8 @@
 **Tissue types**: Gonad, mantle
 **Environmental conditions**: Seasonal reproductive cycles
 **Estimated file size**: ~40-80 GB total
+**Example BioProjects**: PRJNA486983, PRJNA273482
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+gonad
 
 ### 6. Larval Settlement Studies
 **Description**: Transcriptomes during larval settlement and metamorphosis
@@ -48,6 +56,8 @@
 **Tissue types**: Whole larvae, pediveligers
 **Environmental conditions**: Settlement cues and substrates
 **Estimated file size**: ~30-60 GB total
+**Example BioProjects**: PRJNA394425, PRJNA311096
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+larva
 
 ## Magallana gigas Studies
 
@@ -57,6 +67,8 @@
 **Tissue types**: Various adult and larval tissues
 **Environmental conditions**: Climate change, acidification studies
 **Estimated file size**: ~50-100 GB total
+**Example BioProjects**: PRJNA725689, PRJNA688412
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=magallana+gigas
 
 ## Summary
 - **Total estimated RNA-seq samples**: 150-250 samples

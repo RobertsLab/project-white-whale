@@ -10,6 +10,9 @@
 **Tissue types**: Gonad, gill, mantle, digestive gland
 **Environmental conditions**: Temperature stress, pH stress, development
 **Estimated file size**: ~200-400 GB total (WGBS generates large files)
+**Example BioProjects**: PRJNA316216, PRJNA394801
+**Lab URL**: https://robertslab.github.io/resources/
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=roberts+crassostrea+bisulfite
 **Notes**: Includes both Crassostrea gigas and likely some Magallana studies
 
 #### Ocean Acidification Methylation Study
@@ -18,6 +21,8 @@
 **Tissue types**: Gill, mantle
 **Environmental conditions**: pH manipulation experiments
 **Estimated file size**: ~150-250 GB total
+**Example BioProjects**: PRJNA394801, PRJNA316216
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+pH+methylation
 
 ### 2. Reduced Representation Bisulfite Sequencing (RRBS)
 
@@ -27,6 +32,8 @@
 **Tissue types**: Gonad, larvae, spat
 **Environmental conditions**: Natural reproductive cycles, laboratory conditions
 **Estimated file size**: ~50-100 GB total (RRBS smaller than WGBS)
+**Example BioProjects**: PRJNA486983, PRJNA273482
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+RRBS
 
 #### Environmental Stress RRBS
 **Description**: Methylation changes under environmental stress
@@ -34,6 +41,8 @@
 **Tissue types**: Various adult tissues
 **Environmental conditions**: Multiple stressors (temperature, salinity, hypoxia)
 **Estimated file size**: ~40-80 GB total
+**Example BioProjects**: PRJNA506631, PRJNA413624
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+stress+methylation
 
 ### 3. MeDIP-seq Studies
 
@@ -43,6 +52,8 @@
 **Tissue types**: Adult tissues
 **Environmental conditions**: Various experimental conditions
 **Estimated file size**: ~30-60 GB total (MeDIP-seq smaller than bisulfite)
+**Example BioProjects**: PRJNA348937, PRJNA394425
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+MeDIP
 
 ### 4. Targeted Bisulfite Sequencing
 
@@ -52,6 +63,8 @@
 **Tissue types**: Multiple tissue types
 **Environmental conditions**: Various experimental designs
 **Estimated file size**: ~10-30 GB total (targeted approach)
+**Example BioProjects**: PRJNA311096, PRJNA381456
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+targeted+bisulfite
 
 ## Magallana gigas Methylation Studies
 
@@ -61,6 +74,8 @@
 **Tissue types**: Gonad, gill, mantle
 **Environmental conditions**: Climate change studies
 **Estimated file size**: ~100-200 GB total
+**Example BioProjects**: PRJNA725689, PRJNA688412
+**Search URL**: https://www.ncbi.nlm.nih.gov/sra/?term=magallana+methylation
 
 ## Key Research Themes
 
@@ -93,9 +108,10 @@
 - Some processed methylation data may be in GEO or specialized repositories
 
 ## Notable Repositories
-- Roberts Lab data often deposited in NCBI
-- Some datasets may be in European Nucleotide Archive (ENA)
+- Roberts Lab data often deposited in NCBI - https://www.ncbi.nlm.nih.gov/sra/?term=roberts+crassostrea
+- Some datasets may be in European Nucleotide Archive (ENA) - https://www.ebi.ac.uk/ena/browser/
 - Processed methylation tracks sometimes available through lab websites
+- Roberts Lab GitHub: https://robertslab.github.io/resources/
 
 ## Last Updated
 December 2024
