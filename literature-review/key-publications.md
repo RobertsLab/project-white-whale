@@ -32,18 +32,21 @@
 ## Other Significant Publications with Expected Datasets
 
 ### 4. Zhang et al. (2012) - The Oyster Genome
-**Description**: Original Pacific oyster genome publication
+**Citation**: Zhang G, Fang X, Guo X, Li L, Luo R, Xu F, Yang P, Zhang L, Wang X, Qi H, Xiong Z, Que H, Xie Y, Holland PW, Paps J, Zhu Y, Wu F, Chen Y, Wang J, Peng C, Meng J, Yang L, Liu J, Wen B, Zhang N, Huang Z, Zhu Q, Feng Y, Mount A, Hedgecock D, Xu Z, Liu Y, Domazet-Lošo T, Du Y, Sun X, Zhang S, Liu B, Cheng P, Jiang X, Li J, Fan D, Wang W, Fu W, Wang T, Wang B, Zhang J, Peng Z, Li Y, Li N, Wang J, Chen M, He Y, Tan F, Song X, Zheng Q, Huang R, Yang H, Du X, Chen L, Yang M, Gaffney PM, Wang S, Luo L, She Z, Ming Y, Huang W, Zhang S, Huang B, Zhang Y, Qu T, Ni P, Miao G, Wang J, Wang Q, Steinberg CE, Wang H, Li N, Qian L, Zhang G, Li Y, Yang H, Liu X, Wang J, Yin Y, Wang J. (2012) The oyster genome reveals stress adaptation and complexity of shell formation. Nature 490:49-54.
+**DOI**: 10.1038/nature11413
 **Associated RNA-seq**: Developmental RNA-seq data
 **Samples**: Multiple tissues and developmental stages
 **Estimated data size**: ~100-200 GB
-**BioProject**: PRJNA85067 (estimated)
+**BioProject**: PRJNA85067
 
 ### 5. Riviere et al. (2015) - Epigenetic Marks in Oyster
-**Description**: First comprehensive DNA methylation study in Pacific oyster
+**Citation**: Riviere G, Wu GC, Fellous A, Goux D, Sourdaine P, Favrel P. (2013) DNA methylation is crucial for the early development in the oyster C. gigas. Marine Biotechnology 15:739-753.
+**DOI**: 10.1007/s10126-013-9523-2
 **Methylation method**: Whole genome bisulfite sequencing
 **Samples**: ~10-15 samples
 **Tissue types**: Multiple adult tissues
 **Estimated data size**: ~150-300 GB
+**Note**: Published in 2013, comprehensive early DNA methylation study
 
 ### 6. Lim et al. (2020) - Ocean Acidification Methylation (Related Species)
 **Citation**: Lim YK, Cheung K, Dang X, Roberts SB, Wang X, Thiyagarajan V. (2020) DNA methylation changes in response to ocean acidification at the time of larval metamorphosis in the edible oyster, Crassostrea hongkongensis.
@@ -78,6 +81,8 @@
 **Expected RNA-seq**: Population-level transcriptomics
 **Estimated samples**: 50-100 samples
 **Estimated data size**: ~200-400 GB
+**Repository**: European Nucleotide Archive (ENA) - https://www.ebi.ac.uk/ena/browser/
+**Search terms**: "Crassostrea gigas" OR "Magallana gigas"
 
 ### 9. Asian Pacific Oyster Studies
 **Description**: Studies from Asian institutions
@@ -85,13 +90,15 @@
 **Expected data types**: RNA-seq, some methylation
 **Samples**: Commercial strains and wild populations
 **Estimated data size**: ~150-300 GB
+**Repository**: DNA Data Bank of Japan (DDBJ) - https://www.ddbj.nig.ac.jp/
+**Search terms**: "Crassostrea gigas" OR "Magallana gigas"
 
 ## Data Availability Summary
 
 ### Confirmed Available Datasets
-- Roberts Lab studies: Available in NCBI SRA
-- Original genome project: Available in NCBI
-- Some European studies: Available in ENA
+- Roberts Lab studies: Available in NCBI SRA - https://www.ncbi.nlm.nih.gov/sra/?term=roberts+crassostrea
+- Original genome project: Available in NCBI - BioProject PRJNA85067
+- Some European studies: Available in ENA - https://www.ebi.ac.uk/ena/browser/
 
 ### Likely Available but Needs Verification
 - Asian studies: May be in local repositories

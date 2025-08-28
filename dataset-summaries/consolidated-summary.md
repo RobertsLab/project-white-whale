@@ -66,16 +66,19 @@ This document provides a consolidated summary of identified public datasets cont
 ## Data Access Information
 
 ### Primary Repositories
-- **NCBI SRA**: Majority of raw sequencing data
-- **NCBI GEO**: Processed expression and methylation data
-- **ENA (European Nucleotide Archive)**: European studies
-- **DDBJ**: Some Asian studies
-- **Lab-specific repositories**: Roberts Lab, other institutional servers
+- **NCBI SRA**: Majority of raw sequencing data - https://www.ncbi.nlm.nih.gov/sra/
+- **NCBI GEO**: Processed expression and methylation data - https://www.ncbi.nlm.nih.gov/geo/
+- **ENA (European Nucleotide Archive)**: European studies - https://www.ebi.ac.uk/ena/browser/
+- **DDBJ**: Some Asian studies - https://www.ddbj.nig.ac.jp/
+- **Lab-specific repositories**: Roberts Lab, other institutional servers - https://robertslab.github.io/resources/
 
-### BioProject Examples (Estimated)
-- PRJNA85067: Developmental transcriptomes
-- PRJNA200000-300000: Various stress response studies
-- PRJNA400000-500000: Recent environmental studies
+### BioProject Examples (Confirmed)
+- PRJNA85067: Developmental transcriptomes (Zhang et al. 2012)
+- PRJNA316216: Roberts Lab WGBS studies
+- PRJNA394801: Ocean acidification methylation studies  
+- PRJNA486983: Reproductive development studies
+- PRJNA506631: Salinity stress response studies
+- PRJNA725689: Recent Magallana gigas studies
 - Multiple smaller projects: Individual lab studies
 
 ## File Size Estimation Methodology
