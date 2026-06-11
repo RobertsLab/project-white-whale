@@ -52,8 +52,16 @@ Total estimated size for all datasets: **580-1,220 GB**
 
 ## Documentation
 
+- `HOW-TO.md` - Beginner-friendly, step-by-step walkthrough (start here)
 - `USAGE.md` - Comprehensive usage guide with examples
 - Repository documentation in `../ncbi-datasets/dna-methylation-datasets.md`
+
+## How run discovery works
+
+The downloader never hardcodes sequence accessions. For each BioProject it asks
+NCBI (via E-utilities over HTTPS — no extra software required) which sequencing
+runs belong to it, then downloads those. If NCBI can't be reached, it reports
+the problem and stops rather than downloading placeholder data.
 
 ## Support
 

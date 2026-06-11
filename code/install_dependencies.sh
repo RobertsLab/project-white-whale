@@ -13,10 +13,13 @@ command_exists() {
 # Install SRA Toolkit
 install_sra_toolkit() {
     echo "Installing SRA Toolkit..."
-    
+
     if command_exists conda; then
         echo "Using conda to install SRA Toolkit..."
         conda install -c bioconda sra-tools
+    elif command_exists brew; then
+        echo "Using Homebrew to install SRA Toolkit..."
+        brew install sratoolkit
     elif command_exists apt-get; then
         echo "Using apt-get to install SRA Toolkit..."
         sudo apt-get update
@@ -31,19 +34,27 @@ install_sra_toolkit() {
     fi
 }
 
-# Install Entrez Direct
+# Install Entrez Direct (optional; the Python script also works without it)
 install_entrez_direct() {
-    echo "Installing NCBI Entrez Direct..."
-    
+    echo "Installing NCBI Entrez Direct (optional)..."
+
     if command_exists conda; then
         echo "Using conda to install Entrez Direct..."
         conda install -c bioconda entrez-direct
+    elif command_exists brew; then
+        echo "Using Homebrew to install Entrez Direct..."
+        brew install edirect
     else
         echo "Installing Entrez Direct manually..."
         cd /tmp
         curl -s https://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/install-edirect.sh | bash
-        echo 'export PATH=${PATH}:${HOME}/edirect' >> ~/.bashrc
-        echo "Please run: source ~/.bashrc"
+        # Append PATH to whichever shell rc file matches the current shell.
+        case "${SHELL:-}" in
+            *zsh) RC="${HOME}/.zshrc" ;;
+            *) RC="${HOME}/.bashrc" ;;
+        esac
+        echo 'export PATH=${PATH}:${HOME}/edirect' >> "$RC"
+        echo "Please run: source $RC"
     fi
 }
 
