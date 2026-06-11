@@ -90,16 +90,25 @@ chmod +x download_script.sh
 
 ```
 methylation_data/
-├── download_script.sh          # Generated download script
+├── download_script.sh          # Generated download script (if --create-script used)
 ├── <dataset_id>/
 │   ├── dataset_info.json       # Dataset metadata
 │   ├── <bioproject>/
-│   │   ├── runinfo.csv         # Run information
+│   │   ├── runs.txt            # Run accessions discovered from NCBI
 │   │   ├── <SRR_accession>_1.fastq.gz
 │   │   ├── <SRR_accession>_2.fastq.gz
 │   │   └── ...
 │   └── ...
-└── download_log.txt            # Download progress log
+└── download_methylation_data.log  # Download progress log
+```
+
+## NCBI Rate Limits (optional but recommended)
+
+Run discovery queries NCBI. To raise the request limit, set these before running:
+
+```bash
+export NCBI_EMAIL="you@example.com"     # identifies you to NCBI
+export NCBI_API_KEY="your_ncbi_api_key" # optional, from your NCBI account
 ```
 
 ## Advanced Options

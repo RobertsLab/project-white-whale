@@ -1,10 +1,12 @@
 # Python requirements for DNA methylation data downloader
-# No special Python packages required - uses only standard library
+# Python 3.6+ -- uses only the standard library (no `pip install` needed).
+# Run discovery uses NCBI E-utilities over HTTPS via urllib (built in).
 
-# External tools required:
-# - SRA Toolkit (https://github.com/ncbi/sra-tools)
-# - NCBI Entrez Direct (https://www.ncbi.nlm.nih.gov/books/NBK179288/)
+# External tools required to actually download data:
+# - SRA Toolkit (https://github.com/ncbi/sra-tools)  -- provides fasterq-dump / fastq-dump
 
-# Optional tools for enhanced functionality:
+# Optional tools:
+# - NCBI Entrez Direct (https://www.ncbi.nlm.nih.gov/books/NBK179288/)  -- alternative run discovery
+# - curl  -- required only by the generated download_script.sh
 # - parallel (GNU parallel for faster downloads)
 # - pigz (parallel gzip for compression)
