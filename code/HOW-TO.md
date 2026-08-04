@@ -4,6 +4,12 @@ A step-by-step guide for **first-time users**. No prior bioinformatics
 experience needed. Follow the steps in order; each one tells you what to type
 and what you should see.
 
+All commands below assume you are inside the `code/` folder:
+
+```bash
+cd code
+```
+
 ---
 
 ## What this does
@@ -14,7 +20,8 @@ national sequence database. You pick a "dataset" by name, and the tool figures
 out which sequencing files belong to it and downloads them for you.
 
 You do **not** need to know any accession numbers. The tool looks them up live
-from NCBI every time, so you always get the real, current files.
+from NCBI every time, so you always get the real, current files. Each run is
+also checked against NCBI metadata so only oyster bisulfite/MeDIP data is kept.
 
 ---
 
@@ -41,8 +48,9 @@ From inside the `code/` folder, run:
 ```
 
 This installs the **SRA Toolkit** (the program that actually fetches files). It
-works on macOS (Homebrew), Linux (apt/yum), or anywhere with conda. If the
-script can't auto-install, it prints a link to do it manually.
+works on macOS (Homebrew), Linux (apt/yum), or anywhere with conda. The script
+may also install NCBI Entrez Direct (optional; the Python tool works without
+it). If the script can't auto-install, it prints a link to do it manually.
 
 Check it worked:
 
@@ -61,17 +69,17 @@ terminal and try again, or follow the manual link the installer printed.
 python3 download_methylation_data.py --list
 ```
 
-This prints the available datasets, for example `wgbs_ph_ploidy`,
-`medip_development`, `wgbs_pesto`. Each one bundles one or more NCBI
-BioProjects. Note the **Dataset ID** of one you're interested in — you'll use it
-in the next step.
+This prints all **8** available datasets (for example `wgbs_ph_ploidy`,
+`medip_development`, `wgbs_pesto`, `wgbs_poms_adaptation`). Each one bundles
+one or more NCBI BioProjects. Note the **Dataset ID** of one you're interested
+in — you'll use it in the next step.
 
 ---
 
 ## Step 3 — Preview before you download (always do this first)
 
-A "dry run" shows you exactly what *would* happen, **without downloading
-anything or using any disk space**:
+A "dry run" shows you exactly what *would* be downloaded, **without fetching
+any sequencing files**:
 
 ```bash
 python3 download_methylation_data.py --dataset wgbs_ph_ploidy --dry-run
@@ -81,7 +89,7 @@ You'll see lines like:
 
 ```
 Found 24 matching run(s) in PRJNA682817
-DRY RUN: would download 24 run(s) from PRJNA682817: SRR13207073, SRR13207072, ...
+DRY RUN: would download 24 run(s) from PRJNA682817: SRR13207071, SRR13207065, ...
 ```
 
 This tells you the tool reached NCBI and found real oyster methylation files.
@@ -91,6 +99,10 @@ reported as `Skipped N off-target run(s)` and dropped. If a project has no
 matching data you'll see `Found 0 matching run(s)` and it is simply skipped.
 **This is normal and safe** — the tool never makes up files and never downloads
 non-oyster or non-methylation data.
+
+A dry run still writes a tiny bit of metadata under `methylation_data/`
+(`dataset_info.json` and `runs.txt` listing the discovered accessions). It does
+**not** download FASTQ files and does **not** require the SRA Toolkit.
 
 ---
 
@@ -124,9 +136,9 @@ python3 download_methylation_data.py --dataset wgbs_ph_ploidy
 ```
 
 Before it starts, the tool **checks your free disk space** and warns you if
-there might not be enough. Large datasets can take **hours** (the WGBS datasets
-are hundreds of GB each). You can safely stop (Ctrl-C) and re-run later — files
-already downloaded are skipped.
+there might not be enough. Large datasets can take **hours** (most WGBS
+datasets are hundreds of GB each; the full collection is ~2.6–3.0 TB). You can
+safely stop (Ctrl-C) and re-run later — files already downloaded are skipped.
 
 To save somewhere with more room:
 
@@ -192,7 +204,8 @@ methylation_data/
 ```
 
 A full log of everything that happened is saved to
-`download_methylation_data.log`.
+`download_methylation_data.log` in the directory where you ran the command
+(usually `code/`).
 
 ---
 
