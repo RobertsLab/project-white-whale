@@ -41,32 +41,32 @@ python download_methylation_data.py --list
 
 ### Download a Complete Dataset
 ```bash
-# Download all WGBS studies from Roberts Lab
-python download_methylation_data.py --dataset wgbs_roberts
+# Download the POMS adaptation WGBS study
+python download_methylation_data.py --dataset wgbs_poms_adaptation
 
 # Download with custom output directory
-python download_methylation_data.py --dataset rrbs_developmental --output-dir /data/methylation
+python download_methylation_data.py --dataset wgbs_pesto --output-dir /data/methylation
 ```
 
 ### Download Specific BioProject
 ```bash
-# Download only PRJNA486983 from developmental studies
-python download_methylation_data.py --dataset rrbs_developmental --bioproject PRJNA486983
+# Download only PRJNA682817 from the pH/ploidy WGBS dataset
+python download_methylation_data.py --dataset wgbs_ph_ploidy --bioproject PRJNA682817
 ```
 
 ### Limited Downloads for Testing
 ```bash
 # Download only first 5 runs for testing
-python download_methylation_data.py --dataset medip_seq --max-runs 5 --dry-run
+python download_methylation_data.py --dataset medip_development --max-runs 5 --dry-run
 
 # Remove --dry-run to actually download
-python download_methylation_data.py --dataset medip_seq --max-runs 5
+python download_methylation_data.py --dataset medip_development --max-runs 5
 ```
 
 ### Generate Download Scripts
 ```bash
 # Create shell script for multiple datasets
-python download_methylation_data.py --create-script --datasets wgbs_roberts rrbs_developmental medip_seq
+python download_methylation_data.py --create-script --datasets wgbs_ph_ploidy medip_development wgbs_pesto
 
 # Execute the generated script
 cd methylation_data
@@ -76,15 +76,24 @@ chmod +x download_script.sh
 
 ## Available Datasets
 
+All BioProjects below were verified live against NCBI SRA (2026-08): each
+contains *Crassostrea/Magallana gigas* Bisulfite-Seq or MeDIP-Seq runs. Every
+BioProject appears in exactly one dataset (no duplicates). "Samples" is the
+real run count and "Size" is the summed SRA download size; both may grow if
+submitters add runs.
+
 | Dataset ID | Method | BioProjects | Size (GB) | Samples |
 |------------|--------|-------------|-----------|---------|
-| `wgbs_roberts` | WGBS | PRJNA316216, PRJNA394801 | 200-400 | 30-50 |
-| `wgbs_ocean_acidification` | WGBS | PRJNA394801, PRJNA316216 | 150-250 | 20-30 |
-| `rrbs_developmental` | RRBS | PRJNA486983, PRJNA273482 | 50-100 | 25-35 |
-| `rrbs_environmental_stress` | RRBS | PRJNA506631, PRJNA413624 | 40-80 | 20-30 |
-| `medip_seq` | MeDIP-seq | PRJNA348937, PRJNA394425 | 30-60 | 15-25 |
-| `targeted_bisulfite` | Targeted | PRJNA311096, PRJNA381456 | 10-30 | 20-40 |
-| `magallana_recent` | Mixed | PRJNA725689, PRJNA688412 | 100-200 | 15-25 |
+| `wgbs_poms_adaptation` | WGBS | PRJEB60400 | 450-500 | 246 |
+| `emseq_poms_gestinov` | EM-seq (Bisulfite-Seq) | PRJEB81880 | 400-450 | 40 |
+| `wgbs_aging_decicomp` | WGBS | PRJEB105019 | 450-500 | 60 |
+| `wgbs_pesto` | WGBS | PRJEB58545 | 350-400 | 48 |
+| `wgbs_transgen_infection` | WGBS | PRJNA609264 | 600-650 | 47 |
+| `wgbs_ph_ploidy` | WGBS | PRJNA682817 | 100-110 | 24 |
+| `medip_development` | MeDIP-seq | PRJNA324546 | 5-10 | 21 |
+| `wgbs_epigenomics_series` | WGBS | PRJNA807732, PRJNA562805, PRJNA213124 | 300-330 | 50 |
+
+**Totals:** 8 datasets, 10 BioProjects, ~536 runs, ~2.6-3.0 TB.
 
 ## Output Structure
 
@@ -116,7 +125,7 @@ export NCBI_API_KEY="your_ncbi_api_key" # optional, from your NCBI account
 ### Parallel Downloads
 ```bash
 # Use 4 parallel download processes
-python download_methylation_data.py --dataset wgbs_roberts --max-parallel 4
+python download_methylation_data.py --dataset wgbs_poms_adaptation --max-parallel 4
 ```
 
 ### Custom Selection
@@ -125,12 +134,25 @@ python download_methylation_data.py --dataset wgbs_roberts --max-parallel 4
 # See source code for adding custom run lists
 ```
 
+### Run Validation (on by default)
+
+Discovered runs are filtered against their NCBI metadata: only
+*Crassostrea/Magallana gigas* runs from a methylation assay (Bisulfite-Seq or
+MeDIP-Seq) are kept. Off-target runs are logged as `Skipped N off-target
+run(s)` and never downloaded. This is what prevents a wrong or stale BioProject
+accession from pulling non-oyster or non-methylation data.
+
+```bash
+# Disable the filter (NOT recommended): download whatever a BioProject contains
+python download_methylation_data.py --dataset wgbs_ph_ploidy --skip-validation
+```
+
 ## Storage Requirements
 
-- **Minimum**: ~100 GB for small datasets (targeted_bisulfite, medip_seq)
-- **Typical**: ~500 GB for moderate datasets (RRBS studies)
-- **Large**: ~2-4 TB for complete WGBS collections
-- **Full collection**: ~6-10 TB estimated
+- **Minimum**: <10 GB for the smallest dataset (`medip_development`)
+- **Typical**: 100-500 GB per WGBS dataset
+- **Largest single dataset**: ~650 GB (`wgbs_transgen_infection`)
+- **Full collection (all 8 datasets)**: ~2.6-3.0 TB estimated
 
 ## Download Speed Estimates
 

@@ -61,8 +61,8 @@ terminal and try again, or follow the manual link the installer printed.
 python3 download_methylation_data.py --list
 ```
 
-This prints the available datasets, for example `wgbs_roberts`,
-`rrbs_developmental`, `medip_seq`. Each one bundles one or more NCBI
+This prints the available datasets, for example `wgbs_ph_ploidy`,
+`medip_development`, `wgbs_pesto`. Each one bundles one or more NCBI
 BioProjects. Note the **Dataset ID** of one you're interested in — you'll use it
 in the next step.
 
@@ -74,20 +74,23 @@ A "dry run" shows you exactly what *would* happen, **without downloading
 anything or using any disk space**:
 
 ```bash
-python3 download_methylation_data.py --dataset wgbs_roberts --dry-run
+python3 download_methylation_data.py --dataset wgbs_ph_ploidy --dry-run
 ```
 
 You'll see lines like:
 
 ```
-Found 2 run(s) in PRJNA316216
-DRY RUN: would download 2 run(s) from PRJNA316216: SRR3290007, SRR3290025
+Found 24 matching run(s) in PRJNA682817
+DRY RUN: would download 24 run(s) from PRJNA682817: SRR13207073, SRR13207072, ...
 ```
 
-This tells you the tool reached NCBI and found real files. If instead you see
-`BioProject ... has 0 SRA runs`, that particular project has no data under that
-accession — the tool will simply skip it and tell you. **This is normal and
-safe**; it never makes up fake files to download.
+This tells you the tool reached NCBI and found real oyster methylation files.
+Before listing runs, the tool checks each one's NCBI metadata and keeps only
+*Crassostrea/Magallana gigas* bisulfite/MeDIP runs; anything off-target is
+reported as `Skipped N off-target run(s)` and dropped. If a project has no
+matching data you'll see `Found 0 matching run(s)` and it is simply skipped.
+**This is normal and safe** — the tool never makes up files and never downloads
+non-oyster or non-methylation data.
 
 ---
 
@@ -98,8 +101,8 @@ your setup works end-to-end:
 
 ```bash
 python3 download_methylation_data.py \
-    --dataset wgbs_roberts \
-    --bioproject PRJNA316216 \
+    --dataset wgbs_ph_ploidy \
+    --bioproject PRJNA682817 \
     --max-runs 2
 ```
 
@@ -107,8 +110,8 @@ python3 download_methylation_data.py \
 - `--max-runs 2` limits to the first 2 files.
 
 When it finishes you'll find compressed `.fastq.gz` files under
-`methylation_data/wgbs_roberts/PRJNA316216/`. The tool also writes a `runs.txt`
-listing every accession it found, so your download is reproducible.
+`methylation_data/wgbs_ph_ploidy/PRJNA682817/`. The tool also writes a
+`runs.txt` listing every accession it found, so your download is reproducible.
 
 ---
 
@@ -117,17 +120,18 @@ listing every accession it found, so your download is reproducible.
 Once the test works, download everything in a dataset:
 
 ```bash
-python3 download_methylation_data.py --dataset wgbs_roberts
+python3 download_methylation_data.py --dataset wgbs_ph_ploidy
 ```
 
 Before it starts, the tool **checks your free disk space** and warns you if
-there might not be enough. Large datasets can take **hours**. You can safely
-stop (Ctrl-C) and re-run later — files already downloaded are skipped.
+there might not be enough. Large datasets can take **hours** (the WGBS datasets
+are hundreds of GB each). You can safely stop (Ctrl-C) and re-run later — files
+already downloaded are skipped.
 
 To save somewhere with more room:
 
 ```bash
-python3 download_methylation_data.py --dataset wgbs_roberts \
+python3 download_methylation_data.py --dataset wgbs_ph_ploidy \
     --output-dir /Volumes/BigDrive/oyster_data
 ```
 
@@ -161,7 +165,7 @@ If you'd rather run the downloads as a plain shell script (e.g. on a cluster):
 
 ```bash
 python3 download_methylation_data.py --create-script \
-    --datasets wgbs_roberts rrbs_developmental
+    --datasets wgbs_ph_ploidy medip_development
 ```
 
 This writes `methylation_data/download_script.sh`. It discovers the real runs

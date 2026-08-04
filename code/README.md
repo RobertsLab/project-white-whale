@@ -22,25 +22,27 @@ This directory contains scripts for downloading and processing the DNA methylati
 
 3. **Download a small dataset for testing**:
    ```bash
-   python download_methylation_data.py --dataset targeted_bisulfite --max-runs 3 --dry-run
+   python download_methylation_data.py --dataset medip_development --max-runs 3 --dry-run
    ```
 
 4. **Generate download scripts**:
    ```bash
-   python download_methylation_data.py --create-script --datasets medip_seq targeted_bisulfite
+   python download_methylation_data.py --create-script --datasets medip_development wgbs_ph_ploidy
    ```
 
 ## Available Datasets
 
-The script can download data from 7 major DNA methylation study categories:
+The script downloads from 8 verified DNA methylation datasets (10 BioProjects,
+all confirmed to contain *Crassostrea/Magallana gigas* Bisulfite-Seq/MeDIP-Seq
+runs against NCBI SRA). Highlights:
 
-- **WGBS Studies**: Whole genome bisulfite sequencing (200-400 GB)
-- **RRBS Studies**: Reduced representation bisulfite sequencing (40-100 GB)
-- **MeDIP-seq Studies**: Methylated DNA immunoprecipitation sequencing (30-60 GB)
-- **Targeted Bisulfite**: Gene-specific methylation analysis (10-30 GB)
-- **Magallana Studies**: Recent studies with updated nomenclature (100-200 GB)
+- **WGBS studies** (POMS adaptation, aging/DECICOMP, PESTO, transgenerational
+  infection, pH/ploidy, epigenomics series): ~100-650 GB each
+- **EM-seq** (GESTINOV POMS gill/mantle): ~400-450 GB
+- **MeDIP-seq** (developmental methylome dynamics): ~5-10 GB
 
-Total estimated size for all datasets: **580-1,220 GB**
+See `USAGE.md` for the full per-dataset table. Total estimated size for all
+datasets: **~2.6-3.0 TB** (~536 runs).
 
 ## Requirements
 
@@ -60,8 +62,11 @@ Total estimated size for all datasets: **580-1,220 GB**
 
 The downloader never hardcodes sequence accessions. For each BioProject it asks
 NCBI (via E-utilities over HTTPS — no extra software required) which sequencing
-runs belong to it, then downloads those. If NCBI can't be reached, it reports
-the problem and stops rather than downloading placeholder data.
+runs belong to it. Each run is then validated against its NCBI metadata and
+only *Crassostrea/Magallana gigas* bisulfite/MeDIP runs are kept; off-target
+runs are logged and skipped so a wrong accession is reported rather than
+downloaded. If NCBI can't be reached, it reports the problem and stops rather
+than downloading placeholder data.
 
 ## Support
 

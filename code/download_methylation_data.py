@@ -14,6 +14,12 @@ Run discovery is done in this order:
   1. NCBI E-utilities over HTTPS (built in -- needs no extra software).
   2. NCBI Entrez Direct (`esearch`/`efetch`) if it is installed.
 
+Every discovered run is then validated against its NCBI metadata: only
+Crassostrea/Magallana gigas runs from a methylation assay (Bisulfite-Seq or
+MeDIP-Seq) are kept. Anything else is logged and skipped, so a wrong or stale
+BioProject accession is reported instead of being downloaded by mistake. Pass
+--skip-validation to turn this filter off (not recommended).
+
 The script never invents accession numbers. If it cannot reach NCBI it reports
 the problem and stops, so you never download placeholder data by mistake.
 
@@ -56,82 +62,105 @@ HTTP_TIMEOUT = 60          # seconds per HTTP request
 HTTP_RETRIES = 3           # attempts before giving up on a request
 RUN_ACCESSION_PREFIXES = ("SRR", "ERR", "DRR")
 
-# Dataset information extracted from repository documentation.
+# Runs are only accepted if they match the target species AND a methylation
+# assay. This guard is what prevents the download of off-target data when a
+# BioProject accession is wrong or points at unrelated samples. NCBI treats
+# "Crassostrea gigas" and "Magallana gigas" as the same taxon, so both names
+# appear in run metadata and both are accepted.
+ALLOWED_ORGANISMS = ("crassostrea gigas", "magallana gigas")
+# In SRA, both classic bisulfite and enzymatic-methyl (EM-seq) runs are
+# labelled "Bisulfite-Seq"; MeDIP runs are labelled "MeDIP-Seq".
+ALLOWED_STRATEGIES = ("bisulfite-seq", "medip-seq")
+
+# Dataset catalogue.
 #
-# NOTE: the BioProject accessions below were compiled from literature and
-# should be treated as a starting point. The script verifies each one against
-# NCBI at run time -- if an accession is wrong or has no runs, the script tells
-# you rather than guessing.
+# Every BioProject below was verified live against NCBI SRA: each one actually
+# contains Crassostrea/Magallana gigas Bisulfite-Seq or MeDIP-Seq runs. Sample
+# counts and sizes are the real run counts and summed SRA download sizes at the
+# time of verification (2026-08); they can grow if submitters add runs. The
+# script re-checks every accession against NCBI at run time and filters out any
+# run that is not oyster methylation data, so a stale or wrong accession is
+# reported rather than silently downloaded.
 METHYLATION_DATASETS = {
-    "wgbs_roberts": {
-        "description": "Roberts Lab WGBS Studies",
-        "bioprojects": ["PRJNA316216", "PRJNA394801"],
+    "wgbs_poms_adaptation": {
+        "description": "Genetic/epigenetic adaptation to Pacific Oyster Mortality Syndrome (POMS)",
+        "bioprojects": ["PRJEB60400"],
         "method": "WGBS",
-        "estimated_samples": "30-50",
-        "tissue_types": ["gonad", "gill", "mantle", "digestive_gland"],
-        "estimated_size_gb": "200-400",
-        "search_url": "https://www.ncbi.nlm.nih.gov/sra/?term=roberts+crassostrea+bisulfite",
-        "notes": "High-quality WGBS from University of Washington Roberts Lab"
+        "estimated_samples": "246",
+        "tissue_types": ["various"],
+        "estimated_size_gb": "450-500",
+        "search_url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJEB60400",
+        "notes": "WGBS of oyster populations adapting to POMS (Crassostrea/Magallana gigas)"
     },
-    "wgbs_ocean_acidification": {
-        "description": "Ocean Acidification Methylation Study",
-        "bioprojects": ["PRJNA394801", "PRJNA316216"],
-        "method": "WGBS",
-        "estimated_samples": "20-30",
+    "emseq_poms_gestinov": {
+        "description": "Enzymatic methyl-seq of gill and mantle around POMS infection (GESTINOV 2021)",
+        "bioprojects": ["PRJEB81880"],
+        "method": "EM-seq (Bisulfite-Seq)",
+        "estimated_samples": "40",
         "tissue_types": ["gill", "mantle"],
-        "estimated_size_gb": "150-250",
-        "search_url": "https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+pH+methylation",
-        "notes": "DNA methylation response to ocean acidification"
+        "estimated_size_gb": "400-450",
+        "search_url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJEB81880",
+        "notes": "Enzymatic methyl sequencing before/after POMS infection"
     },
-    "rrbs_developmental": {
-        "description": "Developmental Methylation Studies",
-        "bioprojects": ["PRJNA486983", "PRJNA273482"],
-        "method": "RRBS",
-        "estimated_samples": "25-35",
-        "tissue_types": ["gonad", "larvae", "spat"],
-        "estimated_size_gb": "50-100",
-        "search_url": "https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+RRBS",
-        "notes": "RRBS during oyster development and reproduction"
+    "wgbs_aging_decicomp": {
+        "description": "DNA methylation profiling across ages (DECICOMP)",
+        "bioprojects": ["PRJEB105019"],
+        "method": "WGBS",
+        "estimated_samples": "60",
+        "tissue_types": ["various"],
+        "estimated_size_gb": "450-500",
+        "search_url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJEB105019",
+        "notes": "Epigenetic profiling of 4-, 16- and 28-month-old oysters under control conditions"
     },
-    "rrbs_environmental_stress": {
-        "description": "Environmental Stress RRBS",
-        "bioprojects": ["PRJNA506631", "PRJNA413624"],
-        "method": "RRBS",
-        "estimated_samples": "20-30",
-        "tissue_types": ["various_adult_tissues"],
-        "estimated_size_gb": "40-80",
-        "search_url": "https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+stress+methylation",
-        "notes": "Methylation changes under environmental stress"
+    "wgbs_pesto": {
+        "description": "Methylseq of Crassostrea gigas (PESTO project, 2022)",
+        "bioprojects": ["PRJEB58545"],
+        "method": "WGBS",
+        "estimated_samples": "48",
+        "tissue_types": ["various"],
+        "estimated_size_gb": "350-400",
+        "search_url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJEB58545",
+        "notes": "Whole-genome methylation sequencing from the PESTO project"
     },
-    "medip_seq": {
-        "description": "Genome-wide Methylation Profiling",
-        "bioprojects": ["PRJNA348937", "PRJNA394425"],
+    "wgbs_transgen_infection": {
+        "description": "Transgenerational infection-resistance plasticity after early microbial exposure",
+        "bioprojects": ["PRJNA609264"],
+        "method": "WGBS",
+        "estimated_samples": "47",
+        "tissue_types": ["various"],
+        "estimated_size_gb": "600-650",
+        "search_url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA609264",
+        "notes": "Methylation underlying transgenerational adaptive phenotypic plasticity"
+    },
+    "wgbs_ph_ploidy": {
+        "description": "WGBS of diploid and triploid ctenidia at different pH levels",
+        "bioprojects": ["PRJNA682817"],
+        "method": "WGBS",
+        "estimated_samples": "24",
+        "tissue_types": ["gill"],
+        "estimated_size_gb": "100-110",
+        "search_url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA682817",
+        "notes": "DNA methylation response to pH in diploid vs triploid oysters"
+    },
+    "medip_development": {
+        "description": "Developmental genome-wide methylome dynamics (MeDIP-seq)",
+        "bioprojects": ["PRJNA324546"],
         "method": "MeDIP-seq",
-        "estimated_samples": "15-25",
-        "tissue_types": ["adult_tissues"],
-        "estimated_size_gb": "30-60",
-        "search_url": "https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+MeDIP",
-        "notes": "MeDIP-seq for genome-wide methylation patterns"
+        "estimated_samples": "21",
+        "tissue_types": ["embryo", "larvae"],
+        "estimated_size_gb": "5-10",
+        "search_url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA324546",
+        "notes": "MeDIP-seq across developmental stages"
     },
-    "targeted_bisulfite": {
-        "description": "Gene-specific Methylation Studies",
-        "bioprojects": ["PRJNA311096", "PRJNA381456"],
-        "method": "Targeted Bisulfite",
-        "estimated_samples": "20-40",
-        "tissue_types": ["multiple_tissue_types"],
-        "estimated_size_gb": "10-30",
-        "search_url": "https://www.ncbi.nlm.nih.gov/sra/?term=crassostrea+targeted+bisulfite",
-        "notes": "Targeted analysis of specific gene regions"
-    },
-    "magallana_recent": {
-        "description": "Recent Magallana gigas Studies",
-        "bioprojects": ["PRJNA725689", "PRJNA688412"],
-        "method": "Mixed methods",
-        "estimated_samples": "15-25",
-        "tissue_types": ["gonad", "gill", "mantle"],
-        "estimated_size_gb": "100-200",
-        "search_url": "https://www.ncbi.nlm.nih.gov/sra/?term=magallana+methylation",
-        "notes": "Studies using updated Magallana gigas nomenclature"
+    "wgbs_epigenomics_series": {
+        "description": "Magallana gigas epigenomics WGBS series",
+        "bioprojects": ["PRJNA807732", "PRJNA562805", "PRJNA213124"],
+        "method": "WGBS",
+        "estimated_samples": "50",
+        "tissue_types": ["various"],
+        "estimated_size_gb": "300-330",
+        "search_url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA807732",
+        "notes": "Three related 'Magallana gigas Epigenomics' bisulfite projects"
     }
 }
 
@@ -163,20 +192,59 @@ def _http_get(endpoint: str, params: Dict[str, str]) -> Optional[str]:
     return None
 
 
-def _parse_runs_from_runinfo(runinfo_csv: str) -> List[str]:
-    """Extract run accessions from an SRA runinfo CSV using the 'Run' column."""
-    runs: List[str] = []
+def _parse_runs_from_runinfo(
+    runinfo_csv: str,
+    allowed_organisms: Optional[tuple] = ALLOWED_ORGANISMS,
+    allowed_strategies: Optional[tuple] = ALLOWED_STRATEGIES,
+) -> List[str]:
+    """Extract run accessions from an SRA runinfo CSV.
+
+    Only runs whose organism (ScientificName) and assay (LibraryStrategy) match
+    the expected values are returned. This is the guard that stops the tool from
+    downloading off-target data when a BioProject accession is wrong. Pass
+    ``allowed_organisms=None`` and/or ``allowed_strategies=None`` to skip that
+    check. Runs that are dropped are logged, grouped by organism/strategy, so a
+    mismatched accession surfaces loudly instead of being fetched silently.
+    """
     reader = csv.DictReader(io.StringIO(runinfo_csv))
-    if not reader.fieldnames or "Run" not in reader.fieldnames:
-        return runs
+    fields = reader.fieldnames or []
+    if "Run" not in fields:
+        return []
+
+    check_org = bool(allowed_organisms) and "ScientificName" in fields
+    check_strat = bool(allowed_strategies) and "LibraryStrategy" in fields
+    org_set = tuple(o.lower() for o in (allowed_organisms or ()))
+    strat_set = tuple(s.lower() for s in (allowed_strategies or ()))
+
+    runs: List[str] = []
+    skipped: Dict[tuple, int] = {}
     for row in reader:
         acc = (row.get("Run") or "").strip()
-        if acc.upper().startswith(RUN_ACCESSION_PREFIXES):
+        if not acc.upper().startswith(RUN_ACCESSION_PREFIXES):
+            continue
+        organism = (row.get("ScientificName") or "").strip()
+        strategy = (row.get("LibraryStrategy") or "").strip()
+        org_ok = (not check_org) or organism.lower() in org_set
+        strat_ok = (not check_strat) or strategy.lower() in strat_set
+        if org_ok and strat_ok:
             runs.append(acc)
+        else:
+            key = (organism or "unknown", strategy or "unknown")
+            skipped[key] = skipped.get(key, 0) + 1
+
+    for (organism, strategy), n in sorted(skipped.items()):
+        logger.warning(
+            f"Skipped {n} off-target run(s) [organism='{organism}', "
+            f"strategy='{strategy}']; expected an oyster methylation assay."
+        )
     return runs
 
 
-def fetch_runs_via_eutils(bioproject: str) -> Optional[List[str]]:
+def fetch_runs_via_eutils(
+    bioproject: str,
+    allowed_organisms: Optional[tuple] = ALLOWED_ORGANISMS,
+    allowed_strategies: Optional[tuple] = ALLOWED_STRATEGIES,
+) -> Optional[List[str]]:
     """Discover SRA runs for a BioProject via NCBI E-utilities over HTTPS.
 
     Returns a list of accessions (possibly empty if the BioProject genuinely
@@ -223,12 +291,16 @@ def fetch_runs_via_eutils(bioproject: str) -> Optional[List[str]]:
     if runinfo is None:
         return None
 
-    runs = _parse_runs_from_runinfo(runinfo)
-    logger.info(f"Found {len(runs)} run(s) in {bioproject}")
+    runs = _parse_runs_from_runinfo(runinfo, allowed_organisms, allowed_strategies)
+    logger.info(f"Found {len(runs)} matching run(s) in {bioproject}")
     return runs
 
 
-def fetch_runs_via_edirect(bioproject: str) -> Optional[List[str]]:
+def fetch_runs_via_edirect(
+    bioproject: str,
+    allowed_organisms: Optional[tuple] = ALLOWED_ORGANISMS,
+    allowed_strategies: Optional[tuple] = ALLOWED_STRATEGIES,
+) -> Optional[List[str]]:
     """Discover runs using a local Entrez Direct install, if present."""
     if not (shutil.which("esearch") and shutil.which("efetch")):
         return None
@@ -241,16 +313,27 @@ def fetch_runs_via_edirect(bioproject: str) -> Optional[List[str]]:
         return None
     if result.returncode != 0 or not result.stdout:
         return None
-    return _parse_runs_from_runinfo(result.stdout)
+    return _parse_runs_from_runinfo(result.stdout, allowed_organisms, allowed_strategies)
 
 
 class MethylationDataDownloader:
     """Main class for downloading DNA methylation datasets."""
 
-    def __init__(self, output_dir: str = "./methylation_data", max_parallel: int = 2):
+    def __init__(self, output_dir: str = "./methylation_data", max_parallel: int = 2,
+                 validate: bool = True):
         self.output_dir = Path(output_dir)
         self.max_parallel = max_parallel
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        # When validation is on (default), only oyster methylation runs are
+        # accepted; setting these to None disables the respective check.
+        self.allowed_organisms = ALLOWED_ORGANISMS if validate else None
+        self.allowed_strategies = ALLOWED_STRATEGIES if validate else None
+        if not validate:
+            logger.warning(
+                "Run validation is DISABLED (--skip-validation): runs will be "
+                "downloaded regardless of organism or assay. Use with care."
+            )
 
         # Detect the SRA Toolkit downloader once, up front.
         self.download_tool = self._detect_download_tool()
@@ -291,10 +374,10 @@ class MethylationDataDownloader:
         Never returns fabricated data: if NCBI cannot be reached by any method,
         returns an empty list and logs the failure.
         """
-        runs = fetch_runs_via_eutils(bioproject)
+        runs = fetch_runs_via_eutils(bioproject, self.allowed_organisms, self.allowed_strategies)
         if runs is None:
             logger.warning(f"HTTPS discovery unavailable for {bioproject}; trying Entrez Direct")
-            runs = fetch_runs_via_edirect(bioproject)
+            runs = fetch_runs_via_edirect(bioproject, self.allowed_organisms, self.allowed_strategies)
 
         if runs is None:
             logger.error(
@@ -484,7 +567,9 @@ class MethylationDataDownloader:
         a("fi")
         a('echo "Using $DL"; echo "Started: $(date)"')
         a("")
-        a("# Print the SRR/ERR/DRR run accessions for a BioProject, one per line.")
+        a("# Print the run accessions for a BioProject, one per line. Only oyster")
+        a("# (Crassostrea/Magallana gigas) bisulfite/MeDIP runs are kept -- this")
+        a("# mirrors the Python tool and stops off-target data being downloaded.")
         a("get_runs() {")
         a("    local bp=\"$1\"")
         a('    local base="https://eutils.ncbi.nlm.nih.gov/entrez/eutils"')
@@ -494,7 +579,8 @@ class MethylationDataDownloader:
         a("    querykey=$(echo \"$hist\" | sed -n 's:.*<QueryKey>\\(.*\\)</QueryKey>.*:\\1:p')")
         a('    [ -z "$webenv" ] && return 0')
         a('    curl -s "${base}/efetch.fcgi?db=sra&WebEnv=${webenv}&query_key=${querykey}&rettype=runinfo&retmode=text" \\')
-        a("        | awk -F, 'NR>1 && $1 ~ /^[SED]RR/ {print $1}'")
+        a("        | awk -F, 'NR==1{for(i=1;i<=NF;i++){if($i==\"Run\")r=i; if($i==\"ScientificName\")s=i; if($i==\"LibraryStrategy\")l=i}; next}")
+        a("                   $r ~ /^[SED]RR/ && tolower($s) ~ /gigas/ && tolower($l) ~ /bisulfite|medip/ {print $r}'")
         a("}")
         a("")
 
@@ -546,18 +632,18 @@ Examples:
   python download_methylation_data.py --list
 
   # Preview what a dataset would download (no files written)
-  python download_methylation_data.py --dataset wgbs_roberts --dry-run
+  python download_methylation_data.py --dataset wgbs_ph_ploidy --dry-run
 
   # Download a specific dataset
-  python download_methylation_data.py --dataset wgbs_roberts
+  python download_methylation_data.py --dataset wgbs_ph_ploidy
 
   # Download a few runs of one BioProject to test your setup
-  python download_methylation_data.py --dataset rrbs_developmental \\
-      --bioproject PRJNA486983 --max-runs 3
+  python download_methylation_data.py --dataset wgbs_ph_ploidy \\
+      --bioproject PRJNA682817 --max-runs 3
 
   # Create a standalone shell script for several datasets
   python download_methylation_data.py --create-script \\
-      --datasets wgbs_roberts rrbs_developmental
+      --datasets wgbs_ph_ploidy medip_development
 
 Tip: set NCBI_EMAIL (and optionally NCBI_API_KEY) in your environment to raise
 NCBI rate limits.
@@ -584,12 +670,16 @@ NCBI rate limits.
                         help='List of dataset IDs for script generation')
     parser.add_argument('--max-parallel', type=int, default=2,
                         help='Maximum number of parallel downloads (reserved)')
+    parser.add_argument('--skip-validation', action='store_true',
+                        help='Do NOT filter discovered runs by organism/assay '
+                             '(unsafe: may download non-oyster or non-methylation data)')
 
     args = parser.parse_args()
 
     downloader = MethylationDataDownloader(
         output_dir=args.output_dir,
-        max_parallel=args.max_parallel
+        max_parallel=args.max_parallel,
+        validate=not args.skip_validation,
     )
 
     if args.list:
