@@ -32,6 +32,17 @@
 
 ## Phase 2: Literature Mining (Systematic Approach)
 
+> **Status: EXECUTED (2026-08-04).** Searches run live against NCBI PubMed via
+> E-utilities. Deliverables: [`literature-review/pubmed-search-results.md`](literature-review/pubmed-search-results.md)
+> (queries, counts, journal/author distributions, dataset linkage) and the
+> verified, rewritten [`literature-review/key-publications.md`](literature-review/key-publications.md).
+> Key outcomes: 248 RNA-seq/transcriptome and 54 methylation PubMed hits;
+> verified oyster BioProjects PRJNA173440 (WGBS) and PRJNA146329 (developmental
+> RNA-seq); and a data-integrity correction — the BioProject accessions in the
+> earlier draft docs resolve to non-oyster organisms and were replaced.
+> Per-paper accession confirmation for the remaining publications is deferred to
+> Phase 4.
+
 ### 2.1 PubMed Search Strategy
 ```bash
 # Comprehensive PubMed searches:
