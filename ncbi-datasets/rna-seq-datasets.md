@@ -1,5 +1,13 @@
 # RNA-seq Datasets for Crassostrea gigas
 
+> ⚠️ **Unverified accessions.** The BioProject IDs below were compiled from
+> literature and have **not** yet been confirmed against NCBI. A spot check
+> found several that are empty or belong to the wrong organism (e.g. human,
+> geoduck). Treat every accession here as a lead to verify, not as fact. The
+> DNA methylation catalogue in
+> [`dna-methylation-datasets.md`](dna-methylation-datasets.md) has been rebuilt
+> from verified NCBI queries; the RNA-seq list still needs the same treatment.
+
 ## Major RNA-seq Studies Identified
 
 ### 1. Pacific Oyster Developmental Transcriptomes

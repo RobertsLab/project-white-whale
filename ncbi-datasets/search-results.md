@@ -25,30 +25,32 @@ Searched NCBI databases using the following approach:
 
 ### RNA-seq Datasets
 
-**Major BioProjects Identified:**
-- PRJNA85067: Pacific Oyster Developmental Transcriptomes
-- PRJNA248740: Temperature Stress Response Studies
-- PRJNA506631: Salinity Stress Response Studies
-- PRJNA422851: Pathogen Response Studies
-- PRJNA486983: Reproductive Development Studies
-- PRJNA725689: Recent Magallana gigas Studies
+> ⚠️ **Unverified.** The RNA-seq BioProject accessions in
+> [`rna-seq-datasets.md`](rna-seq-datasets.md) have **not** yet been confirmed
+> against NCBI. A spot check found several that are empty or point to the wrong
+> organism, so they must be re-verified before use. The downloader in
+> [`../code/`](../code/) does not rely on them.
 
-### DNA Methylation Datasets
+### DNA Methylation Datasets (verified 2026-08)
 
-**Major BioProjects Identified:**
-- PRJNA316216: Roberts Lab WGBS Studies
-- PRJNA394801: Ocean Acidification Methylation Studies
-- PRJNA273482: Developmental Methylation Studies
-- PRJNA348937: MeDIP-seq Studies
-- PRJNA688412: Recent Magallana Methylation Studies
+**BioProjects confirmed to contain *Crassostrea/Magallana gigas* bisulfite/MeDIP runs:**
+- PRJEB60400: POMS adaptation WGBS (246 runs)
+- PRJEB81880: GESTINOV POMS gill/mantle EM-seq (40 runs)
+- PRJEB105019: Aging / DECICOMP WGBS (60 runs)
+- PRJEB58545: PESTO methylseq WGBS (48 runs)
+- PRJNA609264: Transgenerational infection resistance WGBS (47 runs)
+- PRJNA682817: pH / ploidy WGBS (24 runs)
+- PRJNA324546: Developmental methylome MeDIP-seq (21 runs)
+- PRJNA807732, PRJNA562805, PRJNA213124: "Magallana gigas Epigenomics" WGBS series (50 runs)
+
+See [`dna-methylation-datasets.md`](dna-methylation-datasets.md) for full details.
 
 ## Summary Statistics
 
-- **Total RNA-seq BioProjects identified**: 6 major projects
-- **Total DNA methylation BioProjects identified**: 5 major projects
-- **Total estimated RNA-seq samples**: 150-250 samples
-- **Total estimated methylation samples**: 120-200 samples
-- **Estimated total file size**: 960-1,930 GB combined
+- **DNA methylation BioProjects verified**: 10 (across 8 datasets)
+- **DNA methylation samples (runs)**: ~536
+- **DNA methylation total size**: ~2.6-3.0 TB
+- **RNA-seq BioProjects**: pending re-verification (see warning above)
 
 ## Last Updated
 December 2024

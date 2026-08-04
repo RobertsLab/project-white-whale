@@ -42,17 +42,25 @@
 | Magallana studies (2018-2024) | 50 | 60-120 | 3.0-6.0 | 150-300 |
 | **SUBTOTAL** | **400** | **Variable** | **Variable** | **1,115-2,145** |
 
-### DNA Methylation Dataset Size Estimates
+### DNA Methylation Dataset Size Estimates (verified actuals, NCBI SRA 2026-08)
 
-| Method | Samples | Coverage | Size/Sample (GB) | Total Size (GB) |
-|--------|---------|----------|------------------|-----------------|
-| WGBS (high coverage) | 30 | 20-30X | 15-25 | 450-750 |
-| WGBS (standard) | 50 | 10-15X | 8-15 | 400-750 |
-| RRBS (comprehensive) | 60 | 10-20X CpG | 3-6 | 180-360 |
-| RRBS (targeted) | 40 | 5-10X CpG | 2-4 | 80-160 |
-| MeDIP-seq | 40 | Variable | 4-8 | 160-320 |
-| Targeted bisulfite | 50 | Gene-specific | 0.5-2 | 25-100 |
-| **SUBTOTAL** | **270** | **Variable** | **Variable** | **1,295-2,440** |
+These are the real run counts and summed SRA download sizes for the verified
+BioProjects (see
+[`../ncbi-datasets/dna-methylation-datasets.md`](../ncbi-datasets/dna-methylation-datasets.md)),
+not modelled estimates. The per-sample assumptions above still describe the
+methods, but the totals below supersede them for these specific projects.
+
+| Dataset (BioProject) | Method | Runs | Total Size (GB) |
+|----------------------|--------|------|-----------------|
+| POMS adaptation (PRJEB60400) | WGBS | 246 | 450-500 |
+| GESTINOV POMS (PRJEB81880) | EM-seq | 40 | 400-450 |
+| Aging / DECICOMP (PRJEB105019) | WGBS | 60 | 450-500 |
+| PESTO (PRJEB58545) | WGBS | 48 | 350-400 |
+| Transgen. infection (PRJNA609264) | WGBS | 47 | 600-650 |
+| pH / ploidy (PRJNA682817) | WGBS | 24 | 100-110 |
+| Developmental (PRJNA324546) | MeDIP-seq | 21 | 5-10 |
+| Epigenomics series (PRJNA807732/562805/213124) | WGBS | 50 | 300-330 |
+| **SUBTOTAL** | **WGBS/EM-seq/MeDIP** | **~536** | **~2,655-2,950** |
 
 ## Size Distribution by Research Theme
 
@@ -80,10 +88,10 @@
 ## Storage and Transfer Considerations
 
 ### Data Storage Requirements
-- **Raw data storage**: 2.4-6.0 TB total estimated
+- **Verified methylation raw data**: ~2.6-3.0 TB (the 10 BioProjects above)
 - **Processed data**: Additional 20-30% of raw data size
 - **Metadata and documentation**: ~1-2% of total size
-- **Total storage need**: 3.0-8.0 TB
+- **RNA-seq**: not included (accessions pending verification)
 
 ### Data Transfer Estimates
 - **Typical internet speed**: 100 Mbps = 12.5 MB/s = 45 GB/hour
@@ -113,9 +121,9 @@
 ## Cost-Benefit Analysis for Data Access
 
 ### High-Value Datasets (Priority 1)
-- Roberts Lab WGBS studies: Comprehensive, well-annotated
-- Original genome project RNA-seq: Foundational reference
-- Multi-tissue stress response: Broad applicability
+- POMS adaptation WGBS (PRJEB60400): largest verified WGBS set (246 runs)
+- Transgenerational infection WGBS (PRJNA609264): disease-response epigenetics
+- Developmental methylome MeDIP-seq (PRJNA324546): small, quick to download
 
 ### Medium-Value Datasets (Priority 2)
 - Population-specific studies: Geographic relevance
@@ -139,4 +147,4 @@
 | .txt/.tsv | Count matrices | 10-100 MB | Analysis ready |
 
 ## Last Updated
-December 2024
+August 2026 — methylation dataset sizes replaced with verified NCBI SRA actuals.

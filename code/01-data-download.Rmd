@@ -6,14 +6,14 @@ date: "2025-08-28"
 
 
 ```{bash}
-python download_methylation_data.py --list
+python3 download_methylation_data.py --list
 ```
 
 ```{bash}
-python download_methylation_data.py --dataset targeted_bisulfite --max-runs 3 --dry-run
+python3 download_methylation_data.py --dataset medip_development --max-runs 3 --dry-run
 ```
 
 ```{bash}
-python download_methylation_data.py --create-script --datasets wgbs_ocean_acidification
+python3 download_methylation_data.py --create-script --datasets wgbs_ph_ploidy
 ```
 
