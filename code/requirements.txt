@@ -7,6 +7,8 @@
 
 # Optional tools:
 # - NCBI Entrez Direct (https://www.ncbi.nlm.nih.gov/books/NBK179288/)  -- alternative run discovery
-# - curl  -- required only by the generated download_script.sh
+# - curl and python3  -- required only by the generated download_script.sh
 # - parallel (GNU parallel for faster downloads)
 # - pigz (parallel gzip for compression)
+
+# Development only (tests and lint): pytest, ruff

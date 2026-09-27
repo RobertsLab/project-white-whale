@@ -68,11 +68,17 @@ python download_methylation_data.py --dataset medip_development --max-runs 5
 # Create shell script for multiple datasets
 python download_methylation_data.py --create-script --datasets wgbs_ph_ploidy medip_development wgbs_pesto
 
-# Execute the generated script
+# Execute the generated script (needs curl, python3 and the SRA Toolkit)
 cd methylation_data
 chmod +x download_script.sh
+MAX_RUNS=2 ./download_script.sh   # optional: small test first
 ./download_script.sh
 ```
+
+The generated script discovers runs from NCBI when it runs, applies the same
+organism/assay filter as the Python tool, writes a `runs.txt` per BioProject,
+leaves a `<run>.done` marker per finished run so it can be re-run to resume,
+and exits non-zero if any lookup or download failed.
 
 ## Available Datasets
 
@@ -106,10 +112,14 @@ methylation_data/
 │   │   ├── runs.txt            # Run accessions discovered from NCBI
 │   │   ├── <SRR_accession>_1.fastq.gz
 │   │   ├── <SRR_accession>_2.fastq.gz
+│   │   ├── <SRR_accession>.done    # Written once the run is verified; makes re-runs skip it
 │   │   └── ...
 │   └── ...
-└── download_methylation_data.log  # Download progress log
+└── ...
 ```
+
+The progress log, `download_methylation_data.log`, is written in the directory
+you ran the command from (usually `code/`).
 
 ## NCBI Rate Limits (optional but recommended)
 
@@ -122,17 +132,29 @@ export NCBI_API_KEY="your_ncbi_api_key" # optional, from your NCBI account
 
 ## Advanced Options
 
-### Parallel Downloads
+### Per-run Timeout
+Downloads have no time limit by default, because a single WGBS run can take
+hours on a slow connection. To abort any run that takes longer than a given
+number of seconds (partial files are removed so a retry starts clean):
 ```bash
-# Use 4 parallel download processes
-python download_methylation_data.py --dataset wgbs_poms_adaptation --max-parallel 4
+python download_methylation_data.py --dataset wgbs_ph_ploidy --run-timeout 14400
 ```
 
-### Custom Selection
-```bash
-# Download specific runs (requires modification of script)
-# See source code for adding custom run lists
-```
+### Test Downloads and Disk Space
+The free-space check scales with what you ask for: with `--max-runs N` it
+estimates only the N runs (per BioProject) that will actually be fetched, so a
+small test download is not blocked by the size of the whole dataset.
+
+Note: `--max-parallel` is accepted for backwards compatibility but runs are
+currently downloaded one at a time.
+
+### Resuming
+Every run that downloads and verifies successfully gets a `<run>.done` marker
+next to its FASTQ files. Re-running the same command skips marked runs. Files
+left behind by an interrupted download or an interrupted gzip (no marker, or a
+`.gz` that fails `gzip -t`) are detected, removed, and downloaded again.
+Downloads made by older versions of this tool have no marker; their `.gz`
+files are integrity-checked once and, if intact, marked complete.
 
 ### Run Validation (on by default)
 
@@ -177,7 +199,7 @@ fasterq-dump --version
 - Large datasets may take hours to days to download
 - Use `--max-runs` to test with smaller subsets
 - Consider institutional high-speed networks
-- Resume interrupted downloads (SRA toolkit handles this automatically)
+- Re-run the same command to resume: verified runs are skipped, partial files are redone (see *Resuming* above)
 
 ### Storage Issues
 - Monitor disk space during downloads

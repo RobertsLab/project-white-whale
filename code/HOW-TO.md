@@ -119,7 +119,8 @@ python3 download_methylation_data.py \
 ```
 
 - `--bioproject` limits to one project.
-- `--max-runs 2` limits to the first 2 files.
+- `--max-runs 2` limits to the first 2 files. The disk-space check only
+  counts those 2 files, so this works on a laptop.
 
 When it finishes you'll find compressed `.fastq.gz` files under
 `methylation_data/wgbs_ph_ploidy/PRJNA682817/`. The tool also writes a
@@ -138,7 +139,8 @@ python3 download_methylation_data.py --dataset wgbs_ph_ploidy
 Before it starts, the tool **checks your free disk space** and warns you if
 there might not be enough. Large datasets can take **hours** (most WGBS
 datasets are hundreds of GB each; the full collection is ~2.6–3.0 TB). You can
-safely stop (Ctrl-C) and re-run later — files already downloaded are skipped.
+safely stop (Ctrl-C) and re-run later: finished runs (marked by a small
+`<run>.done` file) are skipped, and any half-finished files are redone.
 
 To save somewhere with more room:
 
@@ -173,7 +175,8 @@ export NCBI_EMAIL="you@example.com"
 
 ## Generating a standalone script (optional)
 
-If you'd rather run the downloads as a plain shell script (e.g. on a cluster):
+If you'd rather run the downloads as a plain shell script (e.g. on a cluster;
+it needs `curl`, `python3` and the SRA Toolkit on that machine):
 
 ```bash
 python3 download_methylation_data.py --create-script \
@@ -200,7 +203,8 @@ methylation_data/
     ├── dataset_info.json          # what this dataset is
     └── <BioProject>/
         ├── runs.txt               # the accessions that were found
-        └── SRRxxxxxxx_1.fastq.gz  # the sequencing data
+        ├── SRRxxxxxxx_1.fastq.gz  # the sequencing data
+        └── SRRxxxxxxx.done        # marks a run as complete (so re-runs skip it)
 ```
 
 A full log of everything that happened is saved to
