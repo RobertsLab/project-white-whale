@@ -27,10 +27,12 @@ Author: project-white-whale repository
 """
 
 import os
+import re
 import sys
 import csv
 import io
 import json
+import math
 import time
 import shutil
 import logging
@@ -42,12 +44,14 @@ import urllib.error
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Configure logging
+# Configure logging. The log file is created lazily (delay=True) so that
+# read-only commands such as --list and --help do not litter the working
+# directory with an empty log.
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('download_methylation_data.log'),
+        logging.FileHandler('download_methylation_data.log', delay=True),
         logging.StreamHandler()
     ]
 )
@@ -61,6 +65,17 @@ NCBI_EMAIL = os.environ.get("NCBI_EMAIL", "")
 HTTP_TIMEOUT = 60          # seconds per HTTP request
 HTTP_RETRIES = 3           # attempts before giving up on a request
 RUN_ACCESSION_PREFIXES = ("SRR", "ERR", "DRR")
+# BioProject accessions look like PRJNA123456 (NCBI), PRJEB12345 (ENA) or
+# PRJDB1234 (DDBJ). Anything else is rejected before it reaches NCBI or a shell.
+BIOPROJECT_RE = re.compile(r"^PRJ[NED][AB]\d+$")
+# Marker written next to a run's FASTQ files once the download has been
+# verified. Its presence is what makes a re-run skip the run.
+DONE_SUFFIX = ".done"
+
+
+def is_valid_bioproject(accession: str) -> bool:
+    """True if ``accession`` is a well-formed BioProject accession."""
+    return bool(BIOPROJECT_RE.match((accession or "").strip()))
 
 # Runs are only accepted if they match the target species AND a methylation
 # assay. This guard is what prevents the download of off-target data when a
@@ -304,26 +319,44 @@ def fetch_runs_via_edirect(
     """Discover runs using a local Entrez Direct install, if present."""
     if not (shutil.which("esearch") and shutil.which("efetch")):
         return None
+    if not is_valid_bioproject(bioproject):
+        logger.error(f"Refusing to query malformed BioProject accession: {bioproject!r}")
+        return None
     logger.info(f"Querying {bioproject} via local Entrez Direct")
+    # Run the two commands as a pipeline without a shell, so the accession is
+    # passed as a plain argument and never interpreted by a shell.
     try:
-        cmd = f'esearch -db sra -query "{bioproject}[BioProject]" | efetch -format runinfo'
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
+        search = subprocess.run(
+            ["esearch", "-db", "sra", "-query", f"{bioproject}[BioProject]"],
+            capture_output=True, text=True, timeout=120,
+        )
+        if search.returncode != 0 or not search.stdout:
+            return None
+        fetch = subprocess.run(
+            ["efetch", "-format", "runinfo"],
+            input=search.stdout, capture_output=True, text=True, timeout=120,
+        )
     except subprocess.TimeoutExpired:
         logger.warning(f"Entrez Direct timed out for {bioproject}")
         return None
-    if result.returncode != 0 or not result.stdout:
+    except OSError as e:
+        logger.warning(f"Entrez Direct failed for {bioproject}: {e}")
         return None
-    return _parse_runs_from_runinfo(result.stdout, allowed_organisms, allowed_strategies)
+    if fetch.returncode != 0 or not fetch.stdout:
+        return None
+    return _parse_runs_from_runinfo(fetch.stdout, allowed_organisms, allowed_strategies)
 
 
 class MethylationDataDownloader:
     """Main class for downloading DNA methylation datasets."""
 
     def __init__(self, output_dir: str = "./methylation_data", max_parallel: int = 2,
-                 validate: bool = True):
+                 validate: bool = True, run_timeout: Optional[int] = None):
         self.output_dir = Path(output_dir)
         self.max_parallel = max_parallel
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        # Seconds allowed per run download; None means no limit. Large WGBS
+        # runs on a slow link can take many hours, so there is no default cap.
+        self.run_timeout = run_timeout if run_timeout and run_timeout > 0 else None
 
         # When validation is on (default), only oyster methylation runs are
         # accepted; setting these to None disables the respective check.
@@ -335,8 +368,23 @@ class MethylationDataDownloader:
                 "downloaded regardless of organism or assay. Use with care."
             )
 
-        # Detect the SRA Toolkit downloader once, up front.
-        self.download_tool = self._detect_download_tool()
+        # The SRA Toolkit is detected lazily, the first time a download is
+        # attempted, so --list and --dry-run stay quiet and side-effect free.
+        self._download_tool: Optional[str] = None
+        self._tool_detected = False
+
+    @property
+    def download_tool(self) -> Optional[str]:
+        """'fasterq-dump', 'fastq-dump', or None (detected on first use)."""
+        if not self._tool_detected:
+            self._download_tool = self._detect_download_tool()
+            self._tool_detected = True
+        return self._download_tool
+
+    @download_tool.setter
+    def download_tool(self, value: Optional[str]) -> None:
+        self._download_tool = value
+        self._tool_detected = True
 
     @staticmethod
     def _detect_download_tool() -> Optional[str]:
@@ -396,10 +444,34 @@ class MethylationDataDownloader:
         except (ValueError, IndexError):
             return None
 
+    @classmethod
+    def _estimated_needed_gb(cls, dataset_info: Dict, max_runs: Optional[int] = None,
+                             n_bioprojects: Optional[int] = None) -> Optional[int]:
+        """Estimate the disk space a download will need, in GB.
+
+        Without a run limit this is the dataset's upper-bound estimate. With
+        ``max_runs`` the estimate is scaled to the number of runs that will
+        actually be fetched (per-run average x runs x BioProjects), so a small
+        test download is not blocked by the size of the whole dataset.
+        """
+        upper = cls._estimated_upper_gb(dataset_info)
+        if upper is None or not max_runs or max_runs <= 0:
+            return upper
+        try:
+            total_runs = int(str(dataset_info.get("estimated_samples", "")).strip())
+        except ValueError:
+            return upper
+        if total_runs <= 0:
+            return upper
+        n_bp = n_bioprojects or len(dataset_info.get("bioprojects", [])) or 1
+        runs_to_fetch = min(max_runs * n_bp, total_runs)
+        return min(upper, max(1, math.ceil(upper * runs_to_fetch / total_runs)))
+
     def _check_disk_space(self, needed_gb: Optional[int], force: bool) -> bool:
         """Warn (or block) if free disk space looks insufficient."""
         if needed_gb is None:
             return True
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         free_gb = shutil.disk_usage(self.output_dir).free / (1024 ** 3)
         logger.info(f"Free space at {self.output_dir}: {free_gb:.0f} GB (estimate needs ~{needed_gb} GB)")
         if free_gb < needed_gb:
@@ -422,8 +494,28 @@ class MethylationDataDownloader:
         dataset_info = METHYLATION_DATASETS[dataset_id]
         logger.info(f"Starting download for dataset: {dataset_info['description']}")
 
-        if not dry_run and not self._check_disk_space(self._estimated_upper_gb(dataset_info), force):
-            return False
+        if bioproject:
+            bioproject = bioproject.strip()
+            if not is_valid_bioproject(bioproject):
+                logger.error(
+                    f"'{bioproject}' is not a valid BioProject accession "
+                    f"(expected e.g. PRJNA123456 or PRJEB12345)."
+                )
+                return False
+            if bioproject not in dataset_info['bioprojects']:
+                logger.error(
+                    f"BioProject {bioproject} does not belong to dataset '{dataset_id}' "
+                    f"(its BioProjects: {', '.join(dataset_info['bioprojects'])})."
+                )
+                return False
+            bioprojects = [bioproject]
+        else:
+            bioprojects = list(dataset_info['bioprojects'])
+
+        if not dry_run:
+            needed = self._estimated_needed_gb(dataset_info, max_runs, len(bioprojects))
+            if not self._check_disk_space(needed, force):
+                return False
 
         if not dry_run and self.download_tool is None:
             logger.error(
@@ -438,8 +530,6 @@ class MethylationDataDownloader:
         metadata_file = dataset_dir / "dataset_info.json"
         with open(metadata_file, 'w') as f:
             json.dump(dataset_info, f, indent=2)
-
-        bioprojects = [bioproject] if bioproject else dataset_info['bioprojects']
 
         success = True
         any_runs_found = False
@@ -475,10 +565,67 @@ class MethylationDataDownloader:
             return False
         return success
 
+    @staticmethod
+    def _run_files(run_accession: str, output_dir: Path) -> List[Path]:
+        """All FASTQ files (compressed or not) belonging to a run."""
+        return sorted(
+            list(output_dir.glob(f"{run_accession}*.fastq.gz"))
+            + list(output_dir.glob(f"{run_accession}*.fastq"))
+        )
+
+    @staticmethod
+    def _gzip_ok(path: Path) -> bool:
+        """True if ``path`` is a complete, readable gzip file."""
+        try:
+            result = subprocess.run(['gzip', '-t', str(path)], capture_output=True, text=True)
+            return result.returncode == 0
+        except OSError:
+            return False
+
+    def _remove_run_files(self, run_accession: str, output_dir: Path) -> None:
+        """Delete partial outputs of a run so a retry starts from scratch."""
+        for p in self._run_files(run_accession, output_dir):
+            try:
+                p.unlink()
+                logger.info(f"Removed partial file {p.name}")
+            except OSError as e:
+                logger.warning(f"Could not remove {p.name}: {e}")
+        marker = output_dir / f"{run_accession}{DONE_SUFFIX}"
+        if marker.exists():
+            marker.unlink()
+
+    def _is_run_complete(self, run_accession: str, output_dir: Path) -> bool:
+        """Decide whether an earlier download of this run can be trusted.
+
+        A run is complete when its ``.done`` marker exists. Downloads made by
+        older versions of this tool have no marker: their compressed files are
+        integrity-checked once with ``gzip -t`` and, if they pass, the marker
+        is written so the check is not repeated. Files that fail the check are
+        partial (an interrupted gzip, for example) and are removed so the run
+        is fetched again.
+        """
+        marker = output_dir / f"{run_accession}{DONE_SUFFIX}"
+        if marker.exists():
+            return True
+        files = self._run_files(run_accession, output_dir)
+        if not files:
+            return False
+        gz = [p for p in files if p.suffix == ".gz"]
+        plain = [p for p in files if p.suffix != ".gz"]
+        if gz and not plain and all(p.stat().st_size > 0 and self._gzip_ok(p) for p in gz):
+            logger.info(f"Run {run_accession}: existing files verified, marking complete")
+            marker.touch()
+            return True
+        logger.warning(
+            f"Run {run_accession}: found incomplete files from an earlier attempt; "
+            f"removing them and downloading again"
+        )
+        self._remove_run_files(run_accession, output_dir)
+        return False
+
     def _download_run(self, run_accession: str, output_dir: Path) -> bool:
         """Download and compress a single SRA run."""
-        existing = list(output_dir.glob(f"{run_accession}*.fastq.gz"))
-        if existing:
+        if self._is_run_complete(run_accession, output_dir):
             logger.info(f"Run {run_accession} already present, skipping")
             return True
 
@@ -492,37 +639,60 @@ class MethylationDataDownloader:
                        '--outdir', str(output_dir), run_accession]
 
             logger.info(f"Executing: {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=7200)
+            # Output is not captured: the SRA Toolkit's progress display goes
+            # straight to the terminal so long downloads are visibly alive.
+            result = subprocess.run(cmd, timeout=self.run_timeout)
             if result.returncode != 0:
-                logger.error(f"{self.download_tool} failed for {run_accession}: {result.stderr.strip()}")
+                logger.error(
+                    f"{self.download_tool} exited with code {result.returncode} for "
+                    f"{run_accession} (see its output above)"
+                )
+                self._remove_run_files(run_accession, output_dir)
                 return False
 
             # fasterq-dump writes uncompressed FASTQ; compress to save space.
+            # gzip only removes the source once the .gz is complete, so an
+            # interrupted compression leaves both files behind and the next
+            # run detects that and redoes the run.
             if self.download_tool == "fasterq-dump":
                 for fastq_file in output_dir.glob(f"{run_accession}*.fastq"):
                     logger.info(f"Compressing {fastq_file.name}")
                     try:
-                        subprocess.run(['gzip', '-f', str(fastq_file)], check=True, timeout=1800)
-                    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-                        logger.warning(f"Could not gzip {fastq_file.name}: {e}")
+                        subprocess.run(['gzip', '-f', str(fastq_file)], check=True)
+                    except (subprocess.CalledProcessError, OSError) as e:
+                        logger.error(f"Could not gzip {fastq_file.name}: {e}")
+                        self._remove_run_files(run_accession, output_dir)
+                        return False
 
-            return self._validate_run(run_accession, output_dir)
+            if not self._validate_run(run_accession, output_dir):
+                self._remove_run_files(run_accession, output_dir)
+                return False
+            (output_dir / f"{run_accession}{DONE_SUFFIX}").touch()
+            return True
 
         except subprocess.TimeoutExpired:
-            logger.error(f"Timeout downloading {run_accession}")
+            logger.error(
+                f"Timeout downloading {run_accession} after {self.run_timeout} s; "
+                f"removing partial files (raise or drop --run-timeout to allow longer)"
+            )
+            self._remove_run_files(run_accession, output_dir)
             return False
         except OSError as e:
             logger.error(f"Error downloading {run_accession}: {e}")
+            self._remove_run_files(run_accession, output_dir)
             return False
 
-    @staticmethod
-    def _validate_run(run_accession: str, output_dir: Path) -> bool:
-        """Confirm at least one non-empty FASTQ file was produced."""
-        produced = list(output_dir.glob(f"{run_accession}*.fastq.gz")) + \
-            list(output_dir.glob(f"{run_accession}*.fastq"))
+    @classmethod
+    def _validate_run(cls, run_accession: str, output_dir: Path) -> bool:
+        """Confirm at least one non-empty, intact FASTQ file was produced."""
+        produced = cls._run_files(run_accession, output_dir)
         non_empty = [p for p in produced if p.stat().st_size > 0]
         if not non_empty:
             logger.error(f"No non-empty FASTQ produced for {run_accession}")
+            return False
+        bad = [p for p in non_empty if p.suffix == ".gz" and not cls._gzip_ok(p)]
+        if bad:
+            logger.error(f"Corrupt gzip output for {run_accession}: {', '.join(p.name for p in bad)}")
             return False
         logger.info(f"Successfully downloaded {run_accession} "
                     f"({len(non_empty)} file(s), "
@@ -544,6 +714,7 @@ class MethylationDataDownloader:
             logger.error("No valid dataset IDs provided; nothing to write.")
             return
 
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         script_path = self.output_dir / output_file
         lines: List[str] = []
         a = lines.append
@@ -551,13 +722,16 @@ class MethylationDataDownloader:
         a("#!/bin/bash")
         a("# Auto-generated by download_methylation_data.py")
         a("# Discovers the real SRA runs for each BioProject from NCBI, then downloads them.")
-        a("set -euo pipefail")
+        a("set -uo pipefail")
         a("")
         a('MAX_RUNS="${MAX_RUNS:-0}"   # 0 = all runs; set e.g. MAX_RUNS=3 to test')
+        a('EUTILS="${EUTILS:-https://eutils.ncbi.nlm.nih.gov/entrez/eutils}"')
+        a('NCBI_EMAIL="${NCBI_EMAIL:-}"; NCBI_API_KEY="${NCBI_API_KEY:-}"')
         a("")
         a("command_exists() { command -v \"$1\" >/dev/null 2>&1; }")
         a("")
         a("if ! command_exists curl; then echo \"Error: curl is required.\"; exit 1; fi")
+        a("if ! command_exists python3; then echo \"Error: python3 is required (to parse NCBI run metadata).\"; exit 1; fi")
         a("if command_exists fasterq-dump; then")
         a('    DL="fasterq-dump"; DL_ARGS="--split-files --progress --threads 2"')
         a("elif command_exists fastq-dump; then")
@@ -567,21 +741,67 @@ class MethylationDataDownloader:
         a("fi")
         a('echo "Using $DL"; echo "Started: $(date)"')
         a("")
+        a("# Extra identification parameters for NCBI (raise the rate limit if set).")
+        a("ncbi_id_params() {")
+        a('    local p=""')
+        a('    [ -n "$NCBI_EMAIL" ] && p="${p}&email=${NCBI_EMAIL}"')
+        a('    [ -n "$NCBI_API_KEY" ] && p="${p}&api_key=${NCBI_API_KEY}"')
+        a('    echo "${p}&tool=project-white-whale"')
+        a("}")
+        a("")
         a("# Print the run accessions for a BioProject, one per line. Only oyster")
         a("# (Crassostrea/Magallana gigas) bisulfite/MeDIP runs are kept -- this")
         a("# mirrors the Python tool and stops off-target data being downloaded.")
+        a("# The runinfo CSV is parsed with Python's csv module so quoted fields that")
+        a("# contain commas do not shift the columns. Returns non-zero if NCBI could")
+        a("# not be reached (as opposed to a project that simply has no runs).")
+        a("# curl runs with -g so the [BioProject] field tag is not treated as a URL glob.")
         a("get_runs() {")
         a("    local bp=\"$1\"")
-        a('    local base="https://eutils.ncbi.nlm.nih.gov/entrez/eutils"')
-        a('    local hist; hist=$(curl -s "${base}/esearch.fcgi?db=sra&term=${bp}[BioProject]&usehistory=y&retmax=1")')
-        a("    local webenv querykey")
+        a("    local hist webenv querykey")
+        a('    if ! hist=$(curl -sfg "${EUTILS}/esearch.fcgi?db=sra&term=${bp}%5BBioProject%5D&usehistory=y&retmax=1$(ncbi_id_params)"); then')
+        a('        echo "  Error: could not query NCBI for ${bp}" >&2; return 1')
+        a("    fi")
         a("    webenv=$(echo \"$hist\" | sed -n 's:.*<WebEnv>\\(.*\\)</WebEnv>.*:\\1:p')")
         a("    querykey=$(echo \"$hist\" | sed -n 's:.*<QueryKey>\\(.*\\)</QueryKey>.*:\\1:p')")
         a('    [ -z "$webenv" ] && return 0')
-        a('    curl -s "${base}/efetch.fcgi?db=sra&WebEnv=${webenv}&query_key=${querykey}&rettype=runinfo&retmode=text" \\')
-        a("        | awk -F, 'NR==1{for(i=1;i<=NF;i++){if($i==\"Run\")r=i; if($i==\"ScientificName\")s=i; if($i==\"LibraryStrategy\")l=i}; next}")
-        a("                   $r ~ /^[SED]RR/ && tolower($s) ~ /gigas/ && tolower($l) ~ /bisulfite|medip/ {print $r}'")
+        a('    sleep 0.4')
+        a('    curl -sfg "${EUTILS}/efetch.fcgi?db=sra&WebEnv=${webenv}&query_key=${querykey}&rettype=runinfo&retmode=text$(ncbi_id_params)" \\')
+        a("        | python3 -c '")
+        a("import csv, sys")
+        a("orgs = (\"crassostrea gigas\", \"magallana gigas\")")
+        a("strats = (\"bisulfite-seq\", \"medip-seq\")")
+        a("for row in csv.DictReader(sys.stdin):")
+        a("    run = (row.get(\"Run\") or \"\").strip()")
+        a("    org = (row.get(\"ScientificName\") or \"\").strip().lower()")
+        a("    strat = (row.get(\"LibraryStrategy\") or \"\").strip().lower()")
+        a("    if run[:3] in (\"SRR\", \"ERR\", \"DRR\") and org in orgs and strat in strats:")
+        a("        print(run)")
+        a("'")
         a("}")
+        a("")
+        a("# Download one run into a directory, compress it, and leave a .done marker")
+        a("# so a re-run of this script skips it. Partial output is removed on failure.")
+        a("download_run() {")
+        a('    local run="$1" dir="$2"')
+        a('    if [ -e "${dir}/${run}.done" ]; then echo "  ${run} already downloaded, skipping"; return 0; fi')
+        a('    rm -f "${dir}/${run}"*.fastq "${dir}/${run}"*.fastq.gz')
+        a('    echo "  Downloading ${run}..."')
+        a('    if ! $DL $DL_ARGS --outdir "${dir}" "${run}"; then')
+        a('        echo "  Error: ${DL} failed for ${run}" >&2')
+        a('        rm -f "${dir}/${run}"*.fastq "${dir}/${run}"*.fastq.gz; return 1')
+        a("    fi")
+        a('    if [ "$DL" = "fasterq-dump" ]; then')
+        a('        for f in "${dir}/${run}"*.fastq; do')
+        a('            [ -e "$f" ] || continue')
+        a('            if ! gzip -f "$f"; then echo "  Error: gzip failed for $f" >&2; rm -f "${dir}/${run}"*.fastq "${dir}/${run}"*.fastq.gz; return 1; fi')
+        a("        done")
+        a("    fi")
+        a('    if ! ls "${dir}/${run}"*.fastq.gz >/dev/null 2>&1; then echo "  Error: no FASTQ produced for ${run}" >&2; return 1; fi')
+        a('    touch "${dir}/${run}.done"')
+        a("}")
+        a("")
+        a("FAILED=0")
         a("")
 
         total_size = 0
@@ -596,15 +816,15 @@ class MethylationDataDownloader:
             for bp in info['bioprojects']:
                 a(f'echo "Discovering runs for {bp}..."')
                 a(f'mkdir -p "{dataset_id}/{bp}"')
-                a(f'runs=$(get_runs "{bp}")')
-                a(f'if [ -z "$runs" ]; then echo "  No runs found for {bp}"; else')
+                a(f'if ! runs=$(get_runs "{bp}"); then')
+                a('    FAILED=$((FAILED+1))')
+                a(f'elif [ -z "$runs" ]; then echo "  No matching runs found for {bp}"; else')
+                a(f'    printf "%s\\n" "$runs" > "{dataset_id}/{bp}/runs.txt"')
                 a('    n=0')
                 a('    for run in $runs; do')
                 a('        n=$((n+1))')
                 a('        if [ "$MAX_RUNS" -gt 0 ] && [ "$n" -gt "$MAX_RUNS" ]; then break; fi')
-                a('        echo "  Downloading $run..."')
-                a(f'        $DL $DL_ARGS --outdir "{dataset_id}/{bp}" "$run"')
-                a(f'        [ "$DL" = "fasterq-dump" ] && gzip -f "{dataset_id}/{bp}/$run"*.fastq 2>/dev/null || true')
+                a(f'        download_run "$run" "{dataset_id}/{bp}" || FAILED=$((FAILED+1))')
                 a('    done')
                 a('fi')
                 a("")
@@ -613,6 +833,7 @@ class MethylationDataDownloader:
         a(f'echo "Estimated upper-bound size: ~{total_size} GB"')
         a('find . -name "*.fastq.gz" -type f | wc -l | xargs echo "Total compressed FASTQ files:"')
         a('du -sh */ 2>/dev/null | sort -h || true')
+        a('if [ "$FAILED" -gt 0 ]; then echo "WARNING: $FAILED download(s)/lookup(s) failed; re-run this script to retry them." >&2; exit 1; fi')
 
         script_path.write_text("\n".join(lines) + "\n")
         os.chmod(script_path, 0o755)
@@ -631,7 +852,8 @@ Examples:
   # List all available datasets
   python download_methylation_data.py --list
 
-  # Preview what a dataset would download (no files written)
+  # Preview what a dataset would download (writes only dataset_info.json
+  # and runs.txt under the output directory; no FASTQ files are fetched)
   python download_methylation_data.py --dataset wgbs_ph_ploidy --dry-run
 
   # Download a specific dataset
@@ -655,7 +877,8 @@ NCBI rate limits.
     parser.add_argument('--dataset', type=str,
                         help='Dataset ID to download')
     parser.add_argument('--bioproject', type=str,
-                        help='Specific BioProject to download (optional)')
+                        help='Download only this BioProject of the dataset (optional; '
+                             'must be one of the dataset\'s BioProjects)')
     parser.add_argument('--max-runs', type=int,
                         help='Maximum number of runs to download per BioProject')
     parser.add_argument('--output-dir', type=str, default='./methylation_data',
@@ -669,7 +892,10 @@ NCBI rate limits.
     parser.add_argument('--datasets', nargs='+',
                         help='List of dataset IDs for script generation')
     parser.add_argument('--max-parallel', type=int, default=2,
-                        help='Maximum number of parallel downloads (reserved)')
+                        help='Reserved for future use; downloads currently run one at a time')
+    parser.add_argument('--run-timeout', type=int, default=0,
+                        help='Seconds allowed per run download before it is aborted '
+                             '(0 = no limit, the default)')
     parser.add_argument('--skip-validation', action='store_true',
                         help='Do NOT filter discovered runs by organism/assay '
                              '(unsafe: may download non-oyster or non-methylation data)')
@@ -680,6 +906,7 @@ NCBI rate limits.
         output_dir=args.output_dir,
         max_parallel=args.max_parallel,
         validate=not args.skip_validation,
+        run_timeout=args.run_timeout,
     )
 
     if args.list:

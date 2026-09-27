@@ -7,6 +7,7 @@ This directory contains scripts for downloading and processing the DNA methylati
 - `download_methylation_data.py` - Main script for downloading DNA methylation datasets from NCBI SRA
 - `install_dependencies.sh` - Installation script for required dependencies (SRA Toolkit, etc.)
 - `requirements.txt` - List of dependencies and tools needed
+- `tests/` - Unit and integration tests (`python -m pytest code/tests -q` from the repo root; no network needed)
 
 ## Quick Start
 
@@ -73,4 +74,4 @@ than downloading placeholder data.
 For detailed usage instructions and troubleshooting, see `USAGE.md`.
 
 ## Last Updated
-December 2024
+September 2026

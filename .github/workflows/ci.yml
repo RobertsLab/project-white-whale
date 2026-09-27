@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test tools
+        run: python -m pip install --upgrade pip pytest ruff
+
+      - name: Lint
+        run: ruff check code
+
+      - name: Byte-compile
+        run: python -m py_compile code/download_methylation_data.py
+
+      - name: Shell syntax
+        run: bash -n code/install_dependencies.sh
+
+      - name: Unit and integration tests (no network)
+        run: python -m pytest code/tests -q
