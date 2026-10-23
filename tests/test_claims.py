@@ -18,7 +18,10 @@ from whale.claims import (
 from whale.scope import check_scope
 from whale.validate import validate_status, validate_study
 
-ACC, SID = "PRJNA682817", "ROBERTS2022_PH_PLOIDY_WGBS"
+# Fictional studies: the claim tests seed their repos from the real registry/,
+# so a real study here would break them as soon as it was registered.
+ACC, SID = "PRJNA999901", "TESTER2099_CLAIMS_WGBS"
+PART_ACC, PART_SID = "PRJEB999902", "TESTER2099_PARTS_WGBS"
 
 
 # --- naming -------------------------------------------------------------------
@@ -26,9 +29,9 @@ ACC, SID = "PRJNA682817", "ROBERTS2022_PH_PLOIDY_WGBS"
 def test_branch_round_trip():
     assert branch_name(ACC, SID) == f"study/{ACC}/{SID}"
     assert parse_branch(branch_name(ACC, SID)) == (ACC, SID, None)
-    b = branch_name("PRJEB60400", "POMS2023_ADAPTATION_WGBS", "gill")
-    assert b == "study/PRJEB60400/POMS2023_ADAPTATION_WGBS.part-gill"
-    assert parse_branch(b) == ("PRJEB60400", "POMS2023_ADAPTATION_WGBS", "gill")
+    b = branch_name(PART_ACC, PART_SID, "gill")
+    assert b == f"study/{PART_ACC}/{PART_SID}.part-gill"
+    assert parse_branch(b) == (PART_ACC, PART_SID, "gill")
     assert parse_branch("main") is None
 
 
@@ -139,7 +142,7 @@ def test_unknown_profile(claim_env):
 
 def test_part_claim_after_registration(claim_env, filled_study):
     clone = claim_env["clone"]
-    acc, sid = "PRJEB60400", "POMS2023_ADAPTATION_WGBS"
+    acc, sid = PART_ACC, PART_SID
     with pytest.raises(ClaimError, match="registered on main"):
         start_study(acc, sid, repo=clone, profile="klone", part="gill",
                     worktree_dir=claim_env["tmp"] / "wt-gill", registered_by="T", open_pr=False)
