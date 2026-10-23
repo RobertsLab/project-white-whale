@@ -290,20 +290,42 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
 @click.option("--ignore-space", is_flag=True, help="Start even if free space looks too small.")
 @click.option("--mark-staged", is_flag=True,
               help="When every file is verified, set the study's stage to fastq_staged (commits and pushes).")
-def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space, mark_staged):
-    """Download a study's FASTQ from its manifest, resuming and MD5-verifying every file."""
+@click.option("--source", type=click.Choice(["auto", "mirror", "ena"]), default="auto", show_default=True,
+              help="auto: the gannet mirror where it has a file, ENA otherwise; mirror: refuse unless every "
+                   "file is mirrored; ena: ENA only.")
+@click.option("--accession", default=None,
+              help="BioProject whose mirror to use (default: the study branch's, else ena_provenance.json's).")
+@click.option("--mirror-url", default=None,
+              help="Mirror folder URL (default: data_host.yaml url_base + /raw/<ACCESSION>).")
+def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space, mark_staged,
+                    source, accession, mirror_url):
+    """Download a study's FASTQ from its manifest, resuming and MD5-verifying every file.
+
+    Files already on the gannet mirror are copied from there (checked against the
+    mirror ledger's MD5); the rest, and any mirror copy that fails, come from ENA.
+    """
+    import json
     import os
 
     from whale.claims import ClaimError as _CE
     from whale.claims import current_branch
-    from whale.fastq import FastqError, fetch_all, plan, read_manifest, record_staged
+    from whale.fastq import (
+        FastqError,
+        apply_mirror,
+        fetch_all,
+        load_ledger,
+        plan,
+        read_manifest,
+        record_staged,
+    )
+    from whale.mirror import LEDGER_NAME, load_data_host
 
     repo = _repo()
+    try:
+        parsed = parse_branch(current_branch(repo))
+    except _CE:
+        parsed = None
     if study_id is None:
-        try:
-            parsed = parse_branch(current_branch(repo))
-        except _CE:
-            parsed = None
         if parsed is None:
             raise click.UsageError("not on a study branch; pass --study.")
         study_id = parsed[1]
@@ -318,6 +340,38 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
         files = read_manifest(manifest_path, list(runs) or None)
     except FastqError as exc:
         raise click.ClickException(str(exc)) from None
+
+    if source != "ena":
+        if accession is None and parsed is not None and parsed[1] == study_id:
+            accession = parsed[0]
+        prov = manifest_path.parent / "ena_provenance.json"
+        if accession is None and prov.exists():
+            accession = json.loads(prov.read_text()).get("bioproject")
+        if mirror_url is None and accession:
+            try:
+                base = load_data_host(repo).get("url_base")
+            except FileNotFoundError:
+                base = None
+            mirror_url = f"{base.rstrip('/')}/raw/{accession}" if base else None
+        if mirror_url is None:
+            if source == "mirror":
+                raise click.ClickException("no mirror to use: pass --accession or --mirror-url.")
+            click.echo("No mirror location known (no accession); using ENA.")
+        else:
+            try:
+                ledger = load_ledger(f"{mirror_url}/{LEDGER_NAME}")
+            except (OSError, ValueError) as exc:
+                if source == "mirror":
+                    raise click.ClickException(f"could not read the mirror ledger: {exc}") from None
+                click.echo(click.style(f"Could not read the mirror ledger ({exc}); using ENA.", fg="yellow"))
+                ledger = None
+            files, counts = apply_mirror(files, ledger, mirror_url)
+            click.echo(f"Mirror {mirror_url}: {counts['mirror']} file(s) from the mirror, "
+                       f"{counts['not_mirrored']} not mirrored, {counts['stale']} stale (ENA has changed them)")
+            if source == "mirror" and counts["mirror"] < len(files):
+                raise click.ClickException(f"{len(files) - counts['mirror']} file(s) are not usable from the "
+                                           "mirror; use --source auto to take them from ENA.")
+
     p = plan(files, target)
     gb = 1e9
     click.echo(f"{study_id}: {p['files']} files, {p['total_bytes'] / gb:.1f} GB -> {target}")

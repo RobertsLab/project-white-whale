@@ -68,22 +68,25 @@
    ```
 
    It reads `data/studies/<STUDY_ID>/fastq_manifest.tsv` and writes into
-   `$WHALE_RAW/<STUDY_ID>/`. Each file downloads to `<name>.part`, resumes
-   from where it stopped (re-run the same command after an interruption),
-   and is moved into place only when its MD5 matches ENA's; a mismatch
-   deletes it. Verified files get a `<name>.md5` sidecar so re-runs skip them,
-   and are listed in `data/studies/<STUDY_ID>/fastq_staged.tsv` (committed,
-   with the machine and date). `--jobs` sets parallel downloads (default 2);
-   `--run` limits it to some runs. It refuses to start if free space is short,
-   and refuses a second downloader into the same directory. On klone, run it
-   as a job, not on a login node.
+   `$WHALE_RAW/<STUDY_ID>/`. Files already mirrored on gannet
+   (`whale mirror-fastq`, [FASTQ mirror](fastq_mirror.md)) are copied from
+   there and checked against the mirror ledger's MD5; the rest come from ENA
+   and are checked against ENA's. (Copies converted from NCBI's `.sra` hold
+   the same reads as ENA's files but different bytes, so the two MD5s differ.)
+   A mirror copy that fails falls back to ENA. Each file downloads to
+   `<name>.part` and resumes from where it stopped (re-run the same command
+   after an interruption); a mismatch deletes it. Verified files get a
+   `<name>.md5` sidecar so re-runs skip them, and are listed in
+   `data/studies/<STUDY_ID>/fastq_staged.tsv` with their source, ENA's MD5,
+   the machine and the date (committed). `--jobs` sets parallel downloads
+   (default 2), `--run` limits it to some runs, `--source ena|mirror` forces
+   one source. It refuses to start if free space is short, and refuses a
+   second downloader into the same directory. On klone, run it as a job, not
+   on a login node.
 
-   If the accession is already mirrored on gannet (`whale mirror-fastq
-   --plan`), copy it from `raw/<ACCESSION>/` there instead, which is much
-   faster than ENA, and check MD5s against that folder's `mirror_manifest.tsv`.
-   Do not point `fetch-fastq` at those copies: it checks ENA's MD5s, and files
-   converted from NCBI's `.sra` hold the same reads but do not match them
-   ([FASTQ mirror](fastq_mirror.md)). Then `whale set-status --stage fastq_staged`.
+   If a study is not mirrored yet, mirror it from raven first
+   (`whale mirror-fastq --accession <PRJ…>`): ENA is slow from most machines
+   ([speeds](compute_profiles.md#where-fastq-comes-from-and-how-fast)).
 7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML and
    run the workflow with the profile you claimed. Record each stage as it
    finishes.

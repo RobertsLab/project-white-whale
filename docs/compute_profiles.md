@@ -25,19 +25,31 @@ carries those links into each new worktree. Avoid exFAT and paths with spaces.
 whale fetch-reference     # into $WHALE_REFERENCE/GCF_963853765.1 (docs/reference_bundle.md)
 ```
 
-## Download speed from ENA
+## Where FASTQ comes from, and how fast
 
-`whale fetch-fastq` speed depends on the machine's network path to EBI, not
-on the tool. Measured 2026-10-23, one HTTPS connection for 30 s:
+Speed depends on the path between the machine and the source, not on the
+tools. Measured 2026-10-23 (MB/s):
 
-| Machine | Per connection | 36 GB (Wang 2014) at `--jobs 4`, if it scales |
+| Source → machine | Speed | Measured by |
 |---|---|---|
-| lab Mac (Code session host) | ~0.09 MB/s | days |
-| raven | ~0.96 MB/s | ~3 h |
-| klone | ~12 MB/s aggregate through the proxy (AREE, Oct 2026) | ~1 h |
+| ENA HTTPS → lab Mac | ~0.09 per connection | `curl`, 30 s |
+| ENA HTTPS → raven | ~0.04–1 per connection | `curl`, 30 s; [FASTQ mirror](fastq_mirror.md) |
+| NCBI's AWS bucket (`sra-pub-run-odp`, `.sra`) → raven | ~25 | [FASTQ mirror](fastq_mirror.md) |
+| gannet mirror → lab Mac | ~2–3 total, 4 files at once | `whale fetch-fastq`, 530 MB in 4 min |
+| ENA → klone | ~12 aggregate through the proxy | AREE, October 2026 |
 
-So stage FASTQ on raven or klone even for a study that runs on a desktop,
-then copy it across, or run the study there.
+NCBI's bucket is the fast source, but its runs arrive as `.sra` and must be
+converted (`fasterq-dump`). So the lab's FASTQ reaches studies in two steps:
+
+1. `whale mirror-fastq` on raven pulls each backlog study from NCBI's bucket
+   (ENA as fallback), converts it, verifies it and puts it on gannet, ahead
+   of any claim ([FASTQ mirror](fastq_mirror.md)).
+2. `whale fetch-fastq` on the machine that runs the study copies the files
+   from gannet, and takes from ENA only what the mirror does not have yet.
+
+A study that is not mirrored yet is still faster to mirror on raven first
+than to fetch from ENA on a desktop: Wang 2014's 36 GB is days from ENA on
+the Mac.
 
 ## desktop
 

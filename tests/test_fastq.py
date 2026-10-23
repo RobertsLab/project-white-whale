@@ -32,11 +32,13 @@ PAYLOAD = {f"SRR1_{m}.fastq.gz": bytes(range(256)) * (40 + m) for m in (1, 2)}
 class _Handler(http.server.BaseHTTPRequestHandler):
     ignore_range = False
     requests: list[str] = []
+    routes: dict[str, bytes] = {}   # full path -> body, checked before PAYLOAD by file name
 
     def do_GET(self):  # noqa: N802
         name = self.path.rsplit("/", 1)[-1]
-        type(self).requests.append(f"{name} {self.headers.get('Range') or ''}".strip())
-        data = PAYLOAD.get(name)
+        type(self).requests.append(f"{self.path if self.path in self.routes else name} "
+                                   f"{self.headers.get('Range') or ''}".strip())
+        data = self.routes.get(self.path, PAYLOAD.get(name) if not self.path.startswith("/raw/") else None)
         if data is None:
             self.send_error(404)
             return
@@ -61,6 +63,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 def server():
     _Handler.requests = []
     _Handler.ignore_range = False
+    _Handler.routes = {}
     httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
@@ -93,6 +96,7 @@ def test_resume_from_partial(server, tmp_path):
     base, handler = server
     f = _files(base)[0]
     (tmp_path / f"{f.file}.part").write_bytes(PAYLOAD[f.file][:1000])
+    (tmp_path / f"{f.file}.part.src").write_text(f.https_url + "\n")
     assert plan([f], tmp_path)["remaining_bytes"] == f.bytes - 1000
     assert fetch_one(f, tmp_path) == "downloaded"
     assert handler.requests == [f"{f.file} bytes=1000-"]
@@ -104,6 +108,7 @@ def test_server_ignoring_range_restarts_cleanly(server, tmp_path):
     handler.ignore_range = True
     f = _files(base)[0]
     (tmp_path / f"{f.file}.part").write_bytes(PAYLOAD[f.file][:1000])
+    (tmp_path / f"{f.file}.part.src").write_text(f.https_url + "\n")
     assert fetch_one(f, tmp_path) == "downloaded"
     assert (tmp_path / f.file).read_bytes() == PAYLOAD[f.file]
 
