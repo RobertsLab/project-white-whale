@@ -1,0 +1,14 @@
+version: "0.1.0"
+terms:
+  gill: {label: Gill (ctenidia)}
+  mantle: {label: Mantle}
+  gonad: {label: Gonad}
+  male_gamete: {label: Sperm}
+  female_gamete: {label: Oocyte / egg}
+  digestive_gland: {label: Digestive gland}
+  adductor_muscle: {label: Adductor muscle}
+  hemocyte: {label: Hemocytes / hemolymph}
+  labial_palp: {label: Labial palp}
+  whole_body: {label: Whole soft tissue or whole organism}
+  mixed: {label: Several tissues pooled in one library}
+  other: {label: Other (describe in the study YAML)}

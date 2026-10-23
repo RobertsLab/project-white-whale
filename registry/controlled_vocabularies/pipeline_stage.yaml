@@ -1,0 +1,15 @@
+# Where a claimed study is. Recorded in data/studies/<STUDY_ID>/status.yaml on
+# the study branch and shown by `whale claims` and the dashboard. Stages are
+# ordered; `excluded` and `released` end a claim.
+version: "0.1.0"
+terms:
+  claimed: {order: 0, label: Branch pushed; nothing downloaded}
+  registered: {order: 1, label: Study YAML filled in and valid; sample sheet and FASTQ manifest generated}
+  fastq_staged: {order: 2, label: FASTQ downloaded to this machine and MD5-checked against the manifest}
+  aligned: {order: 3, label: Bismark alignment and deduplication finished for every library}
+  called: {order: 4, label: Per-sample CpG calls written}
+  qc_passed: {order: 5, label: Every library through the QC gate (or excluded with a reason)}
+  summarized: {order: 6, label: Per-sample summaries and manifests committed; methylomes on the data host}
+  merged: {order: 7, label: Study PR merged to main}
+  excluded: {order: 98, label: Study will not be processed; reason in notes}
+  released: {order: 99, label: Claim given up; branch deleted so another machine can take it}

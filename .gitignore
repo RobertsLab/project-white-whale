@@ -1,10 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# R / RStudio
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 
-# Python/test caches
-__pycache__/
-.pytest_cache/
-.ruff_cache/
-*.pyc
+# Nextflow
+.nextflow/
+.nextflow.log*
+work/
+results/
+
+# Machine-local data: symlinks to this machine's drives, never committed.
+# See docs/compute_profiles.md.
+data/raw
+data/methylomes
+data/reference/GCF_*/
+
+# Generated indexes (rebuild with `whale build-registry`)
+registry/study_registry.csv
+
+# Quarto
+docs/_site/
+.quarto/
+
+.DS_Store
+.claude/

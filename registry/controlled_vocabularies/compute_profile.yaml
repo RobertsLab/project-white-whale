@@ -1,0 +1,16 @@
+# Machines a study can be claimed on. Each id is a Nextflow profile in
+# config/base.config. See docs/compute_profiles.md.
+version: "0.1.0"
+terms:
+  desktop:
+    label: Lab desktop or workstation
+    executor: local
+    suited_for: Studies up to ~150 GB of FASTQ; QC, summaries and analysis notebooks
+  raven:
+    label: Roberts Lab server (raven)
+    executor: local
+    suited_for: Studies of ~150-500 GB without chunked alignment
+  klone:
+    label: UW Hyak (klone), checkpoint partition
+    executor: slurm
+    suited_for: The deep studies; chunked alignment on preemptible nodes

@@ -1,0 +1,11 @@
+version: "0.1.0"
+terms:
+  gamete: {label: Gamete}
+  embryo: {label: Embryo (pre-trochophore)}
+  trochophore: {label: Trochophore larva}
+  d_larva: {label: D-stage / veliger larva}
+  pediveliger: {label: Pediveliger larva}
+  spat: {label: Spat / post-settlement juvenile}
+  juvenile: {label: Juvenile}
+  adult: {label: Adult}
+  mixed: {label: Several stages}

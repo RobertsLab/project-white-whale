@@ -1,0 +1,10 @@
+# How a study's paired RNA-seq relates to its methylation libraries. Goal 2
+# analyses that pair samples one to one need `same_animals`; group-level
+# analyses can use `same_design`.
+version: "0.1.0"
+terms:
+  same_animals: {label: RNA-seq from the same animals (or the same pools) as the methylation libraries}
+  same_design: {label: Same experiment and groups, different animals}
+  related: {label: Related experiment by the same authors; groups do not match one to one}
+  none: {label: No RNA-seq}
+  unknown: {label: Not yet checked}

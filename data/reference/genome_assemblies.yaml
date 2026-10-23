@@ -1,0 +1,23 @@
+# Reference assemblies a study may be processed against.
+#
+# Every sample in White Whale is mapped to the `default: true` assembly, so
+# coordinates and gene IDs are comparable by construction (PLAN.md §2). Other
+# entries exist only so a study's *original* assembly can be recorded.
+# Accession details copied from AREE's data/reference/genome_assemblies.yaml
+# (verified there against the NCBI Datasets API on 2026-08-28).
+version: "0.1.0"
+assemblies:
+  - assembly_id: "xbMagGiga1.1"
+    ncbi_assembly_accession: "GCF_963853765.1"
+    genbank_accession: "GCA_963853765.1"
+    species: "Magallana gigas"
+    ncbi_taxid: 29159
+    annotation_release: "GCF_963853765.1-RS_2024_06"
+    default: true
+  - assembly_id: "cgigas_uk_roslin_v1"
+    ncbi_assembly_accession: "GCF_902806645.1"
+    genbank_accession: "GCA_902806645.1"
+    species: "Magallana gigas"
+    ncbi_taxid: 29159
+    annotation_release: null
+    default: false
