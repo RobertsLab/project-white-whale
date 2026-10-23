@@ -1,0 +1,14 @@
+# Where per-sample methylomes and other large outputs are kept (PLAN.md §5).
+# They are never committed; each study's methylome_manifest.tsv lists every
+# file's URL, SHA-256 and size under `url_base`.
+#
+# The share path on gannet is chosen when the first methylome is uploaded;
+# until then `url_base` and `upload_target` stay null and nothing should be
+# uploaded. gannet's web server answered HTTPS from raven and from a lab Mac
+# on 2026-10-23.
+version: "0.1.0"
+host: gannet
+hostname: gannet.fish.washington.edu
+url_base: null          # e.g. https://gannet.fish.washington.edu/<share>/whale
+upload_target: null     # rsync destination matching url_base
+layout: "methylomes/<STUDY_ID>/<sample_id>/"

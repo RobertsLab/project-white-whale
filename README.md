@@ -45,7 +45,7 @@ whale start-study --accession PRJNA682817 --study-id ROBERTS2022_PH_PLOIDY_WGBS 
 cd ../white-whale-ROBERTS2022_PH_PLOIDY_WGBS
 # ...fill the study YAML, generate the sample sheet, stage FASTQ...
 whale set-status --stage fastq_staged --note "105 GB, MD5 ok"
-nextflow run workflows/methylation -c config/ROBERTS2022_PH_PLOIDY_WGBS.config -profile raven,docker
+nextflow run workflows/methylation -c config/ROBERTS2022_PH_PLOIDY_WGBS.config -profile raven
 whale set-status --stage called
 whale claims                        # every claimed study, its machine and stage
 ```

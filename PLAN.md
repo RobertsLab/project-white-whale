@@ -262,7 +262,7 @@ downstream, run from the harmonized calls, so it can be rerun with a shared
 model for every study (§6.3).
 
 Per-sample outputs (~0.5–2 GB each) go to `WHALE_METHYLOMES` on the machine
-that ran them, then are synced to the lab data host (gannet / owl) under
+that ran them, then are synced to the lab data host (gannet, `data/data_host.yaml`) under
 `whale/methylomes/<STUDY_ID>/<sample>/`; `methylome_manifest.tsv` (committed)
 holds the URL + SHA-256 + size of every file. `whale fetch-methylomes
 --study X` restores them on any machine.
@@ -400,18 +400,23 @@ Phases 4–6 overlap by design: analyses are re-rendered as each study merges.
 
 ---
 
-## 10. Decisions to make before Phase 0
+## 10. Decisions
 
-1. **Reuse of AREE code: vendor or depend?** Vendoring the five Nextflow
-   modules and the ENA sample-sheet code is simplest and keeps this repo
-   self-contained; depending on AREE as a git submodule keeps fixes in one
-   place. Recommendation: vendor, with a `VENDORED_FROM_AREE.md` noting the
-   commit, and revisit if both projects keep changing the same modules.
-2. **Data host for per-sample methylomes.** gannet / owl with HTTPS URLs in
-   the manifests is the lab's established pattern; confirm space for ~1 TB of
-   calls + bigWigs.
-3. **Raven specifics** (cores, RAM, scratch path, container engine) to size
-   the `raven` profile.
+Decided 2026-10-23:
+
+1. **Reuse of AREE code: vendor.** AREE code is copied in and adapted, with
+   the source file and AREE commit recorded in
+   [VENDORED_FROM_AREE.md](VENDORED_FROM_AREE.md). Revisit if both projects
+   keep changing the same modules.
+2. **Data host for per-sample methylomes: gannet**, with HTTPS URLs in the
+   manifests. The share path is set in `data/data_host.yaml` when the first
+   methylome is uploaded; space for ~1 TB still to confirm.
+3. **Raven** was inspected over SSH and the `raven` profile sized from it:
+   24 cores / 48 threads, 247 GB RAM, Singularity CE 3.10 as the container
+   engine, NVMe RAID0 work directory. See docs/compute_profiles.md.
+
+Open:
+
 4. **Study granularity for PRJEB60400** (246 runs): one study claimed in
    parts, or split by sub-experiment once its sample metadata is read.
 5. **Name.** The repository stays `project-white-whale`; the resource and CLI
