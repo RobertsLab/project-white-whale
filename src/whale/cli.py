@@ -278,6 +278,85 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
     click.echo(f"\nWrote {target}/reference_provenance.json")
 
 
+@main.command("fetch-fastq")
+@click.option("--study", "study_id", default=None, help="Default: the study of the current study branch.")
+@click.option("--manifest", default=None, type=click.Path(exists=True, dir_okay=False),
+              help="Default: data/studies/<study>/fastq_manifest.tsv.")
+@click.option("--dest", default=None, type=click.Path(file_okay=False),
+              help="Default: $WHALE_RAW/<study>, else data/raw/<study>.")
+@click.option("--run", "runs", multiple=True, help="Only this run accession (repeatable).")
+@click.option("--jobs", default=2, show_default=True, help="Files downloaded at once.")
+@click.option("--dry-run", is_flag=True, help="Report what is staged and what is left; download nothing.")
+@click.option("--ignore-space", is_flag=True, help="Start even if free space looks too small.")
+@click.option("--mark-staged", is_flag=True,
+              help="When every file is verified, set the study's stage to fastq_staged (commits and pushes).")
+def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space, mark_staged):
+    """Download a study's FASTQ from its manifest, resuming and MD5-verifying every file."""
+    import os
+
+    from whale.claims import ClaimError as _CE
+    from whale.claims import current_branch
+    from whale.fastq import FastqError, fetch_all, plan, read_manifest, record_staged
+
+    repo = _repo()
+    if study_id is None:
+        try:
+            parsed = parse_branch(current_branch(repo))
+        except _CE:
+            parsed = None
+        if parsed is None:
+            raise click.UsageError("not on a study branch; pass --study.")
+        study_id = parsed[1]
+    study_dir = repo / "data" / "studies" / study_id
+    manifest_path = Path(manifest) if manifest else study_dir / "fastq_manifest.tsv"
+    if not manifest_path.exists():
+        raise click.ClickException(f"{manifest_path} is missing; run whale fetch-samplesheet first.")
+    raw = os.environ.get("WHALE_RAW")
+    target = Path(dest) if dest else (Path(raw) if raw else repo / "data" / "raw") / study_id
+
+    try:
+        files = read_manifest(manifest_path, list(runs) or None)
+    except FastqError as exc:
+        raise click.ClickException(str(exc)) from None
+    p = plan(files, target)
+    gb = 1e9
+    click.echo(f"{study_id}: {p['files']} files, {p['total_bytes'] / gb:.1f} GB -> {target}")
+    click.echo(f"  verified already : {p['staged']}")
+    click.echo(f"  to download      : {len(p['todo'])} ({p['remaining_bytes'] / gb:.1f} GB left)")
+    click.echo(f"  free space       : {p['free_bytes'] / gb:.1f} GB")
+    short = p["remaining_bytes"] * 1.02 > p["free_bytes"]
+    if short:
+        click.echo(click.style("  Not enough free space for what is left.", fg="red"))
+    if dry_run:
+        return
+    if short and not ignore_space:
+        raise click.ClickException("not enough free space; free some or pass --ignore-space.")
+
+    try:
+        result = fetch_all(files, target, jobs=jobs, log=click.echo)
+    except FastqError as exc:
+        raise click.ClickException(str(exc)) from None
+    # Beside the manifest, so a --manifest outside the repo never writes into it.
+    record = manifest_path.parent / "fastq_staged.tsv"
+    record_staged(files, target, record)
+    click.echo(f"\n{result['downloaded']} downloaded, {result['skipped']} already verified, "
+               f"{len(result['failed'])} failed. Recorded in {record}.")
+    if result["failed"]:
+        click.echo(click.style("Re-run the same command to resume the failed files.", fg="yellow"))
+        sys.exit(1)
+    if mark_staged:
+        try:
+            total = sum(f.bytes for f in files)
+            # Commit the verification record with the stage change.
+            if record.resolve().is_relative_to(repo.resolve()):
+                subprocess.run(["git", "add", str(record.resolve().relative_to(repo.resolve()))],
+                               cwd=repo, check=True)
+            new = set_status("fastq_staged", repo=repo, note=f"{len(files)} files, {total / gb:.1f} GB, MD5 verified")
+        except ClaimError as exc:
+            raise click.ClickException(f"downloads verified, but the stage was not set: {exc}") from None
+        click.echo(f"Stage: {new['stage']} on {new['machine']}")
+
+
 # --- claims ------------------------------------------------------------------
 
 @main.command("start-study")

@@ -25,6 +25,20 @@ carries those links into each new worktree. Avoid exFAT and paths with spaces.
 whale fetch-reference     # into $WHALE_REFERENCE/GCF_963853765.1 (docs/reference_bundle.md)
 ```
 
+## Download speed from ENA
+
+`whale fetch-fastq` speed depends on the machine's network path to EBI, not
+on the tool. Measured 2026-10-23, one HTTPS connection for 30 s:
+
+| Machine | Per connection | 36 GB (Wang 2014) at `--jobs 4`, if it scales |
+|---|---|---|
+| lab Mac (Code session host) | ~0.09 MB/s | days |
+| raven | ~0.96 MB/s | ~3 h |
+| klone | ~12 MB/s aggregate through the proxy (AREE, Oct 2026) | ~1 h |
+
+So stage FASTQ on raven or klone even for a study that runs on a desktop,
+then copy it across, or run the study there.
+
 ## desktop
 
 Lab Macs and workstations: the local executor, one Bismark alignment at a

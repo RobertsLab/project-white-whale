@@ -60,8 +60,23 @@
 
    With the YAML valid and these three files committed,
    `whale set-status --stage registered`.
-6. **Stage FASTQ** under `$WHALE_RAW/<STUDY_ID>/`, check MD5s against the
-   manifest, `whale set-status --stage fastq_staged`.
+6. **Stage FASTQ** with
+
+   ```bash
+   whale fetch-fastq --dry-run        # what is verified already, what is left, free space
+   whale fetch-fastq --mark-staged    # download, verify, record, and move to fastq_staged
+   ```
+
+   It reads `data/studies/<STUDY_ID>/fastq_manifest.tsv` and writes into
+   `$WHALE_RAW/<STUDY_ID>/`. Each file downloads to `<name>.part`, resumes
+   from where it stopped (re-run the same command after an interruption),
+   and is moved into place only when its MD5 matches ENA's; a mismatch
+   deletes it. Verified files get a `<name>.md5` sidecar so re-runs skip them,
+   and are listed in `data/studies/<STUDY_ID>/fastq_staged.tsv` (committed,
+   with the machine and date). `--jobs` sets parallel downloads (default 2);
+   `--run` limits it to some runs. It refuses to start if free space is short,
+   and refuses a second downloader into the same directory. On klone, run it
+   as a job, not on a login node.
 7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML and
    run the workflow with the profile you claimed. Record each stage as it
    finishes.
