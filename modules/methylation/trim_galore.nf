@@ -5,7 +5,7 @@ process TRIM_GALORE {
     tag "${sample_id}"
     label 'process_medium'
     container 'quay.io/biocontainers/trim-galore:0.6.10--hdfd78af_0'
-    publishDir "${params.outdir}/${params.study_id}/qc", mode: params.publish_mode, pattern: "*report.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*report.txt"
 
     input:
     tuple val(sample_id), path(reads)

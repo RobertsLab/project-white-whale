@@ -34,10 +34,11 @@ import hashlib
 import json
 import re
 import urllib.parse
-import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import date
 from pathlib import Path
+
+from whale.net import get_text
 
 ENA_PORTAL = "https://www.ebi.ac.uk/ena/portal/api/filereport"
 ENA_XML = "https://www.ebi.ac.uk/ena/browser/api/xml"
@@ -71,8 +72,7 @@ class ENAError(RuntimeError):
 
 
 def _get(url: str) -> str:
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as fh:  # noqa: S310 - fixed EBI host
-        return fh.read().decode("utf-8")
+    return get_text(url, timeout=TIMEOUT)
 
 
 def sha256_file(path: Path) -> str:

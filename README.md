@@ -49,7 +49,8 @@ Docker or Apptainer.
 Every public study is one entry in [`registry/backlog.tsv`](registry/backlog.tsv).
 A machine **checks a study out** by claiming it: `whale start-study` creates a
 branch and worktree for the study and pushes the branch. The push is the claim,
-so two machines cannot take the same study. Progress is recorded on the branch
+so two machines cannot take the same study (a race under two different branch
+names is caught right after the push and by CI). Progress is recorded on the branch
 and every machine can see it.
 
 ```bash

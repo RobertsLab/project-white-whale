@@ -303,7 +303,9 @@ def download(url: str, dest: Path, *, expected_bytes: int | None = None,
     """Fetch url to dest via dest.part, resuming a partial file; return the MD5 of what was written.
 
     Network errors are retried with back-off, each time resuming where the
-    partial file ends. A server that ignores the Range header restarts the file.
+    partial file ends, and so is a response that ends early without an error
+    (when the size is known). A server that ignores the Range header restarts
+    the file.
     """
     part = dest.with_name(dest.name + ".part")
     if part.exists() and expected_bytes is not None and part.stat().st_size > expected_bytes:
@@ -328,8 +330,12 @@ def download(url: str, dest: Path, *, expected_bytes: int | None = None,
                     for chunk in iter(lambda: resp.read(CHUNK), b""):
                         out.write(chunk)
                         h.update(chunk)
+                        have += len(chunk)
                         if throttle:
                             throttle.take(len(chunk))
+            if expected_bytes is not None and have < expected_bytes:
+                # Retried below like a reset, resuming from here rather than from zero.
+                raise ConnectionError(f"response ended at {have:,} of {expected_bytes:,} bytes")
             break
         except (urllib.error.URLError, HTTPException, OSError) as exc:
             if isinstance(exc, urllib.error.HTTPError) and exc.code in (403, 404, 410):

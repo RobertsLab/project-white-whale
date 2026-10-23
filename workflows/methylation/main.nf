@@ -32,10 +32,10 @@ include { MANIFEST }                      from '../../modules/methylation/manife
 // Mirrors registry/controlled_vocabularies/assay_chemistry.yaml (base-resolution terms).
 def chemistries() {
     return [
-        wgbs : [deduplicate: true,  trim: ''],
-        emseq: [deduplicate: true,  trim: ''],
-        pbat : [deduplicate: true,  trim: ''],
-        rrbs : [deduplicate: false, trim: '--rrbs'],
+        wgbs : [deduplicate: true,  trim: '',       align: ''],
+        emseq: [deduplicate: true,  trim: '',       align: ''],
+        pbat : [deduplicate: true,  trim: '',       align: '--pbat'],
+        rrbs : [deduplicate: false, trim: '--rrbs', align: ''],
     ]
 }
 
@@ -70,7 +70,8 @@ workflow {
     FASTQC(reads_ch)
     TRIM_GALORE(reads_ch, [chem.trim, params.trim_args].findAll { it }.join(' '))
     BISMARK_GENOME_PREPARATION(genome_fasta)
-    BISMARK_ALIGN(TRIM_GALORE.out.reads, BISMARK_GENOME_PREPARATION.out.genome_dir.first())
+    BISMARK_ALIGN(TRIM_GALORE.out.reads, BISMARK_GENOME_PREPARATION.out.genome_dir.first(),
+                  [chem.align, params.bismark_align_args].findAll { it }.join(' '))
 
     bam_ch = chem.deduplicate
         ? BISMARK_DEDUPLICATE(BISMARK_ALIGN.out.bam).bam
@@ -85,6 +86,7 @@ workflow {
     def run_params = groovy.json.JsonOutput.toJson([
         study_id: params.study_id, part: params.part, chemistry: params.chemistry,
         genome_assembly: params.genome_assembly, bismark_align_args: params.bismark_align_args,
+        chemistry_align_args: chem.align,
         extractor_args: params.extractor_args, trim_args: params.trim_args,
         deduplicate: chem.deduplicate, profile: workflow.profile,
         nextflow_version: nextflow.version.toString(), run_name: workflow.runName,
