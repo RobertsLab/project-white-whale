@@ -49,11 +49,11 @@ exons, 249,701 introns and 27,908 intergenic intervals.
 ## The Bismark index
 
 The workflow builds the Bismark index the first time it runs on a machine and
-keeps it in the bundle as `bismark_genome/` (with its own copy of
-`genomic.fna`); every later run, for any study, reuses it rather than spending
-hours rebuilding it. Set `WHALE_BISMARK_INDEX` to keep it somewhere else (it
-then lives in `$WHALE_BISMARK_INDEX/bismark_genome/`). On klone it must be on
-storage the compute nodes see, like the bundle itself.
+keeps it in the bundle as `bismark_genome/` (with its own copy of the genome,
+as `genome.fa`, the name Bismark accepts); every later run, for any study,
+reuses it rather than spending hours rebuilding it. Set `WHALE_BISMARK_INDEX`
+to keep it somewhere else (it then lives in `$WHALE_BISMARK_INDEX/bismark_genome/`).
+On klone it must be on storage the compute nodes see, like the bundle itself.
 
 `bismark_genome/genome.sha256` records which genome was indexed. If the
 bundle's `genomic.fna` no longer matches it (the bundle was fetched again for
