@@ -1,0 +1,17 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: PESTO2022_METHYLSEQ_WGBS
+accession: PRJEB58545
+part: null
+stage: claimed
+profile: klone
+machine: klone
+claimed_by: STEVEN
+claimed_on: '2026-10-23'
+nextflow_run: null
+notes: null
+history:
+- stage: claimed
+  date: '2026-10-23'
+  machine: klone
+  note: null

@@ -1,0 +1,66 @@
+{
+  "study_id": "PESTO2022_METHYLSEQ_WGBS",
+  "bioproject": "PRJEB58545",
+  "date_generated": "2026-10-23",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB58545&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "sample_title"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 48
+  },
+  "n_runs": 48,
+  "n_libraries": 48,
+  "n_biosamples": 48,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "Illumina NovaSeq 6000"
+  ],
+  "group_sizes_runs": {
+    "Gastrula_DNA_F0_E": 6,
+    "Gastrula_DNA_F0_T": 6,
+    "Gastrula_DNA_F1_EE": 3,
+    "Gastrula_DNA_F1_ET": 3,
+    "Gastrula_DNA_F1_TE": 3,
+    "Gastrula_DNA_F1_TT": 3,
+    "Metamorphosis_DNA_F0_E": 6,
+    "Metamorphosis_DNA_F0_T": 6,
+    "Metamorphosis_DNA_F1_EE": 3,
+    "Metamorphosis_DNA_F1_ET": 3,
+    "Metamorphosis_DNA_F1_TE": 3,
+    "Metamorphosis_DNA_F1_TT": 3
+  },
+  "group_sizes_libraries": {
+    "Gastrula_DNA_F0_E": 6,
+    "Gastrula_DNA_F0_T": 6,
+    "Gastrula_DNA_F1_EE": 3,
+    "Gastrula_DNA_F1_ET": 3,
+    "Gastrula_DNA_F1_TE": 3,
+    "Gastrula_DNA_F1_TT": 3,
+    "Metamorphosis_DNA_F0_E": 6,
+    "Metamorphosis_DNA_F0_T": 6,
+    "Metamorphosis_DNA_F1_EE": 3,
+    "Metamorphosis_DNA_F1_ET": 3,
+    "Metamorphosis_DNA_F1_TE": 3,
+    "Metamorphosis_DNA_F1_TT": 3
+  },
+  "min_group_libraries": 3,
+  "total_fastq_bytes": 598731508856,
+  "fastq_sources": {
+    "fastq_ftp": 48,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/PESTO2022_METHYLSEQ_WGBS/samplesheet.tsv": "169cb282d0719e6907607ab58a5549e9b2bb12101a3081d6b73702c84916e45a",
+    "data/studies/PESTO2022_METHYLSEQ_WGBS/fastq_manifest.tsv": "caed46758886df7e1077e13f76ca72c6fbeb167af0f0d158f89541d950c9c9c8"
+  }
+}
