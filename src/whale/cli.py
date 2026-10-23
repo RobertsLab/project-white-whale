@@ -131,6 +131,100 @@ def backlog_cmd(no_fetch, remote):
     click.echo(_table(rows, ["accession", "study", "chem", "runs", "GB", "rnaseq", "profile", "state"]))
 
 
+@main.command("fetch-samplesheet")
+@click.option("--bioproject", required=True, help="BioProject accession, e.g. PRJNA682817.")
+@click.option("--study", "study_id", default=None,
+              help="study_id the sheet is for (default: the study of the current study branch).")
+@click.option("--show-attributes", is_flag=True,
+              help="Only list the deposited sample attributes and run labels, to choose --condition-attribute.")
+@click.option("--condition-attribute", "condition_attributes", multiple=True,
+              help="Sample attribute defining an experimental group (repeatable; combined in order into "
+                   "`condition`). May name a --label-pattern group, a --design-table column, or sample_title.")
+@click.option("--attribute", "extra_attributes", multiple=True,
+              help="Additional sample attribute to carry into the sheet (repeatable).")
+@click.option("--label-field", default=None,
+              help="Run-report field holding per-library design labels (e.g. library_name, experiment_title).")
+@click.option("--label-pattern", default=None,
+              help="Regex with named groups applied to --label-field; each group becomes an attribute.")
+@click.option("--library-strategy", "library_strategies", multiple=True,
+              help="Keep runs with this ENA library_strategy (repeatable). Default: the methylation "
+                   "strategies (Bisulfite-Seq, MeDIP-Seq, MBD-Seq, MRE-Seq).")
+@click.option("--design-table", default=None, type=click.Path(exists=True, dir_okay=False),
+              help="TSV of design attributes for projects whose BioSamples lack the design; committed with the study.")
+@click.option("--design-join", default=None, help="Deposited sample attribute matching the design table's column of that name.")
+@click.option("--design-source", default=None, help="Where the design table came from; recorded in provenance.")
+@click.option("--out", "out_dir", default=None, type=click.Path(),
+              help="Output directory (default: data/studies/<study_id>/).")
+def fetch_samplesheet_cmd(bioproject, study_id, show_attributes, condition_attributes, extra_attributes,
+                          label_field, label_pattern, library_strategies, design_table, design_join,
+                          design_source, out_dir):
+    """Build a study's sample sheet and FASTQ manifest from its deposited ENA metadata.
+
+    Downloads no sequence data. Writes samplesheet.tsv, fastq_manifest.tsv (ENA's
+    MD5s) and ena_provenance.json into data/studies/<study_id>/.
+    """
+    from whale.claims import ClaimError as _CE
+    from whale.claims import current_branch
+    from whale.ena import ENAError, build_samplesheet, sample_attribute_summary
+
+    repo = _repo()
+    try:
+        if show_attributes:
+            for k, vals in sample_attribute_summary(bioproject, list(library_strategies) or None).items():
+                shown = ", ".join(v or "''" for v in vals[:8]) + (f", … ({len(vals)} values)" if len(vals) > 8 else "")
+                click.echo(f"{k:28} {shown}")
+            return
+        if not condition_attributes:
+            raise click.UsageError("--condition-attribute is required (use --show-attributes to see the choices).")
+        if study_id is None:
+            try:
+                parsed = parse_branch(current_branch(repo))
+            except _CE:
+                parsed = None
+            if parsed is None:
+                raise click.UsageError("not on a study branch; pass --study.")
+            if parsed[0] != bioproject:
+                raise click.UsageError(f"this branch is for {parsed[0]}, not {bioproject}; pass --study to override.")
+            study_id = parsed[1]
+        report = build_samplesheet(
+            bioproject, study_id=study_id,
+            out_dir=Path(out_dir) if out_dir else repo / "data" / "studies" / study_id,
+            condition_attributes=list(condition_attributes), extra_attributes=list(extra_attributes),
+            label_field=label_field, label_pattern=label_pattern,
+            library_strategies=list(library_strategies) or None,
+            design_table=Path(design_table) if design_table else None,
+            design_join=design_join, design_source=design_source, repo=repo)
+    except ENAError as exc:
+        raise click.ClickException(str(exc)) from None
+
+    click.echo(f"{report['bioproject']} -> {study_id}: {report['n_runs']} runs, "
+               f"{report['n_libraries']} libraries, {report['n_biosamples']} BioSamples")
+    click.echo(f"  kept       : {', '.join(report['library_strategies_kept'])}")
+    click.echo(f"  layouts    : {', '.join(report['library_layouts'])}")
+    click.echo(f"  platforms  : {', '.join(report['instrument_models'])}")
+    click.echo(f"  download   : {report['total_fastq_bytes'] / 1e9:.1f} GB of FASTQ")
+    click.echo("  groups (libraries / runs):")
+    for group, n in report["group_sizes_libraries"].items():
+        click.echo(f"    {group:32} {n} / {report['group_sizes_runs'][group]}")
+    if report.get("runs_not_kept"):
+        click.echo(click.style(f"\nNot kept: {report['runs_not_kept']}. If these are RNA-seq of the same "
+                               "animals, record them under paired_rnaseq in the study YAML.", fg="yellow"))
+    if report.get("libraries_with_several_runs"):
+        click.echo(click.style(f"\n{len(report['libraries_with_several_runs'])} libraries were sequenced in "
+                               "several runs. The workflow processes each run separately for now.", fg="yellow"))
+    if report.get("biosamples_with_several_libraries"):
+        click.echo(click.style(f"\n{len(report['biosamples_with_several_libraries'])} BioSample(s) carry more "
+                               "than one library: check whether the design is in a run-level field "
+                               "(--label-field) and add the shared_biosample quality flag.", fg="yellow"))
+    if report["min_group_libraries"] < 3:
+        click.echo(click.style(f"\nSmallest group has {report['min_group_libraries']} libraries: "
+                               "consider the low_replication quality flag.", fg="yellow"))
+    click.echo(f"\nWrote {', '.join(report['outputs'])} and {report['provenance_file']}")
+    click.echo(f"Fill in the study YAML: samples.n_runs={report['n_runs']}, "
+               f"samples.n_libraries={report['n_libraries']}, "
+               f"data_availability.fastq_size_gb={report['total_fastq_bytes'] / 1e9:.1f}")
+
+
 # --- claims ------------------------------------------------------------------
 
 @main.command("start-study")

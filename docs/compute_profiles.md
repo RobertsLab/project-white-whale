@@ -32,18 +32,46 @@ nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile desktop,
 
 ## raven
 
-The Roberts Lab server: the local executor with more cores and memory, two
-alignments at once. Good for ~150-500 GB studies. Its core count, memory and
-scratch path are not yet recorded (PLAN.md §10); until they are, set
-`WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` and `WHALE_WORKDIR` in the shell that
-starts the run, and use `docker` or `apptainer` as the engine.
+The Roberts Lab server (`raven.fish.washington.edu`), inspected 2026-10-23:
+
+| | |
+|---|---|
+| CPU | Intel Xeon Gold 5220R, 24 cores / 48 threads |
+| Memory | 247 GB (+ 99 GB swap) |
+| OS | Ubuntu 24.04 |
+| Fast disk | `/home/shared/16TB_HDD_01`: 14 TB NVMe RAID0 (8 × 1.7 TB) despite its name; ~1.5 TB free. Fast, **no redundancy** |
+| Bulk disk | `/home/shared/8TB_HDD_03` (3.1 TB free), `/home/shared/8TB_HDD_01` (2.1 TB free), HDD |
+| Containers | **Singularity CE 3.10** (`/usr/bin/singularity`, setuid): runs local images and pulls `docker://` images. Docker needs membership of the `docker` group; the Apptainer 1.2.4 in `/home/shared/apptainer` fails on unprivileged user namespaces |
+| Java / Nextflow | OpenJDK 21; **Nextflow not installed** |
+
+The machine is shared (load ~8 of 48 when inspected), so the profile leaves
+headroom: 36 CPUs and 180 GB for the run, 12 CPUs per alignment, three
+alignments at once. It enables Singularity itself and defaults the work
+directory and image cache to the NVMe RAID:
+
+| Setting | Default | Override |
+|---|---|---|
+| work dir | `/home/shared/16TB_HDD_01/$USER/whale/work` | `WHALE_WORKDIR` |
+| image cache | `/home/shared/16TB_HDD_01/$USER/whale/singularity-cache` | `WHALE_SINGULARITY_CACHEDIR` |
+| executor limits | 36 CPUs, 180 GB | `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` |
+
+Keep FASTQ and published methylomes on a bulk disk, not the RAID0:
 
 ```bash
-nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile raven,docker
+# one-time, if Nextflow is not on PATH (Java 21 is already installed)
+curl -s https://get.nextflow.io | bash && mkdir -p ~/bin && mv nextflow ~/bin/
+
+export WHALE_RAW=/home/shared/8TB_HDD_03/$USER/whale/raw
+export WHALE_METHYLOMES=/home/shared/8TB_HDD_03/$USER/whale/methylomes
+export WHALE_REFERENCE=/home/shared/8TB_HDD_03/$USER/whale/reference
+nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile raven
 ```
 
-Run long jobs inside `tmux` or `screen` so a dropped SSH session does not stop
-them.
+Good for studies of ~150-500 GB; the work directory needs about twice the
+FASTQ size, so check `df -h /home/shared/16TB_HDD_01` before a large run. Run
+long jobs inside `tmux` or `screen` so a dropped SSH session does not stop
+them. Bismark 0.24.0 and BS-SNPer are also installed under `/home/shared`,
+but the workflow uses its pinned containers, not those.
 
 ## klone
 

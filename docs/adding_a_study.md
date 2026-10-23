@@ -22,11 +22,44 @@
    whale validate-study registry/studies/<STUDY_ID>.yaml
    ```
 
-   until it is clean, then `--strict`. Then `whale set-status --stage registered`.
-5. **Sample sheet and FASTQ manifest** go in `data/studies/<STUDY_ID>/`
-   (`samplesheet.tsv`: `sample_id`, `run_accession`, `fastq_1`, `fastq_2`).
-   They are generated from ENA metadata, never typed. *(The generator,
-   `whale fetch-samplesheet`, adapted from AREE, is Phase 1 work.)*
+   until it is clean, then `--strict`.
+5. **Generate the sample sheet and FASTQ manifest** from ENA, never by hand.
+   First see what the submitters deposited:
+
+   ```bash
+   whale fetch-samplesheet --bioproject <PRJ…> --show-attributes
+   ```
+
+   then name the attributes that define the groups, in order:
+
+   ```bash
+   whale fetch-samplesheet --bioproject PRJNA682817 \
+     --condition-attribute ploidy --condition-attribute water_pH \
+     --attribute replicate --attribute tissue
+   ```
+
+   This writes `samplesheet.tsv` (the columns the workflow reads:
+   `sample_id`, `run_accession`, `fastq_1`, `fastq_2`, plus the design),
+   `fastq_manifest.tsv` (URLs with ENA's MD5s) and `ena_provenance.json` into
+   `data/studies/<STUDY_ID>/`; inside a study worktree `--study` is taken from
+   the branch. It keeps only methylation runs (Bisulfite-Seq, MeDIP-Seq,
+   MBD-Seq, MRE-Seq) unless `--library-strategy` says otherwise, refuses runs
+   that are not taxid 29159, and reports, without keeping, any other runs in
+   the project: often the paired RNA-seq, which goes under `paired_rnaseq`.
+   Its summary prints the numbers for `samples.n_runs`, `samples.n_libraries`
+   and `data_availability.fastq_size_gb`, and warns when a quality flag is
+   probably needed (`shared_biosample`, `low_replication`).
+
+   When the design is not in the BioSample attributes:
+   - in a run-level string (`library_name`, `experiment_title`): add
+     `--label-field library_name --label-pattern '<regex with named groups>'`
+     and use the group names as condition attributes;
+   - only in the authors' own table: commit it under `data/studies/<STUDY_ID>/`
+     and add `--design-table <tsv> --design-join <attribute> --design-source <url>`;
+     add the `design_from_paper` quality flag.
+
+   With the YAML valid and these three files committed,
+   `whale set-status --stage registered`.
 6. **Stage FASTQ** under `$WHALE_RAW/<STUDY_ID>/`, check MD5s against the
    manifest, `whale set-status --stage fastq_staged`.
 7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML and

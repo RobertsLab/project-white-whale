@@ -1,6 +1,6 @@
 accession	suggested_study_id	chemistry	runs	fastq_gb	paired_rnaseq	suggested_profile	source	notes
-PRJNA173440	WANG2014_FIRST_METHYLOMES_WGBS	wgbs	4		PRJNA146329	desktop	literature-review (Wang et al. 2014, PMID 25514978)	Smallest WGBS set; first end-to-end pipeline test. Paired developmental RNA-seq is related, not same animals; check.
-PRJNA682817	ROBERTS2022_PH_PLOIDY_WGBS	wgbs	24	105	check	raven	SRA sweep 2026-08	Diploid/triploid ctenidia x pH. Roberts Lab.
+PRJNA173440	WANG2014_FIRST_METHYLOMES_WGBS	wgbs	4	36	PRJNA146329	desktop	literature-review (Wang et al. 2014, PMID 25514978)	Smallest WGBS set; first end-to-end pipeline test. Paired developmental RNA-seq is related, not same animals; check.
+PRJNA682817	ROBERTS2022_PH_PLOIDY_WGBS	wgbs	24	145	check	raven	SRA sweep 2026-08	Diploid/triploid ctenidia x pH. Roberts Lab.
 PRJNA562805	WANG2020_TIDAL_HEAT_WGBS	wgbs	12	141	PRJNA407831	raven	SRA sweep 2026-08; AREE	Same animals as RNA-seq PRJNA407831 (AREE LI2018_HEAT_TIDAL). AREE has a full registration to import.
 PRJNA807732	(name on claim)	wgbs	24		check	raven	SRA sweep 2026-08	"Magallana gigas Epigenomics" series; read metadata before naming.
 PRJNA213124	(name on claim)	wgbs	14		check	desktop	SRA sweep 2026-08	"Magallana gigas Epigenomics" series; read metadata before naming.
