@@ -1,0 +1,5 @@
+sample_id	run_accession	fastq_1	fastq_2	library_id	label	sample_accession	sample_alias	condition	individual_type	tissue	gender	library_strategy	library_layout	instrument_model	read_count
+SRR546471	SRR546471	SRR546471_1.fastq.gz	SRR546471_2.fastq.gz	SRX180559	GSM991064: Inbred	SAMN01125790	GSM991064	inbred	inbred	mantle	female	Bisulfite-Seq	PAIRED	Illumina HiSeq 2000	70799691
+SRR546472	SRR546472	SRR546472_1.fastq.gz	SRR546472_2.fastq.gz	SRX180560	GSM991064: Inbred	SAMN01125790	GSM991064	inbred	inbred	mantle	female	Bisulfite-Seq	PAIRED	Illumina HiSeq 2000	68365315
+SRR546473	SRR546473	SRR546473_1.fastq.gz	SRR546473_2.fastq.gz	SRX180561	GSM991065: Wild	SAMN01125791	GSM991065	wild	wild	mantle		Bisulfite-Seq	PAIRED	Illumina HiSeq 2000	78826347
+SRR546474	SRR546474	SRR546474_1.fastq.gz	SRR546474_2.fastq.gz	SRX180562	GSM991065: Wild	SAMN01125791	GSM991065	wild	wild	mantle		Bisulfite-Seq	PAIRED	Illumina HiSeq 2000	77213856
