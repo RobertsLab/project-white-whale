@@ -1,0 +1,14 @@
+# Findings shown on the dashboard, newest first. Add one when a result is
+# solid enough to state: what was found, which goal it bears on, and which
+# studies it rests on. Every number must come from committed outputs; link
+# the analysis that produced it. `whale build-dashboard` checks the shape.
+#
+#   - date: 2026-11-01
+#     goal: 1                      # 1 = comparative methylome, 2 = methylation and expression
+#     title: Short statement of the finding
+#     summary: >
+#       Two or three sentences, with the number of studies and samples.
+#     studies: [WANG2014_FIRST_METHYLOMES_WGBS]
+#     link: https://github.com/RobertsLab/project-white-whale/blob/main/analysis/...
+
+findings: []

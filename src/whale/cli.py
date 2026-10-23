@@ -503,6 +503,58 @@ def mirror_fastq_cmd(accessions, dest, staging, source, jobs, threads, tmp, rate
         sys.exit(1)
 
 
+@main.command("build-dashboard")
+@click.option("--out", default=None, type=click.Path(dir_okay=False), help="Default: site/data.json.")
+@click.option("--no-claims", is_flag=True, help="Do not read claims from the remote's study branches.")
+@click.option("--no-mirror", is_flag=True, help="Do not read the gannet mirror ledgers.")
+@click.option("--remote", default="origin", show_default=True)
+def build_dashboard_cmd(out, no_claims, no_mirror, remote):
+    """Write site/data.json for the GitHub Pages dashboard (site/index.html)."""
+    import os
+    import re
+
+    from whale.dashboard import build, write
+    from whale.fastq import load_ledger
+    from whale.mirror import LEDGER_NAME, load_data_host
+
+    repo = _repo()
+    claims = None
+    if not no_claims:
+        try:
+            claims = list_claims(repo, remote=remote)
+        except ClaimError as exc:
+            click.echo(click.style(f"claims unavailable: {exc}", fg="yellow"), err=True)
+
+    mirrors = None
+    if not no_mirror:
+        try:
+            base = load_data_host(repo).get("url_base")
+        except FileNotFoundError:
+            base = None
+        if base:
+            mirrors = {}
+            for b in load_backlog(repo):
+                url = f"{base.rstrip('/')}/raw/{b['accession']}/{LEDGER_NAME}"
+                try:
+                    mirrors[b["accession"]] = load_ledger(url)
+                except (OSError, ValueError) as exc:
+                    click.echo(click.style(f"mirror ledger unreadable for {b['accession']}: {exc}", fg="yellow"), err=True)
+                    mirrors[b["accession"]] = None
+
+    if os.environ.get("GITHUB_REPOSITORY"):
+        repo_url = f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ['GITHUB_REPOSITORY']}"
+    else:
+        origin = subprocess.run(["git", "remote", "get-url", remote], cwd=repo, capture_output=True, text=True).stdout.strip()
+        m = re.search(r"github\.com[:/](.+?)(\.git)?$", origin)
+        repo_url = f"https://github.com/{m.group(1)}" if m else "https://github.com/RobertsLab/project-white-whale"
+
+    data = build(repo, claims=claims, mirrors=mirrors, repo_url=repo_url)
+    path = write(data, Path(out) if out else repo / "site" / "data.json")
+    t = data["totals"]
+    click.echo(f"Wrote {path}: {t['backlog']} studies, {t['registered']} registered, {t['in_progress']} in progress, "
+               f"{t['done']} done; {t['mirrored_gb']} GB mirrored; {len(data['findings'])} finding(s)")
+
+
 # --- claims ------------------------------------------------------------------
 
 @main.command("start-study")
