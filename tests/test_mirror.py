@@ -11,6 +11,7 @@ import gzip
 import hashlib
 import io
 import json
+import os
 import shutil
 import sys
 import urllib.error
@@ -212,9 +213,16 @@ def test_max_gb_limits_a_run(repo, ena, tmp_path):
 
 
 def test_second_run_exits_while_locked(repo, ena, tmp_path):
-    with mirror_mod._Lock(tmp_path / "staging" / "mirror.lock") as got:
+    lock = tmp_path / "staging" / "mirror.lock"
+    lock.parent.mkdir(parents=True)
+    lock.write_text("12345\n")   # left by an earlier run; replaced, not appended to
+    with mirror_mod._Lock(lock) as got:
         assert got
+        holder = lock.read_text()
+        assert holder == f"{os.getpid()}\n"
         assert _run(repo, tmp_path)["locked"] is True
+        # The run that was turned away leaves the holder's PID in place.
+        assert lock.read_text() == holder
     assert _run(repo, tmp_path)["locked"] is False
 
 
