@@ -12,6 +12,7 @@ from whale.claims import (
     parse_branch,
     release_study,
     render_study_yaml,
+    rival_claims,
     set_status,
     start_study,
 )
@@ -81,6 +82,26 @@ def test_status_moves_forward_only(repo_root):
     moved = advance_status(s2, "called", repo=repo_root, machine="n3000", today="2026-10-25", profile="klone")
     assert moved["profile"] == "klone" and moved["machine"] == "n3000"
     assert validate_status(moved, repo_root) == []
+
+
+def test_rival_claims():
+    mine = branch_name(ACC, SID)
+    same_acc = branch_name(ACC, "OTHER2099_CLAIMS_WGBS")
+    same_sid = branch_name("PRJNA999903", SID)
+    unrelated = branch_name("PRJNA999904", "OTHER2099_ELSE_WGBS")
+    assert rival_claims(mine, [mine, same_acc, same_sid, unrelated, "main"]) == sorted([same_acc, same_sid])
+    # Parts of one registered study are not rivals, of each other or of a part-less listing.
+    gill, mantle = branch_name(ACC, SID, "gill"), branch_name(ACC, SID, "mantle")
+    assert rival_claims(gill, [gill, mantle]) == []
+    assert rival_claims("not-a-study-branch", [mine]) == []
+
+
+def test_scope_fails_while_a_rival_claim_exists(filled_study):
+    branch = branch_name("PRJNA562805", "WANG2020_TIDAL_HEAT_WGBS")
+    rival = branch_name("PRJNA562805", "LI2018_TIDAL_HEAT_WGBS")
+    errors, _ = check_scope(branch, [], filled_study, {}, [branch, rival])
+    assert any(rival in e and "release-study" in e for e in errors)
+    assert check_scope(branch, [], filled_study, {}, [branch]) == ([], [])
 
 
 # --- against a real (local) remote -------------------------------------------
@@ -165,3 +186,21 @@ def test_part_claim_after_registration(claim_env, filled_study):
                 machine="raven", open_pr=False)
     rows = {r["part"]: r for r in list_claims(clone)}
     assert set(rows) == {"gill", "mantle"} and rows["mantle"]["profile"] == "raven"
+
+
+def test_race_under_another_name_is_reported(claim_env, monkeypatch):
+    """Two machines pass the pre-push check at once, under different study IDs for one accession."""
+    import whale.claims as claims
+
+    clone = claim_env["clone"]
+    first = start_study(ACC, SID, repo=clone, profile="raven", worktree_dir=claim_env["tmp"] / "wt-a",
+                        registered_by="A", machine="raven", open_pr=False)
+    assert first["rivals"] == []
+    # The second machine's pre-push check ran before the first push landed.
+    monkeypatch.setattr(claims, "find_conflicts", lambda *a, **k: [])
+    other = claim_env["tmp"] / "machine-b"
+    git("clone", "--quiet", str(claim_env["remote"]), str(other), cwd=claim_env["tmp"])
+    second = start_study(ACC, "OTHER2099_CLAIMS_WGBS", repo=other, profile="klone",
+                         worktree_dir=claim_env["tmp"] / "wt-b", registered_by="B", machine="klone",
+                         open_pr=False)
+    assert second["pushed"] and second["rivals"] == [first["branch"]]

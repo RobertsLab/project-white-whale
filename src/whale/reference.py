@@ -26,16 +26,17 @@ Adapted from AREE's src/intake/reference_bundle.py (github.com/sr320/AREE).
 from __future__ import annotations
 
 import gzip
-import hashlib
 import json
 import os
 import re
 import shutil
-import urllib.request
 from datetime import date
 from pathlib import Path
 
 import yaml
+
+from whale.checksums import md5_file, sha256_file
+from whale.net import get_text
 
 NCBI_GENOMES_BASE = "https://ftp.ncbi.nlm.nih.gov/genomes/all"
 TIMEOUT = 300
@@ -122,31 +123,17 @@ def parse_md5_listing(text: str) -> dict[str, str]:
 
 
 def _http_get_text(url: str) -> str:
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as fh:  # noqa: S310 - fixed NCBI host
-        return fh.read().decode()
+    return get_text(url, timeout=TIMEOUT)
 
 
 def _http_download(url: str, dest: Path) -> None:
-    tmp = dest.with_name(dest.name + ".part")
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as fh, open(tmp, "wb") as out:  # noqa: S310
-        shutil.copyfileobj(fh, out, length=1 << 20)
-    tmp.replace(dest)
+    """Download via <dest>.part, retrying and resuming a partial file (the genome is ~0.2 GB)."""
+    from whale.mirror import MirrorError, download
 
-
-def _hash(path: Path, algo: str) -> str:
-    h = hashlib.new(algo)
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def md5_file(path: Path) -> str:
-    return _hash(path, "md5")
-
-
-def sha256_file(path: Path) -> str:
-    return _hash(path, "sha256")
+    try:
+        download(url, dest)
+    except MirrorError as exc:
+        raise ReferenceError(f"download failed: {exc}") from None
 
 
 def _decompress(src: Path, dest: Path) -> None:

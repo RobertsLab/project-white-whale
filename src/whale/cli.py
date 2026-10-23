@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from http.client import HTTPException
 from pathlib import Path
 
 import click
@@ -15,6 +16,7 @@ from whale.claims import (
     parse_branch,
     registered_on,
     release_study,
+    remote_study_branches,
     set_status,
     start_study,
 )
@@ -80,7 +82,10 @@ def validate_status_cmd(files):
     paths = [Path(f) for f in files] or sorted((repo / "data" / "studies").rglob("status.yaml"))
     failed = False
     for path in paths:
-        errors = validate_status(yaml.safe_load(path.read_text()) or {}, repo)
+        try:
+            errors = validate_status(yaml.safe_load(path.read_text()) or {}, repo)
+        except yaml.YAMLError as exc:
+            errors = [f"could not parse YAML: {exc}"]
         click.echo(f"{'FAIL' if errors else 'ok  '}  {path}")
         for e in errors:
             click.echo(click.style(f"      error: {e}", fg="red"))
@@ -196,6 +201,8 @@ def fetch_samplesheet_cmd(bioproject, study_id, show_attributes, condition_attri
             design_join=design_join, design_source=design_source, repo=repo)
     except ENAError as exc:
         raise click.ClickException(str(exc)) from None
+    except (OSError, HTTPException) as exc:
+        raise click.ClickException(f"could not read from ENA (retried): {exc}") from None
 
     click.echo(f"{report['bioproject']} -> {study_id}: {report['n_runs']} runs, "
                f"{report['n_libraries']} libraries, {report['n_biosamples']} BioSamples")
@@ -265,6 +272,8 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
         prov = fetch_bundle(repo, assembly, dest=target, rnaseq=rnaseq, log=click.echo)
     except ReferenceError as exc:
         raise click.ClickException(str(exc)) from None
+    except (OSError, HTTPException) as exc:
+        raise click.ClickException(f"could not read from NCBI (retried): {exc}") from None
 
     click.echo(f"\n{prov['assembly_id']}: {prov['sequences']} sequences, {prov['genome_length'] / 1e6:.1f} Mb")
     for name, n in prov["feature_counts"].items():
@@ -403,8 +412,10 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
             total = sum(f.bytes for f in files)
             # Commit the verification record with the stage change.
             if record.resolve().is_relative_to(repo.resolve()):
-                subprocess.run(["git", "add", str(record.resolve().relative_to(repo.resolve()))],
-                               cwd=repo, check=True)
+                add = subprocess.run(["git", "add", str(record.resolve().relative_to(repo.resolve()))],
+                                     cwd=repo, capture_output=True, text=True)
+                if add.returncode != 0:
+                    raise ClaimError(f"git add {record.name} failed: {add.stderr.strip()}")
             new = set_status("fastq_staged", repo=repo, note=f"{len(files)} files, {total / gb:.1f} GB, MD5 verified")
         except ClaimError as exc:
             raise click.ClickException(f"downloads verified, but the stage was not set: {exc}") from None
@@ -593,6 +604,11 @@ def start_study_cmd(accession, study_id, profile, part, worktree_dir, machine, r
     else:
         click.echo(click.style("NOT claimed: --no-push given; other machines cannot see this study.",
                                fg="yellow"))
+    if res["rivals"]:
+        raise click.ClickException(
+            "another machine claimed the same study at the same moment: " + ", ".join(res["rivals"])
+            + ". Download nothing yet: agree which claim to keep and run "
+            "`whale release-study --branch <the other>`.")
     click.echo(f"\nNext: cd {res['worktree']} and follow docs/adding_a_study.md.")
 
 
@@ -672,7 +688,14 @@ def check_study_scope_cmd(branch, base):
         registered = registered_on(base, repo)
     except ClaimError:
         registered = {}
-    errors, warnings = check_scope(branch, changed, study, registered)
+    remote = base.split("/", 1)[0] if "/" in base else "origin"
+    try:
+        claimed = remote_study_branches(remote, repo)
+    except ClaimError as exc:
+        click.echo(click.style(f"warning: could not list study branches on {remote}, so rival "
+                               f"claims were not checked: {exc}", fg="yellow"))
+        claimed = None
+    errors, warnings = check_scope(branch, changed, study, registered, claimed)
     for w in warnings:
         click.echo(click.style(f"warning: {w}", fg="yellow"))
     for e in errors:
