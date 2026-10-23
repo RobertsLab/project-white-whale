@@ -15,10 +15,10 @@ The design, analyses and phases are in [PLAN.md](PLAN.md). The structure
 follows [AREE](https://github.com/sr320/AREE), narrowed to one species and one
 assay family.
 
-> **Status: Phase 0 (scaffold).** The registry, validation, the claim system
-> for running studies on several machines, the compute profiles and a
-> stub-tested methylation workflow are in place. No study has been registered
-> or run yet. See [PLAN.md §9](PLAN.md#9-phases).
+> **Status: Phase 1 under way.** The registry, validation, the claim system
+> for running studies on several machines, the compute profiles, a
+> stub-tested methylation workflow and the ENA sample-sheet generator are in
+> place. No study has been registered or run yet. See [PLAN.md §9](PLAN.md#9-phases).
 
 ## Install
 
@@ -43,7 +43,8 @@ and every machine can see it.
 whale backlog                       # what is free, claimed (where, how far) or registered
 whale start-study --accession PRJNA682817 --study-id ROBERTS2022_PH_PLOIDY_WGBS --profile raven
 cd ../white-whale-ROBERTS2022_PH_PLOIDY_WGBS
-# ...fill the study YAML, generate the sample sheet, stage FASTQ...
+whale fetch-samplesheet --bioproject PRJNA682817 --condition-attribute ploidy --condition-attribute water_pH
+# ...fill the study YAML, stage FASTQ...
 whale set-status --stage fastq_staged --note "105 GB, MD5 ok"
 nextflow run workflows/methylation -c config/ROBERTS2022_PH_PLOIDY_WGBS.config -profile raven
 whale set-status --stage called
@@ -64,6 +65,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale set-status --stage <stage> [--note …] [--run-name …]` | Record progress on the current study branch; commits and pushes |
 | `whale claims` | Every claimed study, from the pushed branches |
 | `whale release-study --branch <b> --reason …` | Give a claim up so another machine can take it |
+| `whale fetch-samplesheet --bioproject <PRJ…> --condition-attribute <a> […] [--show-attributes]` | Sample sheet, FASTQ manifest (ENA MD5s) and provenance from the deposited metadata; downloads nothing |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |
 | `whale build-registry` | Rebuild `registry/study_registry.csv` (not committed) |

@@ -8,6 +8,7 @@ carried across by hand.
 | White Whale | AREE source | AREE commit | Changes |
 |---|---|---|---|
 | `src/whale/claims.py` | `src/intake/study_claims.py` | `44022f1` | BioProject-only accessions; per-branch `status.yaml`; compute profiles; part claims; `set_status`, `list_claims`, `release_study` |
+| `src/whale/ena.py` (`whale fetch-samplesheet`) | `src/intake/ena_samplesheet.py` | `0a87b69` | Methylation strategies kept by default, others reported; taxid 29159 enforced; sheet in the methylation workflow's columns with `sample_id` = run accession and `library_id` = experiment; no methylKit sheet; `--show-attributes`; BioSample title as `sample_title` |
 | `src/whale/scope.py` | `src/validation/study_scope.py` | `44022f1` | Part ownership; test-file naming |
 | `.github/PULL_REQUEST_TEMPLATE/study.md` | same path | `44022f1` | Methylome checklist |
 | `config/base.config` (`klone` profile) | `config/base.config` | `44022f1` | `WHALE_*` variables; methylation processes only |
@@ -15,8 +16,7 @@ carried across by hand.
 | `data/reference/genome_assemblies.yaml` | same path | `44022f1` | Two assemblies; `default` flag |
 | `docs/compute_profiles.md` (klone section) | `docs/running_on_klone.md` | `44022f1` | Summarized |
 
-Still to vendor in Phase 1: `src/intake/ena_samplesheet.py` (as
-`whale fetch-samplesheet`) and `src/intake/reference_bundle.py` (as
+Still to vendor in Phase 1: `src/intake/reference_bundle.py` (as
 `whale fetch-reference`).
 
 When vendoring more, add a row here with the AREE commit
