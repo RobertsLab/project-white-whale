@@ -3,7 +3,7 @@
 study_id: WANG2014_FIRST_METHYLOMES_WGBS
 accession: PRJNA173440
 part: null
-stage: claimed
+stage: registered
 profile: raven
 machine: raven
 claimed_by: Steven Roberts
@@ -15,3 +15,7 @@ history:
   date: '2026-10-23'
   machine: raven
   note: null
+- stage: registered
+  date: '2026-10-23'
+  machine: raven
+  note: YAML, sample sheet and manifest committed (from the Mac)
