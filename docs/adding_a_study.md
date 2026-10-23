@@ -63,7 +63,9 @@
 6. **Stage FASTQ** under `$WHALE_RAW/<STUDY_ID>/`, check MD5s against the
    manifest, `whale set-status --stage fastq_staged`. If the accession is
    already mirrored on gannet (`whale mirror-fastq --plan`), copy it from
-   `raw/<ACCESSION>/` there rather than from ENA ([FASTQ mirror](fastq_mirror.md)).
+   `raw/<ACCESSION>/` there rather than from ENA, and check MD5s against that
+   folder's `mirror_manifest.tsv`: files converted from NCBI's `.sra` hold the
+   same reads but do not match ENA's MD5s ([FASTQ mirror](fastq_mirror.md)).
 7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML and
    run the workflow with the profile you claimed. Record each stage as it
    finishes.

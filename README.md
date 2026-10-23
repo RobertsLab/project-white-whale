@@ -69,7 +69,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale release-study --branch <b> --reason …` | Give a claim up so another machine can take it |
 | `whale fetch-samplesheet --bioproject <PRJ…> --condition-attribute <a> […] [--show-attributes]` | Sample sheet, FASTQ manifest (ENA MD5s) and provenance from the deposited metadata; downloads nothing |
 | `whale fetch-reference [--rnaseq] [--plan] [--check]` | Fetch, MD5-verify and derive the reference bundle (genome, GTF, chrom.sizes, feature BEDs) |
-| `whale mirror-fastq [--accession <PRJ…>] [--plan] [--jobs N] [--max-gb G]` | Prefetch backlog FASTQ from ENA to gannet, MD5-verified and resumable; run from raven |
+| `whale mirror-fastq [--accession <PRJ…>] [--plan] [--jobs N] [--max-gb G]` | Prefetch backlog FASTQ to gannet: NCBI `.sra` converted on raven (ENA as fallback), verified and resumable |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |
 | `whale build-registry` | Rebuild `registry/study_registry.csv` (not committed) |

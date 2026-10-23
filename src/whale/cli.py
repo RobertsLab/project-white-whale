@@ -286,7 +286,13 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
 @click.option("--staging", default=None, type=click.Path(file_okay=False),
               help="Where files are downloaded and checked before upload "
                    "(default: $WHALE_MIRROR_STAGING, else $WHALE_RAW/.mirror-staging).")
-@click.option("--jobs", default=4, show_default=True, help="Files downloaded at once.")
+@click.option("--source", type=click.Choice(["ncbi", "ena"]), default="ncbi", show_default=True,
+              help="ncbi: .sra from NCBI's S3 bucket converted with fasterq-dump, ENA as fallback per run; "
+                   "ena: ENA's FASTQ only.")
+@click.option("--jobs", default=4, show_default=True, help="Runs fetched at once.")
+@click.option("--threads", default=4, show_default=True, help="fasterq-dump / pigz threads per run (ncbi).")
+@click.option("--tmp", default=None, type=click.Path(file_okay=False),
+              help="fasterq-dump scratch, ideally fast local disk (default: <staging>/tmp).")
 @click.option("--limit-rate", "rate_mb", default=None, type=float, help="Total download rate cap, MB/s.")
 @click.option("--max-gb", default=None, type=float,
               help="Stop starting new files once this much has been queued in this run.")
@@ -295,13 +301,15 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
                    "default the methylation strategies). Registered studies use their fastq_manifest.tsv.")
 @click.option("--no-verify-remote", is_flag=True, help="Skip re-computing each MD5 on the data host.")
 @click.option("--plan", "plan_only", is_flag=True, help="Show what is mirrored and what is left; download nothing.")
-def mirror_fastq_cmd(accessions, dest, staging, jobs, rate_mb, max_gb, library_strategies,
-                     no_verify_remote, plan_only):
-    """Prefetch backlog FASTQ from ENA to the data host (gannet), MD5-verified and resumable.
+def mirror_fastq_cmd(accessions, dest, staging, source, jobs, threads, tmp, rate_mb, max_gb,
+                     library_strategies, no_verify_remote, plan_only):
+    """Prefetch backlog FASTQ to the data host (gannet), verified and resumable.
 
-    Safe to rerun, e.g. nightly from cron on raven: files already mirrored with
-    ENA's current MD5 are skipped, partial downloads resume, and a second copy
-    started while one is running exits at once.
+    By default each run is taken from NCBI as .sra (MD5-checked), converted with
+    fasterq-dump and checked against ENA's read and base counts; ENA's FASTQ
+    (MD5-checked) is the fallback. Safe to rerun, e.g. nightly from cron on
+    raven: files already mirrored are skipped, partial downloads resume, and a
+    second copy started while one is running exits at once.
     """
     from whale.mirror import (
         LocalStore,
@@ -323,6 +331,7 @@ def mirror_fastq_cmd(accessions, dest, staging, jobs, rate_mb, max_gb, library_s
         else:
             res = mirror(repo, accs, store, staging=Path(staging) if staging else default_staging(repo),
                          jobs=jobs, rate_mb=rate_mb, max_gb=max_gb, verify_remote=not no_verify_remote,
+                         source=source, threads=threads, tmp=Path(tmp) if tmp else None,
                          library_strategies=list(library_strategies) or None, log=click.echo)
             if res["locked"]:
                 click.echo("Another mirror-fastq is running with this staging directory; nothing to do.")
@@ -348,7 +357,8 @@ def mirror_fastq_cmd(accessions, dest, staging, jobs, rate_mb, max_gb, library_s
     if plan_only:
         click.echo(f"Mirror at {store.label}\n")
     else:
-        click.echo(f"\nMirrored {len(res['mirrored'])} file(s), {res['bytes'] / 1e9:.1f} GB this run.\n")
+        click.echo(f"\nMirrored {len(res['mirrored'])} file(s), {res['bytes'] / 1e9:.1f} GB this run "
+                   f"({res['sources']['ncbi_sra']} converted from NCBI, {res['sources']['ena']} from ENA).\n")
     click.echo(_table(rows, ["accession", "files", "GB", "mirrored", "left GB", "state"]))
     for p in plans:
         for n in p.get("notes", []):

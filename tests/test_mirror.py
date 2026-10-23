@@ -1,14 +1,18 @@
 """Offline tests for `whale mirror-fastq` (src/whale/mirror.py).
 
 A fake ENA serves a two-run project (read-run report and FASTQ bytes, with
-Range support and injectable faults); the data host is a local directory.
-No network access.
+Range support and injectable faults); a fake NCBI serves the locator and
+.sra files, and a fake fasterq-dump unpacks them. The data host is a local
+directory. No network access.
 """
 from __future__ import annotations
 
+import gzip
 import hashlib
 import io
+import json
 import shutil
+import sys
 import urllib.error
 from pathlib import Path
 
@@ -55,7 +59,7 @@ class FakeENA:
             have = [n for n in names if n in self.files]
             rows.append({
                 "run_accession": run, "library_strategy": strategy, "library_layout": "PAIRED",
-                "tax_id": "29159",
+                "tax_id": "29159", "read_count": "500", "base_count": "4000",
                 "fastq_ftp": ";".join(f"{BASE}/{run}/{n}" for n in have),
                 "fastq_md5": ";".join(self.md5(n) for n in have),
                 "fastq_bytes": ";".join(str(len(self.files[n])) for n in have),
@@ -118,6 +122,7 @@ def repo(tmp_path, repo_root):
 
 
 def _run(repo, tmp_path, **kw):
+    kw.setdefault("source", "ena")
     return mirror(repo, [ACC], LocalStore(tmp_path / "host"), staging=tmp_path / "staging",
                   log=lambda *_: None, today="2026-10-23", **kw)
 
@@ -192,12 +197,12 @@ def test_partial_file_from_earlier_run_resumes(ena, tmp_path):
 def test_md5_mismatch_is_not_mirrored(repo, ena, tmp_path):
     ena.corrupt = {"SRR2_1.fastq.gz"}
     res = _run(repo, tmp_path)
-    assert [f for f, _ in res["failed"]] == [f"{ACC}/SRR2_1.fastq.gz"]
+    assert [f for f, _ in res["failed"]] == [f"{ACC}/SRR2"]
     assert "does not match ENA" in res["failed"][0][1]
     assert not (tmp_path / "host/raw" / ACC / "SRR2_1.fastq.gz").exists()
     assert "SRR2_1.fastq.gz" not in LocalStore(tmp_path / "host").read_ledger(ACC)
     assert not (tmp_path / "staging" / ACC / "SRR2_1.fastq.gz").exists()
-    assert len(res["mirrored"]) == 3
+    assert len(res["mirrored"]) == 2
 
 
 def test_max_gb_limits_a_run(repo, ena, tmp_path):
@@ -230,12 +235,136 @@ def test_cli_plan_then_mirror(repo, ena, tmp_path, monkeypatch):
     assert "4" in out.output and "RNA-Seq" in out.output and not Path(host / "raw").exists()
 
     out = runner.invoke(main, ["mirror-fastq", "--accession", ACC, "--dest", str(host),
-                               "--staging", str(staging)])
+                               "--staging", str(staging), "--source", "ena"])
     assert out.exit_code == 0, out.output
     assert "Mirrored 4 file(s)" in out.output and "complete" in out.output
 
     ena.corrupt = {"SRR1_1.fastq.gz"}
     (host / "raw" / ACC / "SRR1_1.fastq.gz").unlink()
     out = runner.invoke(main, ["mirror-fastq", "--accession", ACC, "--dest", str(host),
-                               "--staging", str(staging)])
+                               "--staging", str(staging), "--source", "ena"])
     assert out.exit_code == 1 and "1 failed" in out.output
+
+
+# --- NCBI source ---------------------------------------------------------------
+
+S3 = "https://sra-pub-run-odp.s3.amazonaws.com/sra"
+
+FAKE_FASTERQ = """#!{python}
+import json, sys
+from pathlib import Path
+args = sys.argv[1:]
+out = Path(args[args.index("--outdir") + 1])
+sra = Path(args[-1])
+out.mkdir(parents=True, exist_ok=True)
+for suffix, text in json.loads(sra.read_text()).items():
+    (out / f"{{sra.stem}}{{suffix}}.fastq").write_text(text)
+"""
+
+
+class FakeNCBI:
+    """Each .sra is JSON {output suffix: FASTQ text}, which the fake fasterq-dump writes out."""
+
+    def __init__(self, ena):
+        self.ena = ena
+        self.sra = {run: json.dumps({f"_{m}": _fq(run, m).decode() for m in (1, 2)}).encode()
+                    for run in ("SRR1", "SRR2")}
+        self.missing: set[str] = set()
+        self.bad_md5: set[str] = set()
+
+    def locate(self, url):
+        run = url.split("acc=")[1].split("&")[0]
+        if run in self.missing:
+            return {"result": [{"bundle": run, "status": 404, "msg": "no data"}]}
+        md5 = "0" * 32 if run in self.bad_md5 else hashlib.md5(self.sra[run]).hexdigest()
+        return {"result": [{"files": [{"type": "sra", "size": len(self.sra[run]), "md5": md5,
+                                       "locations": [{"service": "s3", "link": f"{S3}/{run}/{run}"}]}]}]}
+
+    def open(self, req):
+        if req.full_url.startswith(S3):
+            run = req.full_url.rsplit("/", 1)[-1]
+            self.ena.requests.append((f"{run}.sra", req.get_header("Range") or ""))
+            return _Resp(self.sra[run], 200)
+        return self.ena.open(req)
+
+
+@pytest.fixture
+def ncbi(ena, monkeypatch, tmp_path):
+    fake = FakeNCBI(ena)
+    monkeypatch.setattr(mirror_mod, "_get_json", fake.locate)
+    monkeypatch.setattr(mirror_mod, "_urlopen", fake.open)
+    kit = tmp_path / "sratoolkit"
+    (kit / "bin").mkdir(parents=True)
+    tool = kit / "bin" / "fasterq-dump"
+    tool.write_text(FAKE_FASTERQ.format(python=sys.executable))
+    tool.chmod(0o755)
+    monkeypatch.setenv("WHALE_SRATOOLKIT", str(kit))
+    monkeypatch.delenv("WHALE_PIGZ", raising=False)
+    return fake
+
+
+def test_ncbi_converts_and_records(repo, ncbi, ena, tmp_path):
+    res = _run(repo, tmp_path, source="ncbi")
+    assert res["failed"] == [] and res["sources"] == {"ncbi_sra": 4, "ena": 0}
+    assert {n for n, _ in ena.requests} == {"SRR1.sra", "SRR2.sra"}
+    host = tmp_path / "host/raw" / ACC
+    assert gzip.decompress((host / "SRR2_1.fastq.gz").read_bytes()) == _fq("SRR2", 1)
+    row = LocalStore(tmp_path / "host").read_ledger(ACC)["SRR2_1.fastq.gz"]
+    assert row["source"] == "ncbi_sra" and row["read_count"] == "500"
+    assert row["md5"] == hashlib.md5((host / "SRR2_1.fastq.gz").read_bytes()).hexdigest()
+    assert row["ena_md5"] == ena.md5("SRR2_1.fastq.gz") != row["md5"]
+    assert row["sra_md5"] == hashlib.md5(ncbi.sra["SRR2"]).hexdigest()
+    assert row["url"] == f"{S3}/SRR2/SRR2"
+    assert not (tmp_path / "staging" / ACC / "SRR2").exists()
+
+    # Converted files are skipped on a rerun although their MD5 is not ENA's.
+    ena.requests.clear()
+    assert _run(repo, tmp_path, source="ncbi")["mirrored"] == [] and ena.requests == []
+
+
+def test_ncbi_falls_back_to_ena_per_run(repo, ncbi, ena, tmp_path):
+    ncbi.missing = {"SRR1"}
+    ncbi.bad_md5 = {"SRR2"}
+    res = _run(repo, tmp_path, source="ncbi")
+    assert res["failed"] == [] and res["sources"] == {"ncbi_sra": 0, "ena": 4}
+    ledger = LocalStore(tmp_path / "host").read_ledger(ACC)
+    assert {r["source"] for r in ledger.values()} == {"fastq_ftp"}
+    assert ledger["SRR1_1.fastq.gz"]["md5"] == ena.md5("SRR1_1.fastq.gz")
+
+
+def test_ncbi_read_count_mismatch_falls_back(repo, ncbi, ena, tmp_path):
+    short = _fq("SRR1", 2)[: -len(b"@SRR1.2\nACGT\n+\nIIII\n")]
+    ncbi.sra["SRR1"] = json.dumps({"_1": _fq("SRR1", 1).decode(), "_2": short.decode()}).encode()
+    res = _run(repo, tmp_path, source="ncbi")
+    assert res["sources"] == {"ncbi_sra": 2, "ena": 2}
+    assert LocalStore(tmp_path / "host").read_ledger(ACC)["SRR1_2.fastq.gz"]["source"] == "fastq_ftp"
+
+
+def test_ncbi_unpaired_leftover_counts_then_is_dropped(repo, ncbi, ena, tmp_path, monkeypatch):
+    lone = "@SRR1.x\nACGT\n+\nIIII\n"
+    ncbi.sra["SRR1"] = json.dumps({"_1": _fq("SRR1", 1).decode(), "_2": _fq("SRR1", 2).decode(),
+                                   "": lone}).encode()
+    report = ena.report
+
+    def with_lone(acc):
+        rows = report(acc)
+        rows[0].update(read_count="501", base_count="4004")
+        return rows
+    monkeypatch.setattr(mirror_mod, "fetch_run_report", with_lone)
+    res = _run(repo, tmp_path, source="ncbi")
+    assert res["sources"] == {"ncbi_sra": 4, "ena": 0}
+    assert sorted(p.name for p in (tmp_path / "host/raw" / ACC).glob("SRR1*")) == ["SRR1_1.fastq.gz", "SRR1_2.fastq.gz"]
+
+
+def test_ncbi_needs_fasterq_dump(repo, ena, tmp_path, monkeypatch):
+    monkeypatch.setenv("WHALE_SRATOOLKIT", str(tmp_path / "nowhere"))
+    with pytest.raises(MirrorError, match="fasterq-dump not found"):
+        _run(repo, tmp_path, source="ncbi")
+
+
+def test_cli_default_source_is_ncbi(repo, ncbi, tmp_path, monkeypatch):
+    monkeypatch.setenv("WHALE_REPO", str(repo))
+    out = CliRunner().invoke(main, ["mirror-fastq", "--accession", ACC, "--dest", str(tmp_path / "host"),
+                                    "--staging", str(tmp_path / "staging")])
+    assert out.exit_code == 0, out.output
+    assert "4 converted from NCBI, 0 from ENA" in out.output
