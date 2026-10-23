@@ -45,6 +45,7 @@ class FakeENA:
     def __init__(self):
         self.files = {f"{run}_{m}.fastq.gz": _fq(run, m) for run in ("SRR1", "SRR2") for m in (1, 2)}
         self.cut_once: set[str] = set()     # fail these mid-stream once
+        self.short_once: set[str] = set()   # end these early once, without an error
         self.corrupt: set[str] = set()      # serve wrong bytes every time
         self.ignore_range = False
         self.requests: list[tuple[str, str]] = []
@@ -81,6 +82,9 @@ class FakeENA:
         if name in self.cut_once:
             self.cut_once.discard(name)
             return _Resp(body[: len(body) // 3], status, fail=True)
+        if name in self.short_once:
+            self.short_once.discard(name)
+            return _Resp(body[: len(body) // 3], status)
         return _Resp(body, status)
 
 
@@ -178,6 +182,17 @@ def test_interrupted_download_resumes(repo, ena, tmp_path):
     ranges = [r for n, r in ena.requests if n == "SRR1_1.fastq.gz"]
     assert ranges[0] == "" and ranges[1].startswith("bytes=") and ranges[1] != "bytes=0-"
     assert (tmp_path / "host/raw" / ACC / "SRR1_1.fastq.gz").read_bytes() == ena.files["SRR1_1.fastq.gz"]
+
+
+def test_short_response_resumes(ena, tmp_path):
+    """A response that ends early without an error is resumed, not restarted from zero."""
+    name = "SRR1_1.fastq.gz"
+    ena.short_once = {name}
+    dest = tmp_path / name
+    md5 = download(f"https://{BASE}/SRR1/{name}", dest, expected_bytes=len(ena.files[name]))
+    assert md5 == ena.md5(name) and dest.read_bytes() == ena.files[name]
+    third = len(ena.files[name]) // 3
+    assert ena.requests == [(name, ""), (name, f"bytes={third}-")]
 
 
 def test_partial_file_from_earlier_run_resumes(ena, tmp_path):
