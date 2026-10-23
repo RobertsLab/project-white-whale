@@ -15,6 +15,15 @@ TIMEOUT = 120
 BACKOFF = [5, 15, 45]
 
 
+def https_url(url: str) -> str:
+    """ENA's ftp:// FASTQ URLs are served over HTTPS too, which allows resuming with Range."""
+    if url.startswith("ftp://"):
+        return "https://" + url[len("ftp://"):]
+    if url.startswith(("https://", "http://")):
+        return url
+    return "https://" + url
+
+
 def _transient(exc: Exception) -> bool:
     if isinstance(exc, urllib.error.HTTPError):
         return exc.code == 429 or exc.code >= 500

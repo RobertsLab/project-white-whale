@@ -58,6 +58,7 @@ from pathlib import Path
 
 import yaml
 
+from whale.checksums import md5_file
 from whale.ena import (
     EXPECTED_TAXID,
     METHYLATION_STRATEGIES,
@@ -65,6 +66,7 @@ from whale.ena import (
     fetch_run_report,
     run_fastq_files,
 )
+from whale.net import https_url
 from whale.registry import load_backlog, load_studies
 
 LEDGER_NAME = "mirror_manifest.tsv"
@@ -84,15 +86,6 @@ class MirrorError(RuntimeError):
 
 
 # --- what to mirror ------------------------------------------------------------
-
-def https_url(url: str) -> str:
-    """ENA's ftp:// FASTQ URLs are served over HTTPS too, which allows resuming with Range."""
-    if url.startswith("ftp://"):
-        return "https://" + url[len("ftp://"):]
-    if url.startswith(("https://", "http://")):
-        return url
-    return "https://" + url
-
 
 def registered_runs(repo: Path, accession: str) -> set[str] | None:
     """Run accessions in the committed fastq_manifest.tsv of the study registered for this accession."""
@@ -154,7 +147,7 @@ def wanted_files(repo: Path, accession: str, library_strategies: list[str] | Non
 
 # --- where it goes -------------------------------------------------------------
 
-def _read_ledger_text(text: str) -> dict[str, dict]:
+def read_ledger_text(text: str) -> dict[str, dict]:
     if not text.strip():
         return {}
     return {r["file"]: r for r in csv.DictReader(io.StringIO(text), delimiter="\t")}
@@ -185,7 +178,7 @@ class LocalStore:
 
     def read_ledger(self, acc: str) -> dict[str, dict]:
         p = self._dir(acc) / LEDGER_NAME
-        return _read_ledger_text(p.read_text()) if p.exists() else {}
+        return read_ledger_text(p.read_text()) if p.exists() else {}
 
     def write_ledger(self, acc: str, rows: dict[str, dict], staging: Path) -> None:
         d = self._dir(acc)
@@ -236,7 +229,7 @@ class SSHStore:
 
     def read_ledger(self, acc: str) -> dict[str, dict]:
         p = shlex.quote(f"{self._dir(acc)}/{LEDGER_NAME}")
-        return _read_ledger_text(self._ssh(f"if [ -f {p} ]; then cat {p}; fi"))
+        return read_ledger_text(self._ssh(f"if [ -f {p} ]; then cat {p}; fi"))
 
     def write_ledger(self, acc: str, rows: dict[str, dict], staging: Path) -> None:
         local = Path(staging) / acc / LEDGER_NAME
@@ -266,14 +259,6 @@ def default_staging(repo: Path) -> Path:
 
 
 # --- downloading ---------------------------------------------------------------
-
-def md5_file(path: Path) -> str:
-    h = hashlib.md5()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(CHUNK), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
 
 class Throttle:
     """A total download rate shared by every worker thread (bytes/s; None = unlimited)."""
@@ -377,7 +362,7 @@ class _Lock:
             self.fh.close()
 
 
-def _ena_md5(done: dict) -> str:
+def ena_md5(done: dict) -> str:
     """The ENA MD5 a ledger row was mirrored against (rows converted from NCBI hold their own MD5 in md5)."""
     return done.get("ena_md5") or done.get("md5", "")
 
@@ -398,10 +383,10 @@ def plan_mirror(repo: Path, accessions: list[str], store, *, library_strategies=
         todo = []
         for f in files:
             done = ledger.get(f["file"])
-            if done and _ena_md5(done) == f["md5"] and f["file"] in present \
+            if done and ena_md5(done) == f["md5"] and f["file"] in present \
                     and str(present[f["file"]]) == str(done.get("bytes") or present[f["file"]]):
                 continue
-            if done and _ena_md5(done) != f["md5"]:
+            if done and ena_md5(done) != f["md5"]:
                 notes.append(f"{f['file']}: ENA's MD5 changed since it was mirrored; fetching again")
             todo.append(f)
         plans.append({"accession": acc, "files": files, "todo": todo, "notes": notes, "ledger": ledger})

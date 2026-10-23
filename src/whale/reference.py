@@ -26,7 +26,6 @@ Adapted from AREE's src/intake/reference_bundle.py (github.com/sr320/AREE).
 from __future__ import annotations
 
 import gzip
-import hashlib
 import json
 import os
 import re
@@ -36,6 +35,7 @@ from pathlib import Path
 
 import yaml
 
+from whale.checksums import md5_file, sha256_file
 from whale.net import get_text
 
 NCBI_GENOMES_BASE = "https://ftp.ncbi.nlm.nih.gov/genomes/all"
@@ -134,22 +134,6 @@ def _http_download(url: str, dest: Path) -> None:
         download(url, dest)
     except MirrorError as exc:
         raise ReferenceError(f"download failed: {exc}") from None
-
-
-def _hash(path: Path, algo: str) -> str:
-    h = hashlib.new(algo)
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def md5_file(path: Path) -> str:
-    return _hash(path, "md5")
-
-
-def sha256_file(path: Path) -> str:
-    return _hash(path, "sha256")
 
 
 def _decompress(src: Path, dest: Path) -> None:
