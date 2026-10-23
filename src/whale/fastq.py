@@ -38,6 +38,8 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+from whale.net import get_text
+
 TIMEOUT = 120
 CHUNK = 1 << 20
 RETRIES = 4
@@ -132,8 +134,7 @@ def load_ledger(url: str, get=None) -> dict[str, dict] | None:
 
 
 def _http_get_text(url: str) -> str:
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as resp:  # noqa: S310 - data host from data_host.yaml
-        return resp.read().decode()
+    return get_text(url, timeout=TIMEOUT)
 
 
 def apply_mirror(files: list[ManifestFile], ledger: dict[str, dict] | None, base_url: str) -> tuple[list[ManifestFile], dict]:

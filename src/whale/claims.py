@@ -10,7 +10,11 @@ opened as a draft pull request against main. Pushing the branch is the claim:
 two machines racing for one study push different commits to the same branch
 name and git rejects the second, so the loser stops before downloading
 anything. Before pushing, `start_study` also refuses a study that is already
-registered on main or already claimed by a pushed `study/` branch.
+registered on main or already claimed by a pushed `study/` branch. That check
+cannot see a claim pushed a moment later under a different branch name (the
+same accession under another study_id, or the same study_id under another
+accession), so `start_study` looks again after its push and reports any such
+rival, and the study PR's scope check fails until one of the two is released.
 
 Each branch carries data/studies/<STUDY_ID>/status.yaml (or, for a part,
 data/studies/<STUDY_ID>/parts/<PART>/status.yaml): which machine and profile
@@ -25,6 +29,7 @@ Adapted from AREE's intake/study_claims.py (github.com/sr320/AREE).
 """
 from __future__ import annotations
 
+import contextlib
 import getpass
 import re
 import shutil
@@ -129,6 +134,28 @@ def find_conflicts(accession: str, study_id: str, part: str | None,
         elif parsed[2] == part:
             problems.append(f"part {part} is already claimed by branch {branch}.")
     return problems
+
+
+def rival_claims(branch: str, claimed: list[str]) -> list[str]:
+    """Other study branches holding the same study under a different branch name.
+
+    A rival claims the same accession under another study_id, or (both being
+    whole-study claims) the same study_id under another accession. Parts of one
+    registered study are not rivals of each other.
+    """
+    own = parse_branch(branch)
+    if own is None:
+        return []
+    accession, study_id, part = own
+    rivals = []
+    for other in claimed:
+        parsed = parse_branch(other)
+        if parsed is None or other == branch:
+            continue
+        if (parsed[0] == accession and parsed[1] != study_id) or \
+                (parsed[1] == study_id and part is None and parsed[2] is None):
+            rivals.append(other)
+    return sorted(rivals)
 
 
 # --- files a claim writes ----------------------------------------------------
@@ -290,7 +317,8 @@ def start_study(accession: str, study_id: str, *, repo, profile: str, part: str 
                 open_pr: bool = True) -> dict:
     """Create the study branch in its own worktree, commit the stubs, and claim it.
 
-    Returns {branch, worktree, files, linked, pushed, pr_url}.
+    Returns {branch, worktree, files, linked, pushed, pr_url, rivals}; `rivals` are
+    other branches found holding the same study right after the push (see rival_claims).
     """
     repo = Path(repo)
     if profile not in load_vocab(repo, "compute_profile"):
@@ -331,7 +359,7 @@ def start_study(accession: str, study_id: str, *, repo, profile: str, part: str 
     _run(["git", "commit", "--quiet", "-m", f"Claim {what} ({accession}) on {machine} [{profile}]"], worktree)
 
     result = {"branch": branch, "worktree": str(worktree), "files": sorted(files),
-              "linked": link_drives(repo, worktree), "pushed": False, "pr_url": None}
+              "linked": link_drives(repo, worktree), "pushed": False, "pr_url": None, "rivals": []}
     if not push:
         return result
     try:
@@ -343,6 +371,9 @@ def start_study(accession: str, study_id: str, *, repo, profile: str, part: str 
             f"  git worktree remove {worktree} && git branch -D {branch}"
         ) from None
     result["pushed"] = True
+    # If the listing fails the claim still stands; CI's scope check looks for rivals too.
+    with contextlib.suppress(ClaimError):
+        result["rivals"] = rival_claims(branch, remote_study_branches(remote, repo))
 
     if open_pr and shutil.which("gh"):
         body = (f"Claimed by `whale start-study` on **{machine}** (profile `{profile}`), {today}. "

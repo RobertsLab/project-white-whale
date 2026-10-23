@@ -199,3 +199,13 @@ def _bind(fn, **fixed):
     def wrapper(*args, **kwargs):
         return fn(*args, **{**fixed, **kwargs})
     return wrapper
+
+
+def test_download_failure_is_a_reference_error(tmp_path, monkeypatch):
+    import whale.mirror as mirror
+
+    def gone(url, dest, **kw):
+        raise mirror.MirrorError(f"{url}: gave up after 6 attempts (timed out)")
+    monkeypatch.setattr(mirror, "download", gone)
+    with pytest.raises(ReferenceError, match="gave up"):
+        ref._http_download("https://ftp.ncbi.nlm.nih.gov/x/genomic.fna.gz", tmp_path / "genomic.fna.gz")

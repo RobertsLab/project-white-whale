@@ -26,15 +26,18 @@ process BISMARK_GENOME_PREPARATION {
     """
 }
 
+// `align_args` carries the chemistry preset (--pbat for PBAT libraries) plus
+// params.bismark_align_args.
 process BISMARK_ALIGN {
     tag "${sample_id}"
     label 'process_high'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
-    publishDir "${params.outdir}/${params.study_id}/qc", mode: params.publish_mode, pattern: "*report.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*report.txt"
 
     input:
     tuple val(sample_id), path(reads)
     path genome_dir
+    val align_args
 
     output:
     tuple val(sample_id), path("${sample_id}.bam"), emit: bam
@@ -47,7 +50,7 @@ process BISMARK_ALIGN {
     // Each Bismark instance runs ~3 bowtie2 threads; --multicore = cpus / 3.
     def multicore = Math.max(1, (task.cpus as int) / 3 as int)
     """
-    bismark --genome ${genome_dir} --multicore ${multicore} --temp_dir . ${params.bismark_align_args} \\
+    bismark --genome ${genome_dir} --multicore ${multicore} --temp_dir . ${align_args} \\
         --basename ${sample_id} ${input}
     mv ${sample_id}*.bam ${sample_id}.bam
     printf 'BISMARK_ALIGN:\\n  bismark: "%s"\\n' "\$(bismark --version | grep -Eo 'v[0-9.]+' | head -1)" > versions.yml
@@ -64,7 +67,7 @@ process BISMARK_DEDUPLICATE {
     tag "${sample_id}"
     label 'process_medium'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
-    publishDir "${params.outdir}/${params.study_id}/qc", mode: params.publish_mode, pattern: "*report.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*report.txt"
 
     input:
     tuple val(sample_id), path(bam)
@@ -89,8 +92,8 @@ process BISMARK_METHYLATION_EXTRACTOR {
     tag "${sample_id}"
     label 'process_high'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
-    publishDir "${params.outdir}/${params.study_id}/qc", mode: params.publish_mode, pattern: "*.txt"
-    publishDir "${params.outdir}/${params.study_id}/cpg", mode: params.publish_mode, pattern: "*.cov.gz"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/cpg", mode: params.publish_mode, pattern: "*.cov.gz"
 
     input:
     tuple val(sample_id), path(bam)

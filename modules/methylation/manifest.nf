@@ -3,7 +3,7 @@
 process MANIFEST {
     label 'process_low'
     container 'quay.io/biocontainers/python:3.12.12'
-    publishDir "${params.outdir}/${params.study_id}", mode: 'copy'
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}", mode: 'copy'
 
     input:
     path versions, stageAs: "versions*.yml"

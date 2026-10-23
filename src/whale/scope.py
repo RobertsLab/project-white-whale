@@ -17,7 +17,7 @@ Adapted from AREE's validation/study_scope.py (github.com/sr320/AREE).
 """
 from __future__ import annotations
 
-from whale.claims import accessions_in, config_name, parse_branch
+from whale.claims import accessions_in, config_name, parse_branch, rival_claims
 
 
 def owned(study_id: str, part: str | None) -> tuple[set[str], str, str | None]:
@@ -33,12 +33,14 @@ def owned(study_id: str, part: str | None) -> tuple[set[str], str, str | None]:
 
 
 def check_scope(branch: str, changed: list[str], study: dict | None,
-                registered: dict[str, set[str]]) -> tuple[list[str], list[str]]:
+                registered: dict[str, set[str]],
+                claimed: list[str] | None = None) -> tuple[list[str], list[str]]:
     """(errors, warnings) for a study PR.
 
     `changed` are paths changed relative to the base, `study` is the parsed
     study YAML (from the branch for a whole-study claim, from the base for a
-    part; None if missing), and `registered` maps study_id -> accessions on the base.
+    part; None if missing), `registered` maps study_id -> accessions on the base,
+    and `claimed` lists the study branches on the remote (None if unknown).
     """
     parsed = parse_branch(branch)
     if parsed is None:
@@ -51,6 +53,11 @@ def check_scope(branch: str, changed: list[str], study: dict | None,
         p for p in changed
         if p not in files and not (p.startswith(prefix) and not (excluded and p.startswith(excluded)))
     )
+    rivals = rival_claims(branch, claimed or [])
+    if rivals:
+        errors.append("the same study is also claimed by " + ", ".join(rivals) + "; two machines "
+                      "claimed it at once. Keep one claim and `whale release-study` the other.")
+
     if outside:
         errors.append(f"changes files outside {study_id}{f' part {part}' if part else ''}'s own paths; "
                       "move these to a separate PR:\n    " + "\n    ".join(outside))
