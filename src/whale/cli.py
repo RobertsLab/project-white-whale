@@ -278,6 +278,88 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
     click.echo(f"\nWrote {target}/reference_provenance.json")
 
 
+@main.command("mirror-fastq")
+@click.option("--accession", "accessions", multiple=True,
+              help="BioProject to mirror (repeatable; default: every backlog entry, in backlog order).")
+@click.option("--dest", default=None, type=click.Path(file_okay=False),
+              help="Mirror into this local directory instead of the data host's upload_target.")
+@click.option("--staging", default=None, type=click.Path(file_okay=False),
+              help="Where files are downloaded and checked before upload "
+                   "(default: $WHALE_MIRROR_STAGING, else $WHALE_RAW/.mirror-staging).")
+@click.option("--jobs", default=4, show_default=True, help="Files downloaded at once.")
+@click.option("--limit-rate", "rate_mb", default=None, type=float, help="Total download rate cap, MB/s.")
+@click.option("--max-gb", default=None, type=float,
+              help="Stop starting new files once this much has been queued in this run.")
+@click.option("--library-strategy", "library_strategies", multiple=True,
+              help="For unregistered projects: mirror runs with this ENA library_strategy (repeatable; "
+                   "default the methylation strategies). Registered studies use their fastq_manifest.tsv.")
+@click.option("--no-verify-remote", is_flag=True, help="Skip re-computing each MD5 on the data host.")
+@click.option("--plan", "plan_only", is_flag=True, help="Show what is mirrored and what is left; download nothing.")
+def mirror_fastq_cmd(accessions, dest, staging, jobs, rate_mb, max_gb, library_strategies,
+                     no_verify_remote, plan_only):
+    """Prefetch backlog FASTQ from ENA to the data host (gannet), MD5-verified and resumable.
+
+    Safe to rerun, e.g. nightly from cron on raven: files already mirrored with
+    ENA's current MD5 are skipped, partial downloads resume, and a second copy
+    started while one is running exits at once.
+    """
+    from whale.mirror import (
+        LocalStore,
+        MirrorError,
+        SSHStore,
+        backlog_accessions,
+        default_staging,
+        load_data_host,
+        mirror,
+        plan_mirror,
+    )
+
+    repo = _repo()
+    accs = list(accessions) or backlog_accessions(repo)
+    try:
+        store = LocalStore(Path(dest)) if dest else SSHStore(load_data_host(repo)["upload_target"])
+        if plan_only:
+            plans = plan_mirror(repo, accs, store, library_strategies=list(library_strategies) or None)
+        else:
+            res = mirror(repo, accs, store, staging=Path(staging) if staging else default_staging(repo),
+                         jobs=jobs, rate_mb=rate_mb, max_gb=max_gb, verify_remote=not no_verify_remote,
+                         library_strategies=list(library_strategies) or None, log=click.echo)
+            if res["locked"]:
+                click.echo("Another mirror-fastq is running with this staging directory; nothing to do.")
+                return
+            plans = res["plans"]
+    except MirrorError as exc:
+        raise click.ClickException(str(exc)) from None
+
+    just_done = set() if plan_only else set(res["mirrored"])
+    rows = []
+    for p in plans:
+        todo = [f for f in p["todo"] if f"{p['accession']}/{f['file']}" not in just_done]
+        if p.get("error"):
+            rows.append({"accession": p["accession"], "files": "", "GB": "", "mirrored": "", "left GB": "",
+                         "state": f"error: {p['error'][:60]}"})
+            continue
+        total = sum(int(f["bytes"] or 0) for f in p["files"]) / 1e9
+        left = sum(int(f["bytes"] or 0) for f in todo) / 1e9
+        done = len(p["files"]) - len(todo)
+        rows.append({"accession": p["accession"], "files": len(p["files"]), "GB": f"{total:.1f}",
+                     "mirrored": done, "left GB": f"{left:.1f}",
+                     "state": "complete" if p["files"] and not todo else ("no files" if not p["files"] else "")})
+    if plan_only:
+        click.echo(f"Mirror at {store.label}\n")
+    else:
+        click.echo(f"\nMirrored {len(res['mirrored'])} file(s), {res['bytes'] / 1e9:.1f} GB this run.\n")
+    click.echo(_table(rows, ["accession", "files", "GB", "mirrored", "left GB", "state"]))
+    for p in plans:
+        for n in p.get("notes", []):
+            click.echo(click.style(f"  {p['accession']}: {n}", fg="yellow"))
+    if not plan_only and res["failed"]:
+        click.echo(click.style(f"\n{len(res['failed'])} failed:", fg="red"))
+        for what, why in res["failed"]:
+            click.echo(click.style(f"  {what}: {why}", fg="red"))
+        sys.exit(1)
+
+
 # --- claims ------------------------------------------------------------------
 
 @main.command("start-study")

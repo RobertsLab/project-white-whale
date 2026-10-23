@@ -15,3 +15,4 @@ upload_target: sr320@gannet.fish.washington.edu:/volume1/v1_web/project-white-wh
 layout:
   methylomes: "methylomes/<STUDY_ID>/<sample_id>/"
   references: "reference/<ASSEMBLY>/"
+  raw: "raw/<ACCESSION>/"   # FASTQ mirrored from ENA; ledger raw/<ACCESSION>/mirror_manifest.tsv (docs/fastq_mirror.md)
