@@ -1,0 +1,35 @@
+# Methylation assay chemistries.
+#
+# `tier` decides what a sample may be compared with. Base-resolution data gives
+# a per-CpG methylation proportion and can enter the shared matrices; enrichment
+# data gives relative read density over methylated regions and is processed and
+# shown, but never pooled with base-resolution samples (PLAN.md §4.1).
+version: "0.1.0"
+terms:
+  wgbs:
+    label: Whole-genome bisulfite sequencing
+    tier: base_resolution
+    deduplicate: true
+  emseq:
+    label: Enzymatic methyl-seq (EM-seq)
+    tier: base_resolution
+    deduplicate: true
+    notes: Often deposited in SRA as library_strategy "Bisulfite-Seq"; read the library protocol.
+  pbat:
+    label: Post-bisulfite adaptor tagging
+    tier: base_resolution
+    deduplicate: true
+    notes: Non-directional; Bismark needs --pbat or --non_directional.
+  rrbs:
+    label: Reduced-representation bisulfite sequencing
+    tier: base_resolution
+    deduplicate: false
+    notes: MspI-anchored reads share start positions, so duplicates are not removed. Covers a biased CpG subset; flag rrbs_subset in comparisons.
+  medip:
+    label: Methylated DNA immunoprecipitation sequencing
+    tier: enrichment
+    deduplicate: true
+  mbd:
+    label: Methyl-CpG binding domain enrichment sequencing
+    tier: enrichment
+    deduplicate: true

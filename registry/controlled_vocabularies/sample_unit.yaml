@@ -1,0 +1,8 @@
+# What one sequencing library represents. Pooling changes what between-library
+# variance means, so it is recorded rather than inferred later.
+version: "0.1.0"
+terms:
+  individual: {label: One animal}
+  pool: {label: DNA of several animals pooled (record pool_size)}
+  tissue_pool: {label: Several tissues of one animal pooled}
+  unknown: {label: Not stated by the deposit or the paper}

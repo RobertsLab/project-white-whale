@@ -1,0 +1,19 @@
+# The standardized class of a study's experimental factor. The original wording
+# is always kept beside it in the study YAML (`factor_original`).
+version: "0.1.0"
+terms:
+  none: {label: No treatment (baseline or natural variation)}
+  temperature: {label: Temperature}
+  ocean_acidification: {label: Ocean acidification / pH / pCO2}
+  salinity: {label: Salinity}
+  hypoxia: {label: Hypoxia}
+  pathogen: {label: Pathogen challenge or disease outbreak}
+  pesticide_or_pollutant: {label: Pesticide or pollutant exposure}
+  nutrition: {label: Nutritional limitation}
+  multi_stressor: {label: More than one stressor combined}
+  development: {label: Developmental time series}
+  age: {label: Age classes}
+  genotype_or_population: {label: Population, family, line or ploidy contrast}
+  sex: {label: Sex contrast}
+  transgenerational: {label: Parental or grandparental exposure}
+  other: {label: Other (describe in the study YAML)}

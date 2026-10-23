@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/RobertsLab/project-white-whale/schemas/study.schema.json",
+  "title": "White Whale study registration",
+  "description": "One public DNA-methylation study of Crassostrea / Magallana gigas. Controlled-vocabulary fields are checked against registry/controlled_vocabularies/ by `whale validate-study`; this schema checks shape only. Unknown values are null, never guessed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "study_id", "accessions", "citation", "species", "original_assembly",
+    "chemistry", "library_layout", "platform", "samples", "paired_rnaseq",
+    "factors", "data_availability", "quality_flags", "limitations", "provenance"
+  ],
+  "properties": {
+    "study_id": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*[0-9]{4}(_[A-Z0-9]+)+$",
+      "description": "FIRSTAUTHOR<YEAR>_<SHORT_TOPIC>[_<CHEMISTRY>], e.g. WANG2020_TIDAL_HEAT_WGBS. Reuse AREE's study_id when AREE has registered the same deposit."
+    },
+    "aree_study_id": {
+      "type": ["string", "null"],
+      "description": "The same study's id in AREE, if registered there."
+    },
+    "accessions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bioproject"],
+      "properties": {
+        "bioproject": {"type": ["string", "null"], "pattern": "^PRJ[NED][AB][0-9]+$"},
+        "sra": {"type": ["string", "null"]},
+        "ena": {"type": ["string", "null"]},
+        "geo": {"type": ["string", "null"]},
+        "doi": {"type": ["string", "null"]},
+        "pmid": {"type": ["string", "null"], "pattern": "^[0-9]+$"},
+        "other": {"type": ["string", "null"]}
+      }
+    },
+    "citation": {"type": ["string", "null"]},
+    "species": {
+      "type": "string",
+      "enum": ["Magallana gigas", "Crassostrea gigas"],
+      "description": "As deposited. NCBI treats both as taxid 29159."
+    },
+    "population": {"type": ["string", "null"]},
+    "original_assembly": {
+      "type": ["string", "null"],
+      "description": "The assembly the authors mapped to, as an accession or name. White Whale reprocesses every study against the default assembly in data/reference/genome_assemblies.yaml regardless."
+    },
+    "chemistry": {"type": ["string", "null"]},
+    "library_layout": {"type": ["string", "null"], "enum": ["paired", "single", "mixed", null]},
+    "platform": {"type": ["string", "null"]},
+    "samples": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n_runs", "n_libraries", "sample_unit", "tissues", "life_stages"],
+      "properties": {
+        "n_runs": {"type": ["integer", "null"], "minimum": 1},
+        "n_libraries": {"type": ["integer", "null"], "minimum": 1},
+        "sample_unit": {"type": ["string", "null"]},
+        "pool_size": {"type": ["integer", "null"], "minimum": 2},
+        "tissues": {"type": "array", "items": {"type": "string"}},
+        "life_stages": {"type": "array", "items": {"type": "string"}},
+        "sexes_recorded": {"type": ["boolean", "null"]},
+        "ploidy": {"type": "array", "items": {"type": "string", "enum": ["diploid", "triploid", "tetraploid", "mixed"]}}
+      }
+    },
+    "paired_rnaseq": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relationship"],
+      "properties": {
+        "relationship": {"type": "string"},
+        "bioproject": {"type": ["string", "null"], "pattern": "^PRJ[NED][AB][0-9]+$"},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "factors": {
+      "type": "array",
+      "description": "The design factors of the study, each with its original wording and a standardized class. Within-study contrasts for §6.3 are named here.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["factor_id", "factor_original", "factor_standardized", "levels"],
+        "properties": {
+          "factor_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "factor_original": {"type": "string"},
+          "factor_standardized": {"type": "string"},
+          "levels": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "reference_level": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "goals": {
+      "type": "array",
+      "items": {"type": "integer", "enum": [1, 2]},
+      "uniqueItems": true,
+      "description": "Which project goals this study can inform. 2 requires paired RNA-seq."
+    },
+    "data_availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_data_available", "fastq_size_gb"],
+      "properties": {
+        "raw_data_available": {"type": ["boolean", "null"]},
+        "fastq_size_gb": {"type": ["number", "null"], "minimum": 0},
+        "published_dml_dmr_tables": {"type": ["boolean", "null"]},
+        "access_notes": {"type": ["string", "null"]}
+      }
+    },
+    "quality_flags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "limitations": {"type": ["string", "null"]},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registered_by", "date_registered"],
+      "properties": {
+        "registered_by": {"type": "string"},
+        "date_registered": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "curation_notes": {"type": ["string", "null"]},
+        "source_links": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+version: "0.1.0"
+terms:
+  pooled_libraries: {label: Libraries pool DNA of several animals}
+  shared_biosample: {label: Several runs share one BioSample; design read from run-level fields}
+  design_from_paper: {label: Sample design taken from the paper or the authors' table, not the deposit}
+  no_spike_in: {label: No unmethylated spike-in; conversion estimated from non-CpG context}
+  low_replication: {label: Fewer than three libraries per group}
+  confounded_design: {label: The factor of interest is confounded with another (one population per class, batch = treatment, ...)}
+  rrbs_subset: {label: Covers only the RRBS CpG subset}
+  enrichment_assay: {label: Enrichment-based assay; not comparable to base-resolution data}
+  mixed_read_lengths: {label: Read length or platform differs between libraries}
+  same_animals_as_other_study: {label: Same animals as another registered study; not independent}
+  sex_unknown: {label: Sex of animals not recorded}
+  low_mapping: {label: Mapping efficiency below the QC gate on some libraries}
+  excluded_samples: {label: Some libraries excluded; reasons in curation_notes}

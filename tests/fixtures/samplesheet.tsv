@@ -1,0 +1,3 @@
+sample_id	run_accession	fastq_1	fastq_2
+S1	SRR0000001	S1_1.fastq.gz	S1_2.fastq.gz
+S2	SRR0000002	S2_1.fastq.gz	

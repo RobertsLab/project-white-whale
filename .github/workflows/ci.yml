@@ -6,30 +6,63 @@ on:
   pull_request:
 
 jobs:
-  test:
+  python:
+    name: Tests, lint, registry validation
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.12"]
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install test tools
-        run: python -m pip install --upgrade pip pytest ruff
-
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
       - name: Lint
-        run: ruff check code
+        run: ruff check src tests
+      - name: Tests
+        run: pytest -q
+      - name: Validate every study registration and status file
+        run: |
+          whale validate-study
+          whale validate-status
+      - name: Rebuild the registry index
+        run: whale build-registry
 
-      - name: Byte-compile
-        run: python -m py_compile code/download_methylation_data.py
+  study-scope:
+    name: Study PR stays inside its own files
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'study/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Check changed paths, study_id and accession
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: whale check-study-scope --branch "$HEAD_REF" --base "origin/$BASE_REF"
 
-      - name: Shell syntax
-        run: bash -n code/install_dependencies.sh
-
-      - name: Unit and integration tests (no network)
-        run: python -m pytest code/tests -q
+  nextflow:
+    name: Methylation workflow (stub run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install Nextflow
+        env:
+          NXF_VER: 26.04.7
+        run: |
+          curl -s https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Run the DAG on the test fixtures
+        run: nextflow run workflows/methylation -profile test -stub
+      - name: Check the run manifest
+        run: |
+          test -s results/test/TEST2026_FIXTURE_WGBS/run_manifest.json
+          ls results/test/TEST2026_FIXTURE_WGBS/cpg/S1.CpG_report.merged_CpG_evidence.cov.gz
