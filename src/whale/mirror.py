@@ -353,12 +353,14 @@ class _Lock:
 
     def __enter__(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.fh = open(self.path, "w")  # noqa: SIM115 - held for the run
+        # Append mode, so a run that finds the lock taken leaves the holder's PID in the file.
+        self.fh = open(self.path, "a")  # noqa: SIM115 - held for the run
         try:
             fcntl.flock(self.fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             self.fh.close()
             return False
+        self.fh.truncate(0)
         self.fh.write(f"{os.getpid()}\n")
         self.fh.flush()
         return True
