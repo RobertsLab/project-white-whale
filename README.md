@@ -17,8 +17,8 @@ assay family.
 
 > **Status: Phase 1 under way.** The registry, validation, the claim system
 > for running studies on several machines, the compute profiles, a
-> stub-tested methylation workflow, the ENA sample-sheet generator and the
-> reference-bundle fetcher are in place. No study has been registered or run yet. See [PLAN.md §9](PLAN.md#9-phases).
+> stub-tested methylation workflow, the ENA sample-sheet generator, the
+> reference-bundle fetcher and the FASTQ downloader are in place. No study has been registered or run yet. See [PLAN.md §9](PLAN.md#9-phases).
 
 ## Install
 
@@ -44,8 +44,8 @@ whale backlog                       # what is free, claimed (where, how far) or 
 whale start-study --accession PRJNA682817 --study-id ROBERTS2022_PH_PLOIDY_WGBS --profile raven
 cd ../white-whale-ROBERTS2022_PH_PLOIDY_WGBS
 whale fetch-samplesheet --bioproject PRJNA682817 --condition-attribute ploidy --condition-attribute water_pH
-# ...fill the study YAML, stage FASTQ...
-whale set-status --stage fastq_staged --note "105 GB, MD5 ok"
+# ...fill the study YAML...
+whale fetch-fastq --mark-staged      # from the gannet mirror (else ENA), MD5-verified; stage -> fastq_staged
 nextflow run workflows/methylation -c config/ROBERTS2022_PH_PLOIDY_WGBS.config -profile raven
 whale set-status --stage called
 whale claims                        # every claimed study, its machine and stage
@@ -69,6 +69,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale release-study --branch <b> --reason …` | Give a claim up so another machine can take it |
 | `whale fetch-samplesheet --bioproject <PRJ…> --condition-attribute <a> […] [--show-attributes]` | Sample sheet, FASTQ manifest (ENA MD5s) and provenance from the deposited metadata; downloads nothing |
 | `whale fetch-reference [--rnaseq] [--plan] [--check]` | Fetch, MD5-verify and derive the reference bundle (genome, GTF, chrom.sizes, feature BEDs) |
+| `whale fetch-fastq [--dry-run] [--jobs N] [--run R] [--mark-staged]` | Stage a study's FASTQ: from the gannet mirror where it has the files, ENA otherwise; resumable, MD5-verified, recorded in `fastq_staged.tsv` |
 | `whale mirror-fastq [--accession <PRJ…>] [--plan] [--jobs N] [--max-gb G]` | Prefetch backlog FASTQ to gannet: NCBI `.sra` converted on raven (ENA as fallback), verified and resumable |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |

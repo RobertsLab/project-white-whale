@@ -123,7 +123,20 @@ without `--max-gb`.
 
 ## Using the mirror
 
-A study claimed for raven or klone can stage its FASTQ from
-`raw/<ACCESSION>/` on gannet (rsync or HTTPS) instead of ENA, checking each
-file against the `md5` in `raw/<ACCESSION>/mirror_manifest.tsv` (step 6 of
-[adding a study](adding_a_study.md)).
+`whale fetch-fastq` (step 6 of [adding a study](adding_a_study.md)) uses the
+mirror by default. For the study's accession it reads
+`raw/<ACCESSION>/mirror_manifest.tsv` from `url_base` in
+`data/data_host.yaml`, and for each file in the study's `fastq_manifest.tsv`:
+
+- **mirrored against the manifest's current ENA MD5:** copied from gannet over
+  HTTPS (resumable) and checked against the ledger's `md5`;
+- **not mirrored, or mirrored against an older ENA MD5** (ENA reprocessed the
+  run since): downloaded from ENA and checked against ENA's MD5;
+- **mirror copy fails** (download or MD5): deleted and fetched from ENA instead.
+
+A partial file is only resumed from the source it was started from. Files
+already verified from either source are kept. The study's
+`fastq_staged.tsv` records, per file, the MD5 actually checked, the
+`source` (`mirror` or `ena`) and ENA's MD5. `--source mirror` refuses to
+start unless every file is usable from the mirror; `--source ena` ignores it;
+`--mirror-url` points at another copy.
