@@ -77,6 +77,8 @@ TIMEOUT = 120
 CHUNK = 1 << 20
 RETRIES = 5
 BACKOFF = [10, 30, 60, 120, 300]
+LEDGER_LOCK = ".ledger.lock"     # a directory beside the ledger: mkdir is atomic everywhere
+LEDGER_LOCK_WAIT = 300           # seconds to wait for another writer's lock
 
 _sleep = time.sleep
 
@@ -153,6 +155,27 @@ def read_ledger_text(text: str) -> dict[str, dict]:
     return {r["file"]: r for r in csv.DictReader(io.StringIO(text), delimiter="\t")}
 
 
+def _lock_held(path: str, wait: int) -> MirrorError:
+    return MirrorError(f"the ledger lock {path} was held for {wait}s. If no mirror-fastq is "
+                       "writing this accession (on any machine), remove that directory and re-run.")
+
+
+def record_in_ledger(store, acc: str, row: dict, staging: Path, *, wait: int = LEDGER_LOCK_WAIT) -> None:
+    """Add one row to the accession's ledger on the store, keeping rows others wrote meanwhile.
+
+    The ledger is rewritten whole, so two writers (two machines, or two staging
+    directories) could each drop the other's rows. The store's ledger lock is
+    held across re-reading the current ledger, adding the row and writing it.
+    """
+    store.lock_ledger(acc, wait)
+    try:
+        rows = store.read_ledger(acc)
+        rows[row["file"]] = row
+        store.write_ledger(acc, rows, staging)
+    finally:
+        store.unlock_ledger(acc)
+
+
 def _ledger_text(rows: dict[str, dict]) -> str:
     buf = io.StringIO()
     w = csv.DictWriter(buf, fieldnames=LEDGER_COLUMNS, delimiter="\t", lineterminator="\n",
@@ -179,6 +202,22 @@ class LocalStore:
     def read_ledger(self, acc: str) -> dict[str, dict]:
         p = self._dir(acc) / LEDGER_NAME
         return read_ledger_text(p.read_text()) if p.exists() else {}
+
+    def lock_ledger(self, acc: str, wait: int) -> None:
+        lock = self._dir(acc) / LEDGER_LOCK
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        deadline = time.monotonic() + wait
+        while True:
+            try:
+                lock.mkdir()
+                return
+            except FileExistsError:
+                if time.monotonic() >= deadline:
+                    raise _lock_held(str(lock), wait) from None
+                _sleep(1)
+
+    def unlock_ledger(self, acc: str) -> None:
+        (self._dir(acc) / LEDGER_LOCK).rmdir()
 
     def write_ledger(self, acc: str, rows: dict[str, dict], staging: Path) -> None:
         d = self._dir(acc)
@@ -230,6 +269,22 @@ class SSHStore:
     def read_ledger(self, acc: str) -> dict[str, dict]:
         p = shlex.quote(f"{self._dir(acc)}/{LEDGER_NAME}")
         return read_ledger_text(self._ssh(f"if [ -f {p} ]; then cat {p}; fi"))
+
+    def lock_ledger(self, acc: str, wait: int) -> None:
+        d, lock = shlex.quote(self._dir(acc)), shlex.quote(f"{self._dir(acc)}/{LEDGER_LOCK}")
+        # One round trip: wait on the host itself; exit 75 if still held after `wait` s.
+        proc = subprocess.run(
+            ["ssh", "-o", "BatchMode=yes", self.host,
+             f"mkdir -p {d} || exit 1; i=0; until mkdir {lock} 2>/dev/null; do i=$((i+1)); "
+             f"[ $i -ge {int(wait)} ] && exit 75; sleep 1; done"],
+            capture_output=True, text=True)
+        if proc.returncode == 75:
+            raise _lock_held(f"{self.host}:{self._dir(acc)}/{LEDGER_LOCK}", wait)
+        if proc.returncode != 0:
+            raise MirrorError(f"ssh {self.host} failed: {proc.stderr.strip() or proc.returncode}")
+
+    def unlock_ledger(self, acc: str) -> None:
+        self._ssh(f"rmdir {shlex.quote(f'{self._dir(acc)}/{LEDGER_LOCK}')}")
 
     def write_ledger(self, acc: str, rows: dict[str, dict], staging: Path) -> None:
         local = Path(staging) / acc / LEDGER_NAME
@@ -550,7 +605,6 @@ def mirror(repo: Path, accessions: list[str], store, *, staging: Path, jobs: int
                 if budget is not None:
                     budget -= sum(int(f["bytes"] or 0) for f in fs)
 
-        ledgers = {p["accession"]: dict(p["ledger"]) for p in plans}
         ledger_lock = threading.Lock()
         throttle = Throttle(rate_mb * 1e6 if rate_mb else None)
 
@@ -562,8 +616,7 @@ def mirror(repo: Path, accessions: list[str], store, *, staging: Path, jobs: int
                 if remote != row["md5"]:
                     raise MirrorError(f"MD5 on {store.label} is {remote}, not {row['md5']}")
             with ledger_lock:
-                ledgers[acc][row["file"]] = {**row, "bytes": str(size), "mirrored_on": today}
-                store.write_ledger(acc, ledgers[acc], staging)
+                record_in_ledger(store, acc, {**row, "bytes": str(size), "mirrored_on": today}, staging)
             return size
 
         def from_ena(acc: str, f: dict) -> int:
