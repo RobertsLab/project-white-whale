@@ -33,3 +33,6 @@ docs/_site/
 
 .DS_Store
 .claude/
+
+# Dashboard data, rebuilt by `whale build-dashboard` / the Pages workflow
+site/data.json
