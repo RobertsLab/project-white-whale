@@ -1,62 +1,101 @@
-# Study registration template. `whale start-study` copies this to
-# registry/studies/<STUDY_ID>.yaml on the study branch and fills study_id, the
-# accession and provenance. Fill the rest from the deposit (ENA/SRA metadata)
-# first and the paper second; leave a value null when neither states it.
-# Check with `whale validate-study registry/studies/<STUDY_ID>.yaml`.
-# See docs/adding_a_study.md.
+# WGBS of ctenidia (gill) from diploid and triploid adult Pacific oysters held
+# at two pH levels, University of Hawaii at Hilo, August 2020 (Roberts Lab).
+#
+# Design from the deposit, read 2026-10-23: BioProject PRJNA682817 ("A study to
+# explore differences in DNA methylation between diploid and triploid adult
+# Crassostrea gigas exposed to two different pH treatments") and the 24
+# BioSamples' attributes (ploidy, water_pH, replicate, tissue, collection
+# date). 2 ploidies x 2 pH, 6 animals each, one library per animal. No
+# publication is linked to the BioProject.
+#
+# First study run on klone's checkpoint partition (PLAN.md §9, Phase 2).
 
 study_id: ROBERTS2022_PH_PLOIDY_WGBS
 aree_study_id: null
 
 accessions:
   bioproject: "PRJNA682817"
-  sra: null
+  sra: "SRR13207050-SRR13207073"
   ena: null
   geo: null
   doi: null
   pmid: null
-  other: null
+  other: "24 BioSamples, one per animal (replicate codes 2NH05-3NL12)"
 
-citation: null
+citation: "Roberts Lab, University of Washington (2020). Whole genome bisulfite sequencing (WGBS) of diploid and triploid Crassostrea gigas ctenidia exposed to different pH levels. NCBI BioProject PRJNA682817. No publication linked as of 2026-10-23."
 species: "Magallana gigas"
-population: null
+population: "Diploid and triploid adults provided by Maria Haws, University of Hawaii at Hilo (BioSample biomaterial provider); collected 2020-08-15/16, USA: Hawaii. Hatchery, family and how triploids were produced are not stated."
 original_assembly: null
 
-chemistry: null          # assay_chemistry.yaml: wgbs | emseq | pbat | rrbs | medip | mbd
-library_layout: null     # paired | single | mixed
-platform: null
+chemistry: wgbs
+library_layout: paired
+platform: "Illumina NovaSeq 6000, paired-end; 37-83 M read pairs per library (mean 52 M)"
 
 samples:
-  n_runs: null
-  n_libraries: null
-  sample_unit: null      # sample_unit.yaml
+  n_runs: 24
+  n_libraries: 24
+  sample_unit: individual
   pool_size: null
-  tissues: []            # tissue.yaml
-  life_stages: []        # life_stage.yaml
-  sexes_recorded: null
-  ploidy: []
+  tissues: [gill]
+  life_stages: [adult]
+  sexes_recorded: false
+  ploidy: [diploid, triploid]
 
 paired_rnaseq:
-  relationship: unknown  # rnaseq_relationship.yaml
+  relationship: none
   bioproject: null
-  notes: null
+  notes: "No RNA-seq linked to PRJNA682817. ENA searched 2026-10-23 for M. gigas RNA-seq collected in August 2020: only PRJNA869216 ('Transcriptome and microbiota of oysters'), a different project. Revisit if the lab deposited RNA-seq of these animals elsewhere."
 
-# One entry per design factor; factor_standardized is a stressor.yaml term.
-factors: []
+factors:
+  - factor_id: ploidy
+    factor_original: "ploidy: diploid vs triploid (BioSample attribute)"
+    factor_standardized: genotype_or_population
+    levels: [diploid, triploid]
+    reference_level: diploid
+  - factor_id: ph
+    factor_original: "water_pH: 8.2 vs 7.7 (BioSample attribute); exposure duration and how pH was manipulated not stated in the deposit"
+    factor_standardized: ocean_acidification
+    levels: ["8.2", "7.7"]
+    reference_level: "8.2"
 
-goals: []
+goals: [1]
 
 data_availability:
-  raw_data_available: null
-  fastq_size_gb: null
-  published_dml_dmr_tables: null
-  access_notes: null
+  raw_data_available: true
+  fastq_size_gb: 145.2
+  published_dml_dmr_tables: false
+  access_notes: "Raw paired FASTQ for all 24 runs public in SRA/ENA (first public 2020-12-06). No processed methylation data deposited."
 
-quality_flags: []        # quality_flags.yaml
-limitations: null
+quality_flags:
+  - sex_unknown
+
+limitations: >
+  (1) Exposure details are not in the deposit: pH 7.7 vs 8.2 is recorded,
+  but not the duration, method (CO2 or acid), temperature, or whether the
+  low-pH and control animals shared a source population and tanks. (2) The
+  diploid and triploid animals' origin (hatchery, families, triploid
+  induction method) is not stated, so ploidy may be confounded with family.
+  (3) Triploid genomes carry three copies of each chromosome; per-CpG
+  methylation proportions in triploids average three alleles against a
+  haploid reference, and allele-specific calls are not comparable with
+  diploids. (4) Sex is not recorded. (5) One tissue (ctenidia), one time
+  point. (6) No paired RNA-seq was found, so this study informs Goal 1 only.
 
 provenance:
   registered_by: "Steven Roberts"
   date_registered: "2026-10-23"
-  curation_notes: null
-  source_links: []
+  curation_notes: >
+    Claimed with `whale start-study --accession PRJNA682817 --study-id
+    ROBERTS2022_PH_PLOIDY_WGBS --profile klone --machine klone` from a lab
+    Mac; klone can push to GitHub and records its own progress. Sample sheet
+    generated with `whale fetch-samplesheet --bioproject PRJNA682817
+    --condition-attribute ploidy --condition-attribute water_pH --attribute
+    replicate --attribute tissue --attribute "collection date"`: 24 runs,
+    24 libraries, 24 BioSamples, 4 groups of 6 (condition values
+    diploid_8_2, diploid_7_7, triploid_8_2, triploid_7_7). The deposit's
+    tissue term "ctenidia" is recorded as gill. The deposit names no
+    publication; study_id year 2022 follows the backlog's working name, though
+    the data were collected in 2020 and released in 2020. No exclusions.
+  source_links:
+    - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA682817"
+    - "https://www.ebi.ac.uk/ena/browser/view/PRJNA682817"
