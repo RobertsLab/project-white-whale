@@ -3,7 +3,7 @@
 study_id: WANG2014_FIRST_METHYLOMES_WGBS
 accession: PRJNA173440
 part: null
-stage: registered
+stage: fastq_staged
 profile: raven
 machine: raven
 claimed_by: Steven Roberts
@@ -19,3 +19,8 @@ history:
   date: '2026-10-23'
   machine: raven
   note: YAML, sample sheet and manifest committed (from the Mac)
+- stage: fastq_staged
+  date: '2026-10-23'
+  machine: raven
+  note: 8 files, 39.2 GB from the gannet mirror (NCBI-converted), MD5 verified against
+    the mirror ledger
