@@ -20,6 +20,9 @@ def repo(tmp_path, repo_root, filled_study):
     """A copy of the registry with one study registered on main (WANG2020) and its status."""
     for rel in ("registry", "schemas"):
         shutil.copytree(repo_root / rel, tmp_path / rel)
+    # Only the study registered below: studies registered on the real main must not change the counts.
+    for path in (tmp_path / "registry" / "studies").glob("[!_]*.yaml"):
+        path.unlink()
     (tmp_path / "data" / "reference").mkdir(parents=True)
     (tmp_path / "registry" / "studies" / "WANG2020_TIDAL_HEAT_WGBS.yaml").write_text(yaml.safe_dump(filled_study))
     return tmp_path
