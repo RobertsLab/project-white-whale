@@ -1,0 +1,17 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: WANG2014_FIRST_METHYLOMES_WGBS
+accession: PRJNA173440
+part: null
+stage: claimed
+profile: raven
+machine: raven
+claimed_by: Steven Roberts
+claimed_on: '2026-10-23'
+nextflow_run: null
+notes: null
+history:
+- stage: claimed
+  date: '2026-10-23'
+  machine: raven
+  note: null

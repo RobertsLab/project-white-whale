@@ -1,0 +1,62 @@
+# Study registration template. `whale start-study` copies this to
+# registry/studies/<STUDY_ID>.yaml on the study branch and fills study_id, the
+# accession and provenance. Fill the rest from the deposit (ENA/SRA metadata)
+# first and the paper second; leave a value null when neither states it.
+# Check with `whale validate-study registry/studies/<STUDY_ID>.yaml`.
+# See docs/adding_a_study.md.
+
+study_id: WANG2014_FIRST_METHYLOMES_WGBS
+aree_study_id: null
+
+accessions:
+  bioproject: "PRJNA173440"
+  sra: null
+  ena: null
+  geo: null
+  doi: null
+  pmid: null
+  other: null
+
+citation: null
+species: "Magallana gigas"
+population: null
+original_assembly: null
+
+chemistry: null          # assay_chemistry.yaml: wgbs | emseq | pbat | rrbs | medip | mbd
+library_layout: null     # paired | single | mixed
+platform: null
+
+samples:
+  n_runs: null
+  n_libraries: null
+  sample_unit: null      # sample_unit.yaml
+  pool_size: null
+  tissues: []            # tissue.yaml
+  life_stages: []        # life_stage.yaml
+  sexes_recorded: null
+  ploidy: []
+
+paired_rnaseq:
+  relationship: unknown  # rnaseq_relationship.yaml
+  bioproject: null
+  notes: null
+
+# One entry per design factor; factor_standardized is a stressor.yaml term.
+factors: []
+
+goals: []
+
+data_availability:
+  raw_data_available: null
+  fastq_size_gb: null
+  published_dml_dmr_tables: null
+  access_notes: null
+
+quality_flags: []        # quality_flags.yaml
+limitations: null
+
+provenance:
+  registered_by: "Steven Roberts"
+  date_registered: "2026-10-23"
+  curation_notes: null
+  source_links: []
