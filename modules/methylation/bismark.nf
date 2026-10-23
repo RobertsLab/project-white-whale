@@ -1,10 +1,16 @@
 // Bismark genome preparation, alignment, deduplication and methylation
 // extraction. Container pins as used by AREE's methylation workflow.
 
+// Built once per assembly and kept (storeDir) as <index dir>/bismark_genome,
+// by default inside the reference bundle, so later runs on the machine reuse it
+// instead of spending hours rebuilding it. The index holds its own copy of the
+// FASTA (a symlink would break once the folder is moved there) and the FASTA's
+// SHA-256 in genome.sha256, which main.nf checks against the bundle.
 process BISMARK_GENOME_PREPARATION {
     tag "${fasta.simpleName}"
     label 'process_high'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
+    storeDir "${params.bismark_index_dir ?: "${params.reference_dir}/${params.genome_assembly}"}"
 
     input:
     path fasta
@@ -15,14 +21,16 @@ process BISMARK_GENOME_PREPARATION {
     script:
     """
     mkdir bismark_genome
-    ln -s ../${fasta} bismark_genome/
+    cp -L ${fasta} bismark_genome/${fasta.name}
+    sha256sum bismark_genome/${fasta.name} | cut -d' ' -f1 > bismark_genome/genome.sha256
     bismark_genome_preparation --parallel ${Math.max(1, (task.cpus as int) / 2 as int)} bismark_genome
     """
 
     stub:
     """
     mkdir -p bismark_genome/Bisulfite_Genome
-    ln -s ../${fasta} bismark_genome/
+    cp -L ${fasta} bismark_genome/${fasta.name}
+    sha256sum bismark_genome/${fasta.name} | cut -d' ' -f1 > bismark_genome/genome.sha256
     """
 }
 
