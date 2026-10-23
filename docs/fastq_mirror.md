@@ -66,6 +66,13 @@ run fetches it again. A second copy started while one is running exits at
 once, so overlapping cron runs are harmless. The exit code is 1 when any run
 failed.
 
+Each ledger update takes a lock on gannet (the directory
+`raw/<ACCESSION>/.ledger.lock`), re-reads the ledger, adds its row and writes
+it back, so mirrors running on two machines (or from two staging
+directories) never drop each other's rows. The lock is held only for those
+few seconds. If a mirror is killed in that moment the lock stays behind;
+after 5 minutes the next writer stops and names the directory to remove.
+
 ## How far along it is
 
 ```bash
