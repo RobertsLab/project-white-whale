@@ -165,7 +165,7 @@ def render_config(study_id: str, accession: str, profile: str, part: str | None 
  * Claimed with `whale start-study` for profile `{profile}`. Run from the
  * repository root of this study's worktree:
  *
- *   nextflow run workflows/methylation -c {config_name(study_id, part)} -profile {profile}{',docker' if profile != 'klone' else ''}
+ *   nextflow run workflows/methylation -c {config_name(study_id, part)} -profile {profile}{',docker' if profile == 'desktop' else ''}
  *
  * Machine-specific paths come from WHALE_RAW, WHALE_REFERENCE, WHALE_METHYLOMES
  * and WHALE_WORKDIR (docs/compute_profiles.md); never write one here.

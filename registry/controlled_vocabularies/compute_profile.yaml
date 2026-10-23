@@ -7,7 +7,7 @@ terms:
     executor: local
     suited_for: Studies up to ~150 GB of FASTQ; QC, summaries and analysis notebooks
   raven:
-    label: Roberts Lab server (raven)
+    label: Roberts Lab server (raven; 48 threads, 247 GB, Singularity)
     executor: local
     suited_for: Studies of ~150-500 GB without chunked alignment
   klone:
