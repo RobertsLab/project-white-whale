@@ -225,6 +225,59 @@ def fetch_samplesheet_cmd(bioproject, study_id, show_attributes, condition_attri
                f"data_availability.fastq_size_gb={report['total_fastq_bytes'] / 1e9:.1f}")
 
 
+@main.command("fetch-reference")
+@click.option("--assembly", default=None,
+              help="Assembly id or accession from data/reference/genome_assemblies.yaml (default: the default one).")
+@click.option("--dest", default=None, type=click.Path(file_okay=False),
+              help="Bundle directory (default: $WHALE_REFERENCE/<ACCESSION>, else data/reference/<ACCESSION>).")
+@click.option("--rnaseq", is_flag=True, help="Also fetch the transcript FASTA and build tx2gene.tsv (Goal 2).")
+@click.option("--plan", "plan_only", is_flag=True, help="Show what would be fetched, with NCBI MD5s; download nothing.")
+@click.option("--check", "check_only", is_flag=True, help="Verify an existing bundle against its provenance.")
+def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
+    """Fetch, MD5-verify and derive the reference bundle (genome, GTF, chrom.sizes, feature BEDs)."""
+    from whale.reference import (
+        ReferenceError,
+        check_bundle,
+        default_bundle_dir,
+        fetch_bundle,
+        plan_bundle,
+        resolve_assembly,
+    )
+
+    repo = _repo()
+    try:
+        record = resolve_assembly(repo, assembly)
+        target = Path(dest) if dest else default_bundle_dir(repo, record["ncbi_assembly_accession"])
+        if check_only:
+            problems = check_bundle(target)
+            for p in problems:
+                click.echo(click.style(f"problem: {p}", fg="red"))
+            if problems:
+                sys.exit(1)
+            click.echo(f"ok: {target} matches its provenance")
+            return
+        if plan_only:
+            plan = plan_bundle(repo, assembly, rnaseq=rnaseq)
+            click.echo(f"{record['assembly_id']} ({record['ncbi_assembly_accession']}) -> {target}")
+            for f in plan["files"]:
+                click.echo(f"  {f['local']:12} {f['ncbi_md5']}  {f['url']}")
+            return
+        prov = fetch_bundle(repo, assembly, dest=target, rnaseq=rnaseq, log=click.echo)
+    except ReferenceError as exc:
+        raise click.ClickException(str(exc)) from None
+
+    click.echo(f"\n{prov['assembly_id']}: {prov['sequences']} sequences, {prov['genome_length'] / 1e6:.1f} Mb")
+    for name, n in prov["feature_counts"].items():
+        click.echo(f"  {name:11} {n:>9,}")
+    if not prov["annotation_release_matches_registry"]:
+        click.echo(click.style(
+            f"\nThe GTF says {prov['gtf_header'].get('annotation-source')!r}, not the registered "
+            f"{prov['registered_annotation_release']!r}. Update genome_assemblies.yaml before using this bundle.",
+            fg="red"))
+        sys.exit(1)
+    click.echo(f"\nWrote {target}/reference_provenance.json")
+
+
 # --- claims ------------------------------------------------------------------
 
 @main.command("start-study")

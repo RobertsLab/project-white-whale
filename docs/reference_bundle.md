@@ -1,0 +1,50 @@
+# The reference bundle
+
+Every sample is processed against one assembly, the `default: true` entry in
+`data/reference/genome_assemblies.yaml` (xbMagGiga1.1, `GCF_963853765.1`,
+annotation `RS_2024_06`). Each machine fetches its bundle once:
+
+```bash
+whale fetch-reference --plan      # what would be fetched, with NCBI's MD5s
+whale fetch-reference             # genome + GTF + derived files (~180 MB download, ~2 min)
+whale fetch-reference --rnaseq    # also transcripts and tx2gene.tsv, for Goal 2
+whale fetch-reference --check     # verify an existing bundle against its provenance
+```
+
+The bundle goes to `$WHALE_REFERENCE/GCF_963853765.1/` (default
+`data/reference/GCF_963853765.1/`, not committed), which is where the
+workflow looks for it.
+
+## Contents
+
+| File | Origin |
+|---|---|
+| `genomic.fna` | NCBI `*_genomic.fna.gz`, decompressed (Bismark) |
+| `genomic.gtf` | NCBI `*_genomic.gtf.gz`, decompressed |
+| `rna.fna`, `tx2gene.tsv` | with `--rnaseq`: NCBI `*_rna.fna.gz`; transcript → GeneID from the GTF |
+| `chrom.sizes` | sequence lengths, from the genome |
+| `features/genes.bed` | GTF `gene` features; name = NCBI GeneID, score column = biotype |
+| `features/exons.bed` | every transcript's exons, de-duplicated |
+| `features/introns.bed` | gaps between consecutive exons of each transcript |
+| `features/promoters.bed` | 1 kb upstream to 200 bp downstream of each gene's TSS, strand-aware, clipped |
+| `features/intergenic.bed` | sequence covered by no gene |
+| `md5checksums.txt`, `*.gz` | NCBI's checksum list and the originals, kept so re-runs download nothing |
+| `reference_provenance.json` | URLs, NCBI MD5 and SHA-256 of every file, GTF header, feature rules and counts |
+
+BED files are 0-based, half-open, BED6, sorted in genome order.
+
+On 2026-10-23 the bundle had 29 sequences (564.0 Mb), 33,331 genes, 284,442
+exons, 249,701 introns and 27,908 intergenic intervals.
+
+## Checks
+
+- Every download is compared with NCBI's published MD5 before use; a mismatch
+  deletes the file and stops.
+- The GTF's `annotation-source` must name the registered annotation release.
+  NCBI can re-annotate an assembly in place; if it has, the command exits
+  non-zero, and `genome_assemblies.yaml` must be updated (in its own PR)
+  before the bundle is used.
+- `--check` recomputes every file's SHA-256 against the provenance file.
+
+Not in the bundle yet: the Bismark index (the workflow builds it), the CpG
+index and the C/T SNP mask (later Phase 1, PLAN.md §6.1).
