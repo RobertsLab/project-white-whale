@@ -2,13 +2,16 @@
 # They are never committed; each study's methylome_manifest.tsv lists every
 # file's URL, SHA-256 and size under `url_base`.
 #
-# The share path on gannet is chosen when the first methylome is uploaded;
-# until then `url_base` and `upload_target` stay null and nothing should be
-# uploaded. gannet's web server answered HTTPS from raven and from a lab Mac
-# on 2026-10-23.
+# Checked 2026-10-23: the directory exists (empty, world-writable, owner
+# sr320), its web listing answers at url_base, the volume has 171 TB free,
+# and raven can reach it over SSH with key auth (a lab Mac could not). Upload
+# from raven, or from any machine with a key for gannet.
 version: "0.1.0"
 host: gannet
 hostname: gannet.fish.washington.edu
-url_base: null          # e.g. https://gannet.fish.washington.edu/<share>/whale
-upload_target: null     # rsync destination matching url_base
-layout: "methylomes/<STUDY_ID>/<sample_id>/"
+path: /volume1/v1_web/project-white-whale
+url_base: https://gannet.fish.washington.edu/v1_web/project-white-whale
+upload_target: sr320@gannet.fish.washington.edu:/volume1/v1_web/project-white-whale
+layout:
+  methylomes: "methylomes/<STUDY_ID>/<sample_id>/"
+  references: "reference/<ASSEMBLY>/"

@@ -263,7 +263,7 @@ model for every study (§6.3).
 
 Per-sample outputs (~0.5–2 GB each) go to `WHALE_METHYLOMES` on the machine
 that ran them, then are synced to the lab data host (gannet, `data/data_host.yaml`) under
-`whale/methylomes/<STUDY_ID>/<sample>/`; `methylome_manifest.tsv` (committed)
+`methylomes/<STUDY_ID>/<sample>/`; `methylome_manifest.tsv` (committed)
 holds the URL + SHA-256 + size of every file. `whale fetch-methylomes
 --study X` restores them on any machine.
 
@@ -408,9 +408,10 @@ Decided 2026-10-23:
    the source file and AREE commit recorded in
    [VENDORED_FROM_AREE.md](VENDORED_FROM_AREE.md). Revisit if both projects
    keep changing the same modules.
-2. **Data host for per-sample methylomes: gannet**, with HTTPS URLs in the
-   manifests. The share path is set in `data/data_host.yaml` when the first
-   methylome is uploaded; space for ~1 TB still to confirm.
+2. **Data host for per-sample methylomes: gannet**, at
+   `/volume1/v1_web/project-white-whale`, served as
+   `https://gannet.fish.washington.edu/v1_web/project-white-whale/`
+   (`data/data_host.yaml`). The volume has 171 TB free.
 3. **Raven** was inspected over SSH and the `raven` profile sized from it:
    24 cores / 48 threads, 247 GB RAM, Singularity CE 3.10 as the container
    engine, NVMe RAID0 work directory. See docs/compute_profiles.md.

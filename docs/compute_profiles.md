@@ -19,6 +19,12 @@ Alternatively symlink `data/raw`, `data/methylomes` and
 `data/reference/GCF_963853765.1` to the machine's drives; `start-study`
 carries those links into each new worktree. Avoid exFAT and paths with spaces.
 
+## Every machine, once
+
+```bash
+whale fetch-reference     # into $WHALE_REFERENCE/GCF_963853765.1 (docs/reference_bundle.md)
+```
+
 ## desktop
 
 Lab Macs and workstations: the local executor, one Bismark alignment at a
