@@ -22,14 +22,16 @@ process BISMARK_GENOME_PREPARATION {
     // genomic.fna, so it goes in under a name Bismark accepts. It is copied,
     // not linked: later tasks see this folder inside their own container,
     // where the staged input's real path (the reference drive) is not mounted.
-    // --parallel must be 2 or more (it runs two bowtie2-build instances per
-    // value), so it is left out when there are fewer than 4 CPUs.
+    // --parallel N runs each of Bismark's two indexing processes on N threads
+    // and must be 2 or more, so tasks with fewer than 4 CPUs (the test
+    // profile) leave it off and use Bismark's default.
     def parallel = (task.cpus as int).intdiv(2)
+    def parallel_arg = parallel >= 2 ? "--parallel ${parallel}" : ''
     """
     mkdir bismark_genome
     cp -L ${fasta} bismark_genome/genome.fa
     sha256sum bismark_genome/genome.fa | cut -d' ' -f1 > bismark_genome/genome.sha256
-    bismark_genome_preparation ${parallel >= 2 ? "--parallel ${parallel}" : ''} bismark_genome
+    bismark_genome_preparation ${parallel_arg} bismark_genome
     """
 
     stub:
