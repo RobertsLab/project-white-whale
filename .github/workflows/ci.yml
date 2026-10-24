@@ -68,6 +68,12 @@ jobs:
           test -s results/test/TEST2026_FIXTURE_WGBS/qc_summary.tsv
           test -s results/test/TEST2026_FIXTURE_WGBS/features/S1.features.tsv.gz
           ls results/test/TEST2026_FIXTURE_WGBS/cpg/S1.CpG_report.merged_CpG_evidence.cov.gz
+      - name: Run the SNP mask DAG on the stub BAMs
+        run: nextflow run workflows/snp_mask -profile test -stub
+      - name: Check the mask outputs
+        run: |
+          test -s results/test/snp_mask/mask_manifest.json
+          test -s results/test/snp_mask/cpg_mask.bed.gz
 
   nextflow-real:
     # The stub run checks the DAG; this runs every real command, in the pinned
@@ -92,3 +98,9 @@ jobs:
         run: nextflow run workflows/methylation -profile test,docker
       - name: Check the calls against the simulated methylation
         run: python3 tests/check_real_run.py results/test/TEST2026_FIXTURE_WGBS
+      - name: Build the SNP mask against a reference with planted C/T SNPs
+        run: |
+          python3 tests/plant_snps.py results/test/snp_reference
+          nextflow run workflows/snp_mask -profile test,docker --reference_dir results/test/snp_reference
+      - name: Check the mask finds the planted SNPs
+        run: python3 tests/plant_snps.py --check results/test/snp_reference results/test/snp_mask

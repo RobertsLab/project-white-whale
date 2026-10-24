@@ -729,6 +729,29 @@ def record_run_cmd(results, run_name, no_upload, upload_target, no_commit, no_pu
         click.echo(f"Pushed {res['branch']}" + ("; PR marked ready for review" if res["pr_ready"] else ""))
 
 
+@main.command("record-mask")
+@click.option("--dir", "mask_dir", required=True, type=click.Path(exists=True, file_okay=False),
+              help="The snp_mask run's output folder (cpg_mask.bed.gz, snps.tsv.gz, mask_manifest.json).")
+@click.option("--no-upload", is_flag=True, help="Register only; do not copy the files to the data host.")
+@click.option("--upload-target", default=None,
+              help="user@host:/path or a local folder (default: data/data_host.yaml upload_target).")
+def record_mask_cmd(mask_dir, no_upload, upload_target):
+    """Upload a C/T SNP mask to the data host and register it in data/reference/snp_masks.yaml."""
+    from whale.results import RecordError
+    from whale.snp_mask import record_mask
+
+    repo = _repo()
+    try:
+        res = record_mask(repo, mask_dir, upload=not no_upload, upload_target=upload_target)
+    except RecordError as exc:
+        raise click.ClickException(str(exc)) from None
+    e, c = res["entry"], res["entry"]["counts"]
+    click.echo(f"{e['mask_id']}: {c['snps']:,} SNPs from {e['libraries']} libraries of {', '.join(e['studies'])}; "
+               f"{c['cpgs_masked']:,} of {c['cpgs']:,} CpGs masked ({100 * c['cpgs_masked_frac']:.2f}%)")
+    click.echo(("Uploaded and registered" if res["uploaded"] else "Registered (not uploaded)")
+               + f" in {res['registry']}; commit it in a pull request.")
+
+
 @main.command("claims")
 @click.option("--no-fetch", is_flag=True)
 @click.option("--remote", default="origin", show_default=True)
