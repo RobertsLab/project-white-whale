@@ -87,6 +87,7 @@ process BISMARK_DEDUPLICATE {
     label 'process_medium'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
     publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*report.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/bam", mode: params.publish_mode, pattern: "*.dedup.bam", enabled: params.publish_bams
 
     input:
     tuple val(sample_id), path(bam)

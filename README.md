@@ -75,6 +75,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 [adding a study](docs/adding_a_study.md),
 [the reference bundle](docs/reference_bundle.md),
 [gene-level methylation](docs/gene_methylation.md),
+[the C/T SNP mask](docs/snp_mask.md),
 [mirroring FASTQ to gannet](docs/fastq_mirror.md).
 
 ## Commands

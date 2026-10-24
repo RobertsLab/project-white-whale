@@ -52,8 +52,10 @@ changes.
 
 ## Before comparing studies
 
-- **No C/T SNP mask yet** (PLAN.md §6.1). A C→T SNP reads as an unmethylated
-  C, so populations with different SNPs differ in apparent methylation.
+- **C/T SNPs.** A C→T SNP reads as an unmethylated C, so populations with
+  different SNPs differ in apparent methylation. The gene tables are not yet
+  masked; apply a [SNP mask](snp_mask.md) (CpGs listed in `cpg_mask.bed.gz`)
+  before comparing groups.
 - **Coverage.** Only CpGs with a call are counted; a gene's `cpgs` is not the
   number of CpGs it holds. ROBERTS2022 averages ~5.5 calls per CpG.
 - **Design.** Tissue, chemistry, pooling and ploidy differ between studies
