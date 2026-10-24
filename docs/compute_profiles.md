@@ -116,6 +116,11 @@ Apptainer is enabled by the profile. Lessons carried from AREE
 - Run the Nextflow **head job** on a non-preemptible partition (`coenv`
   `compute` first; see [Choosing a partition](#choosing-a-partition)),
   2 CPUs, 8 GB, a few days. Never on a login node.
+- The head job records the run when it ends (`whale record-run`), so it needs
+  `whale` on its `PATH` (`sbatch` passes on the submitting shell's
+  environment) or `WHALE_CMD` set, and must be launched from the study's
+  worktree, which pushes to GitHub. Uploading the methylomes needs an SSH key
+  for gannet on the machine; without one the study stops at `qc_passed`.
 - **Do not export `TMPDIR`** in the head job; Slurm forwards it to every task
   and into containers. Use `NXF_TEMP` for Nextflow's own temporary files.
 - `/gscratch/scrubbed` deletes files untouched for 21 days and is often >97%
@@ -205,3 +210,14 @@ nextflow run workflows/methylation -profile test -stub
 ```
 
 runs the whole DAG on two tiny fixture samples without executing any tool.
+
+```bash
+make real-run      # nextflow run workflows/methylation -profile test,docker, then the check
+```
+
+runs every tool for real, in the pinned containers, on the same fixtures: a
+30 kb synthetic genome and 1,500 bisulfite read pairs (S1) and single reads
+(S2) simulated with known methylation by `tests/fixtures/make_fixtures.py`.
+`tests/check_real_run.py` then checks that nearly every read maps, that
+CpG methylation comes out near the simulated 83%, and that CHG/CHH stay near
+0%. It takes a few minutes and needs Docker; CI runs both on every PR.
