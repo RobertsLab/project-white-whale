@@ -79,7 +79,11 @@ Each call appends to the status file's history, commits and pushes. Stages
 
 `claimed → registered → fastq_staged → aligned → called → qc_passed → summarized → merged`
 
-plus `excluded` (will not be processed; say why in `--note`). `--force` moves
+plus `excluded` (will not be processed; say why in `--note`). The machine recorded with
+each stage is the host name, except that a cluster is recorded by its name:
+inside a Slurm job `SLURM_CLUSTER_NAME` (klone, not the compute node `n3441`),
+and a login node by its cluster (`klone-login03` → klone). Set
+`WHALE_MACHINE` to override it. `--force` moves
 back, e.g. after a failed run is restarted from alignment. `--profile klone`
 records a study moving to another machine mid-way.
 
