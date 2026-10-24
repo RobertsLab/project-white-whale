@@ -182,6 +182,12 @@ def config_name(study_id: str, part: str | None = None) -> str:
     return f"config/{study_id}.part-{part}.config" if part else f"config/{study_id}.config"
 
 
+def nextflow_command(study_id: str, profile: str, part: str | None = None) -> list[str]:
+    """The `nextflow run` that processes a claimed study, from the root of its worktree."""
+    return ["nextflow", "run", "workflows/methylation", "-c", config_name(study_id, part),
+            "-profile", f"{profile},docker" if profile == "desktop" else profile]
+
+
 def render_config(study_id: str, accession: str, profile: str, part: str | None = None) -> str:
     part_line = f"\n        part         = '{part}'" if part else ""
     sheet = (f"data/studies/{study_id}/parts/{part}/samplesheet.tsv" if part
@@ -192,7 +198,7 @@ def render_config(study_id: str, accession: str, profile: str, part: str | None 
  * Claimed with `whale start-study` for profile `{profile}`. Run from the
  * repository root of this study's worktree:
  *
- *   nextflow run workflows/methylation -c {config_name(study_id, part)} -profile {profile}{',docker' if profile == 'desktop' else ''}
+ *   {' '.join(nextflow_command(study_id, profile, part))}
  *
  * Machine-specific paths come from WHALE_RAW, WHALE_REFERENCE, WHALE_METHYLOMES
  * and WHALE_WORKDIR (docs/compute_profiles.md); never write one here.

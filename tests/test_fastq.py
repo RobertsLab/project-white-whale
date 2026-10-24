@@ -249,3 +249,62 @@ def test_second_downloader_into_same_dir_is_refused(server, tmp_path):
         with pytest.raises(FastqError, match="already downloading"):
             fetch_all(_files(base), tmp_path)
     assert fetch_all(_files(base), tmp_path)["downloaded"] == 2
+
+
+# --- --launch -----------------------------------------------------------------
+
+LAUNCH_ACC, LAUNCH_SID = "PRJNA999903", "TESTER2099_LAUNCH_WGBS"
+
+
+def _claimed_worktree(claim_env, server, monkeypatch, profile):
+    """A claimed study worktree with a manifest, and a fake `nextflow` on PATH that logs its call."""
+    import os
+    import stat
+
+    from whale.claims import start_study
+
+    base, _ = server
+    wt = claim_env["tmp"] / "wt"
+    start_study(LAUNCH_ACC, LAUNCH_SID, repo=claim_env["clone"], profile=profile, worktree_dir=wt,
+                registered_by="Tester", machine="hete", open_pr=False)
+    with open(wt / "data" / "studies" / LAUNCH_SID / "fastq_manifest.tsv", "w") as fh:
+        fh.write("run_accession\tmate\tfile\turl\tmd5\tbytes\tsource\n")
+        for f in _files(base):
+            fh.write(f"SRR1\t1\t{f.file}\t{f.url}\t{f.md5}\t{f.bytes}\tfastq_ftp\n")
+    bin_dir = claim_env["tmp"] / "bin"
+    bin_dir.mkdir()
+    log = claim_env["tmp"] / "nextflow.log"
+    fake = bin_dir / "nextflow"
+    fake.write_text(f'#!/bin/sh\necho "$PWD|$WHALE_RAW|$*" > {log}\nexit 3\n')
+    fake.chmod(fake.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("WHALE_REPO", str(wt))
+    monkeypatch.setenv("WHALE_RAW", str(claim_env["tmp"] / "raw"))
+    return wt, log
+
+
+def test_cli_launch_stages_then_runs_nextflow(claim_env, server, monkeypatch):
+    import yaml
+
+    wt, log = _claimed_worktree(claim_env, server, monkeypatch, "desktop")
+    res = CliRunner().invoke(main, ["fetch-fastq", "--source", "ena", "--launch", "--dry-run"])
+    assert res.exit_code == 0, res.output
+    assert "Would then launch: nextflow run" in res.output and not log.exists()
+
+    res = CliRunner().invoke(main, ["fetch-fastq", "--source", "ena", "--launch"])
+    # The run's exit status is fetch-fastq's.
+    assert res.exit_code == 3, res.output
+    status = yaml.safe_load((wt / "data" / "studies" / LAUNCH_SID / "status.yaml").read_text())
+    assert status["stage"] == "fastq_staged"
+    cwd, raw, args = log.read_text().strip().split("|")
+    assert cwd == str(wt.resolve()) and raw == str((claim_env["tmp"] / "raw").resolve())
+    assert args == (f"run workflows/methylation -c config/{LAUNCH_SID}.config -profile desktop,docker")
+
+
+def test_cli_launch_refusals_happen_before_download(claim_env, server, monkeypatch):
+    wt, log = _claimed_worktree(claim_env, server, monkeypatch, "klone")
+    for extra, msg in ([[], "sbatch head job"], [["--run", "SRR1"], "drop --run"],
+                       [["--dest", str(claim_env["tmp"] / "elsewhere")], "folder named"]):
+        res = CliRunner().invoke(main, ["fetch-fastq", "--source", "ena", "--launch", *extra])
+        assert res.exit_code != 0 and msg in res.output, res.output
+    assert not (claim_env["tmp"] / "raw").exists() and not log.exists()

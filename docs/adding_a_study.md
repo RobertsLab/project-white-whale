@@ -90,6 +90,14 @@
 7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML and
    run the workflow with the profile you claimed, from the study's worktree,
    with `whale` on the head job's `PATH` (or `WHALE_CMD` set to it).
+   On a desktop or raven, `whale fetch-fastq --launch` does steps 6 and 7 in
+   one go: it stages and marks the FASTQ as in step 6, then starts
+   `nextflow run` for the claimed profile in the foreground (run it under
+   `tmux` or `screen`), and exits with the run's status. It checks that it
+   is in the study's worktree, that `nextflow` is on `PATH` and that every
+   file will be staged (no `--run`) before it downloads anything. Set
+   `chemistry` first. On klone, submit the run as an `sbatch` head job
+   instead ([compute profiles](compute_profiles.md)).
 8. **Nothing to record by hand.** When the run succeeds it calls `whale
    record-run`, which commits `qc_summary.tsv`, `run_manifest.json`,
    `methylome_manifest.tsv` and `study_summary.yaml` under
