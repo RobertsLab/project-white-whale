@@ -22,8 +22,8 @@ species: "Magallana gigas"
 population: null
 original_assembly: null
 
-chemistry: null          # assay_chemistry.yaml: wgbs | emseq | pbat | rrbs | medip | mbd
-library_layout: null     # paired | single | mixed
+chemistry: wgbs          # assay_chemistry.yaml: wgbs | emseq | pbat | rrbs | medip | mbd
+library_layout: paired     # paired | single | mixed
 platform: null
 
 samples:
