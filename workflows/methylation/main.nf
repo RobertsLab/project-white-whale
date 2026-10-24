@@ -17,6 +17,7 @@
  *
  *   nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile raven,docker
  *   nextflow run workflows/methylation -profile test -stub        # smoke test
+ *   nextflow run workflows/methylation -profile test,docker       # every tool, simulated reads (make real-run)
  */
 
 nextflow.enable.dsl = 2
