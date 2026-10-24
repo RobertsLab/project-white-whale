@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import contextlib
 import getpass
+import os
 import re
 import shutil
 import socket
@@ -64,7 +65,18 @@ class ClaimError(RuntimeError):
 
 
 def machine_name() -> str:
-    return socket.gethostname().split(".")[0]
+    """The machine a claim or stage is recorded against.
+
+    WHALE_MACHINE if set. Inside a Slurm job, the cluster (SLURM_CLUSTER_NAME):
+    klone's compute nodes are named n3012, n3441, ..., which says nothing
+    about where a study is. Otherwise the short host name, with a cluster
+    login node (klone-login03) named after its cluster.
+    """
+    if os.environ.get("WHALE_MACHINE"):
+        return os.environ["WHALE_MACHINE"]
+    if os.environ.get("SLURM_CLUSTER_NAME"):
+        return os.environ["SLURM_CLUSTER_NAME"]
+    return re.sub(r"-login\d*$", "", socket.gethostname().split(".")[0])
 
 
 def default_user(repo: Path) -> str:
