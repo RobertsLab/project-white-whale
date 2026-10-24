@@ -3,9 +3,9 @@
 study_id: ROBERTS2022_PH_PLOIDY_WGBS
 accession: PRJNA682817
 part: null
-stage: qc_passed
+stage: summarized
 profile: klone
-machine: n3441
+machine: n3193
 claimed_by: Steven Roberts
 claimed_on: '2026-10-23'
 nextflow_run: determined_khorana
@@ -36,3 +36,7 @@ history:
   date: '2026-10-24'
   machine: n3441
   note: 24 of 24 libraries pass the QC gate
+- stage: summarized
+  date: '2026-10-24'
+  machine: n3193
+  note: summaries committed; 264 files on gannet

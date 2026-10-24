@@ -121,5 +121,5 @@ by_condition:
 methylomes:
   files: 264
   bytes: 1548452967
-  on_data_host: false
+  on_data_host: true
   url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/ROBERTS2022_PH_PLOIDY_WGBS/
