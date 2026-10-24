@@ -13,6 +13,9 @@ stage, summary or finding is ever typed in by hand. It:
    (data/data_host.yaml `upload_target`, methylomes/<STUDY_ID>/<sample>/);
 4. writes study_summary.yaml: QC medians, CpG methylation of the libraries
    that passed, and the same split by each design factor and condition;
+   and, from the per-sample feature tables, gene x sample matrices for gene
+   bodies and promoters under genes/ (every gene in the reference bundle,
+   libraries that passed QC as columns; see `gene_matrices`);
 5. moves status.yaml on through aligned, called, qc_passed and (once the
    methylomes are on the data host) summarized, then commits and pushes;
 6. at summarized, marks the study PR ready for review.
@@ -24,6 +27,7 @@ a failed upload is finished by running it again once the host is reachable.
 from __future__ import annotations
 
 import csv
+import gzip
 import json
 import shlex
 import shutil
@@ -51,6 +55,10 @@ CPG_SUFFIX = ".CpG_report.merged_CpG_evidence.cov.gz"
 METHYLOME_MANIFEST = "methylome_manifest.tsv"
 MANIFEST_COLUMNS = ["sample_id", "file", "bytes", "sha256", "url"]
 RECORDED_STAGES = ["aligned", "called", "qc_passed", "summarized"]
+FEATURE_SUFFIX = ".features.tsv.gz"
+MATRIX_CLASSES = ["gene_body", "promoter"]
+MATRIX_METRICS = ["meth_pct", "cpgs", "calls"]
+GENE_MIN_CPGS = 5   # for the study summary only; the matrices keep every count
 
 
 class RecordError(RuntimeError):
@@ -138,11 +146,79 @@ def summarize(study: dict, sheet: list[dict], qc: list[dict], manifest: dict, *,
 def sample_files(results: Path, sample_id: str) -> list[Path]:
     """The files kept on the data host for one library: its CpG calls and its QC reports."""
     files = [results / "cpg" / f"{sample_id}{CPG_SUFFIX}"]
+    table = results / "features" / f"{sample_id}{FEATURE_SUFFIX}"
+    if table.exists():
+        files.append(table)
     qc = results / "qc"
     if qc.is_dir():
         files += sorted(p for p in qc.iterdir()
                         if p.is_file() and (p.name.startswith(f"{sample_id}_") or p.name.startswith(f"{sample_id}.")))
     return files
+
+
+def _write_gz(path: Path, lines) -> None:
+    # mtime=0: the same tables give byte-identical files, so a re-run commits nothing.
+    with open(path, "wb") as raw, gzip.GzipFile(filename="", fileobj=raw, mode="wb", mtime=0) as gz:
+        for line in lines:
+            gz.write(("\t".join(map(str, line)) + "\n").encode())
+
+
+def gene_matrices(results: Path, samples: list[str], dest: Path) -> dict | None:
+    """Gene x sample matrices from the per-sample feature tables (FEATURE_SUMMARY).
+
+    For gene bodies and promoters, three gzipped TSVs each under dest/genes/:
+    <class>.meth_pct.tsv.gz (methylated / all calls, %), <class>.cpgs.tsv.gz
+    (CpGs with a call) and <class>.calls.tsv.gz (calls). Rows are every gene
+    of the reference bundle in its order; columns `samples`; an empty cell is
+    a gene with no call. Returns the summary's `genes` block, or None when
+    the run made no feature tables (runs before FEATURE_SUMMARY existed).
+    """
+    paths = [results / "features" / f"{s}{FEATURE_SUFFIX}" for s in samples]
+    if not samples or not all(p.exists() for p in paths):
+        missing = [p.name for p in paths if not p.exists()]
+        if samples and len(missing) < len(paths):
+            raise RecordError(f"feature tables missing for {len(missing)} librar(ies): {', '.join(missing[:5])}")
+        return None
+    genes: list[str] | None = None
+    data = {cls: {m: [] for m in MATRIX_METRICS} for cls in MATRIX_CLASSES}
+    for path in paths:
+        cols = {cls: {m: [] for m in MATRIX_METRICS} for cls in MATRIX_CLASSES}
+        order: dict[str, list[str]] = {cls: [] for cls in MATRIX_CLASSES}
+        with gzip.open(path, "rt") as fh:
+            for r in csv.DictReader(fh, delimiter="\t"):
+                cls = r["feature"]
+                if cls not in cols:
+                    continue
+                order[cls].append(r["gene_id"])
+                calls = int(r["meth"]) + int(r["unmeth"])
+                cols[cls]["meth_pct"].append(r["meth_pct"])
+                cols[cls]["cpgs"].append(int(r["cpgs"]))
+                cols[cls]["calls"].append(calls)
+        for cls in MATRIX_CLASSES:
+            if genes is None:
+                genes = order[cls]
+            if order[cls] != genes:
+                raise RecordError(f"{path.name}: its {cls} genes differ from the other libraries' "
+                                  "(made against another reference bundle?)")
+            for m in MATRIX_METRICS:
+                data[cls][m].append(cols[cls][m])
+    out_dir = dest / "genes"
+    out_dir.mkdir(exist_ok=True)
+    block = {"universe": len(genes), "min_cpgs": GENE_MIN_CPGS}
+    for cls in MATRIX_CLASSES:
+        for m in MATRIX_METRICS:
+            columns = data[cls][m]
+            _write_gz(out_dir / f"{cls}.{m}.tsv.gz",
+                      [["gene_id", *samples], *([g, *(c[i] for c in columns)] for i, g in enumerate(genes))])
+        # Genes with >= GENE_MIN_CPGS covered CpGs in every library; their mean methylation.
+        means = []
+        for i in range(len(genes)):
+            if all(c[i] >= GENE_MIN_CPGS for c in data[cls]["cpgs"]):
+                means.append(statistics.fmean(float(c[i]) for c in data[cls]["meth_pct"]))
+        block[cls] = {"covered_in_all": len(means),
+                      "meth_pct": _stats(means),
+                      "methylated_ge_50pct": sum(v >= 50 for v in means)}
+    return block
 
 
 class DataHost:
@@ -265,6 +341,10 @@ def record_run(repo, results, *, run_name: str | None = None, upload: bool = Tru
     study = yaml.safe_load(study_yaml.read_text()) if study_yaml.exists() else {}
     summary = summarize(study, _samplesheet(repo, study_id, part), qc, manifest,
                         part=part, run_name=run_name, today=today)
+    passed_ids = [r["sample_id"] for r in qc if r.get("qc_pass") == "true"]
+    genes_block = gene_matrices(results, passed_ids, dest)
+    if genes_block:
+        summary["genes"] = genes_block
     summary["methylomes"] = {"files": len(rows), "bytes": sum(r["bytes"] for r in rows),
                              "on_data_host": uploaded, "url": f"{url_base}/{prefix}/" if url_base else None}
     (dest / SUMMARY_NAME).write_text(
@@ -301,6 +381,8 @@ def record_run(repo, results, *, run_name: str | None = None, upload: bool = Tru
     if commit:
         files = [spath, dest / "qc_summary.tsv", dest / "run_manifest.json", dest / METHYLOME_MANIFEST,
                  dest / SUMMARY_NAME]
+        if genes_block:
+            files += sorted((dest / "genes").glob("*.tsv.gz"))
         _run(["git", "add", *[str(f.relative_to(repo)) for f in files]], repo)
         if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo).returncode != 0:
             label = f"{study_id}{f' part {part}' if part else ''}"

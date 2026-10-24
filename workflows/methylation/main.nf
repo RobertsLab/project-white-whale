@@ -3,10 +3,11 @@
  * White Whale :: methylation workflow — FASTQ in, per-sample methylome out.
  *
  * Still to come (PLAN.md §5): the C/T SNP mask, chunked alignment for klone,
- * per-sample feature summaries and the study report.
+ * 1 kb tiles and the study report.
  *
  *   FASTQC -> TRIM_GALORE -> BISMARK_ALIGN -> BISMARK_DEDUPLICATE (not RRBS)
- *     -> BISMARK_METHYLATION_EXTRACTOR -> CPG_SUMMARY -> QC_GATE -> MANIFEST
+ *     -> BISMARK_METHYLATION_EXTRACTOR -> CPG_SUMMARY -> QC_GATE
+ *                                      -> FEATURE_SUMMARY (genes) -> MANIFEST
  *
  * When a run on a study branch succeeds, it records itself: `whale
  * record-run` commits qc_summary.tsv, run_manifest.json, the methylome
@@ -34,6 +35,7 @@ include { BISMARK_DEDUPLICATE }           from '../../modules/methylation/bismar
 include { BISMARK_METHYLATION_EXTRACTOR } from '../../modules/methylation/bismark.nf'
 include { CPG_SUMMARY }                   from '../../modules/methylation/qc.nf'
 include { QC_GATE }                       from '../../modules/methylation/qc.nf'
+include { FEATURE_SUMMARY }               from '../../modules/methylation/features.nf'
 include { MANIFEST }                      from '../../modules/methylation/manifest.nf'
 
 // Mirrors registry/controlled_vocabularies/assay_chemistry.yaml (base-resolution terms).
@@ -113,6 +115,7 @@ workflow {
     def genome_fasta = file("${params.reference_dir}/${params.genome_assembly}/genomic.fna", checkIfExists: true)
     checkCachedIndex()
     def samplesheet  = file(params.samplesheet, checkIfExists: true)
+    def features     = file("${params.reference_dir}/${params.genome_assembly}/features", checkIfExists: true)
 
     reads_ch = Channel
         .fromPath(samplesheet)
@@ -149,6 +152,7 @@ workflow {
              CPG_SUMMARY.out.summary)
         .collect()
     QC_GATE(qc_inputs, samplesheet)
+    FEATURE_SUMMARY(BISMARK_METHYLATION_EXTRACTOR.out.cpg, features)
 
     versions_ch = FASTQC.out.versions
         .mix(TRIM_GALORE.out.versions, BISMARK_ALIGN.out.versions, BISMARK_METHYLATION_EXTRACTOR.out.versions)
@@ -165,7 +169,7 @@ workflow {
         nextflow_version: nextflow.version.toString(), run_name: workflow.runName,
         commit: workflow.commitId ?: gitCommit(), session: workflow.sessionId.toString(),
     ])
-    MANIFEST(versions_ch, samplesheet, genome_fasta, run_params)
+    MANIFEST(versions_ch, samplesheet, genome_fasta, features, run_params)
 
     onComplete:
     if (workflow.success && params.record_status && !workflow.stubRun) {

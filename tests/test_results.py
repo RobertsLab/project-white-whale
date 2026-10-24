@@ -70,10 +70,27 @@ def study(claim_env):
             with gzip.open(res / "cpg" / f"{sid}.CpG_report.merged_CpG_evidence.cov.gz", "wt") as g:
                 g.write("chr1\t0\t2\t50\t1\t1\n")
             (res / "qc" / f"{sid}_PE_report.txt").write_text("report")
+            _features(res, sid, meth)
     (res / "run_manifest.json").write_text(json.dumps(
         {"params": {"study_id": SID, "run_name": "happy_turing", "commit": "abc123", "genome_assembly": "GCF_X",
                     "chemistry": "wgbs"}}))
     return {"wt": wt, "results": res, "host": claim_env["tmp"] / "gannet", **claim_env}
+
+
+GENES = ["G1", "G2", "G3"]
+
+
+def _features(res, sid, meth):
+    """A FEATURE_SUMMARY table: G1 well covered, G2 thinly, G3 not at all."""
+    (res / "features").mkdir(exist_ok=True)
+    with gzip.open(res / "features" / f"{sid}.features.tsv.gz", "wt") as g:
+        g.write("feature\tgene_id\tcpgs\tcpgs_5x\tmeth\tunmeth\tmeth_pct\tmean_meth_5x_pct\n")
+        for cls in ("gene_body", "promoter", "exon", "intron"):
+            for gene, n in zip(GENES, (10, 2, 0), strict=True):
+                m = int(meth) * n if cls == "gene_body" else 0
+                u = (100 - int(meth)) * n if cls == "gene_body" else 5 * n
+                pct = f"{100 * m / (m + u):.3f}" if n else ""
+                g.write(f"{cls}\t{gene}\t{n}\t{n}\t{m}\t{u}\t{pct}\t{pct}\n")
 
 
 def _status(wt):
@@ -95,7 +112,18 @@ def test_record_run_summarizes_uploads_and_pushes(study):
     d = wt / f"data/studies/{SID}"
     with open(d / "methylome_manifest.tsv") as fh:
         rows = list(csv.DictReader(fh, delimiter="\t"))
-    assert len(rows) == 8 and {r["sample_id"] for r in rows} == {"S1", "S2", "S3", "S4"}
+    assert len(rows) == 12 and {r["sample_id"] for r in rows} == {"S1", "S2", "S3", "S4"}
+    assert (host / "methylomes" / SID / "S2" / "S2.features.tsv.gz").exists()
+
+    # Gene x sample matrices: every gene, the libraries that passed QC.
+    with gzip.open(d / "genes" / "gene_body.meth_pct.tsv.gz", "rt") as fh:
+        body = list(csv.reader(fh, delimiter="\t"))
+    assert body[0] == ["gene_id", "S1", "S2", "S3"] and [r[0] for r in body[1:]] == GENES
+    assert body[1][1:] == ["11.000", "12.000", "13.000"] and body[3][1:] == ["", "", ""]
+    with gzip.open(d / "genes" / "promoter.cpgs.tsv.gz", "rt") as fh:
+        assert [r[1] for r in csv.reader(fh, delimiter="\t")] == ["S1", "10", "2", "0"]
+    assert sorted(p.name for p in (d / "genes").iterdir()) == sorted(
+        f"{c}.{m}.tsv.gz" for c in ("gene_body", "promoter") for m in ("meth_pct", "cpgs", "calls"))
     cpg = next(r for r in rows if r["sample_id"] == "S1" and r["file"].endswith(".cov.gz"))
     assert cpg["url"] == f"https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/{SID}/S1/{cpg['file']}"
     uploaded = host / "methylomes" / SID / "S1" / cpg["file"]
@@ -107,6 +135,9 @@ def test_record_run_summarizes_uploads_and_pushes(study):
     assert ploidy["column"] == "ploidy" and ph["column"] == "water_ph"
     assert [(lv["level"], lv["n"], lv.get("mean")) for lv in ploidy["levels"]] == [("diploid", 2, 11.5), ("triploid", 1, 13.0)]
     assert [(lv["level"], lv["n"]) for lv in ph["levels"]] == [("8.2", 2), ("7.7", 1)]
+    genes = summary["genes"]
+    assert genes["universe"] == 3 and genes["gene_body"]["covered_in_all"] == 1
+    assert genes["gene_body"]["meth_pct"]["median"] == 12.0 and genes["gene_body"]["methylated_ge_50pct"] == 0
 
     # Committed and pushed, inside the study's own files.
     git("fetch", "--quiet", "origin", cwd=wt)
@@ -125,6 +156,7 @@ def test_record_run_summarizes_uploads_and_pushes(study):
     f = finding(entries[0], study_yaml, URL)
     assert f["title"] == f"{SID}: median CpG methylation 12% across 3 libraries"
     assert "3 of 4 libraries passed the QC gate" in f["summary"] and "By ploidy: diploid 11.5%" in f["summary"]
+    assert "Gene bodies: 1 of 3 genes have ≥5 covered CpGs in every library; median methylation 12%" in f["summary"]
     assert "Excluded: S4" in f["summary"] and f["status"].startswith("provisional") and f["goal"] == "1"
     assert f["link"] == f"{URL}/blob/{branch}/data/studies/{SID}/study_summary.yaml"
 
@@ -158,6 +190,21 @@ def test_no_library_passing_stops_at_called(study):
     (res / "qc_summary.tsv").write_text(text)
     out = record_run(wt, res, upload=False, push=False)
     assert out["added"] == ["aligned", "called"]
+
+
+def test_feature_tables_missing_for_some_libraries(study):
+    wt, res = study["wt"], study["results"]
+    (res / "features" / "S2.features.tsv.gz").unlink()
+    with pytest.raises(RecordError, match="feature tables missing"):
+        record_run(wt, res, upload=False, push=False)
+
+
+def test_runs_without_feature_tables_still_record(study):
+    wt, res = study["wt"], study["results"]
+    shutil.rmtree(res / "features")
+    out = record_run(wt, res, upload=False, push=False)
+    assert out["added"] == ["aligned", "called", "qc_passed"]
+    assert "genes" not in yaml.safe_load((wt / f"data/studies/{SID}/study_summary.yaml").read_text())
 
 
 def test_summarize_without_factors():

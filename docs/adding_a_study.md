@@ -100,7 +100,8 @@
    instead ([compute profiles](compute_profiles.md)).
 8. **Nothing to record by hand.** When the run succeeds it calls `whale
    record-run`, which commits `qc_summary.tsv`, `run_manifest.json`,
-   `methylome_manifest.tsv` and `study_summary.yaml` under
+   `methylome_manifest.tsv`, `study_summary.yaml` and the gene x sample
+   matrices (`genes/`, [gene-level methylation](gene_methylation.md)) under
    `data/studies/<STUDY_ID>/`, uploads the per-sample methylomes to the data
    host, moves `status.yaml` through `aligned`, `called`, `qc_passed` and
    `summarized`, pushes, and marks the PR ready. The dashboard shows the
