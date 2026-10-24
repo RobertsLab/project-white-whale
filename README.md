@@ -17,7 +17,7 @@ assay family.
 
 > **Status: Phase 1 under way.** The registry, validation, the claim system
 > for running studies on several machines, the compute profiles, a
-> stub-tested methylation workflow, the ENA sample-sheet generator, the
+> methylation workflow (run for real in CI on simulated reads), the ENA sample-sheet generator, the
 > reference-bundle fetcher and the FASTQ downloader are in place. No study has been registered or run yet. See [PLAN.md §9](PLAN.md#9-phases).
 
 ## Dashboard
@@ -26,8 +26,10 @@ Progress and findings are published at
 <https://robertslab.github.io/project-white-whale/>, rebuilt by
 `.github/workflows/pages.yml` on every push to `main` and every three hours
 from the backlog, the registered studies, the claims on study branches and the
-gannet mirror. Findings are added by hand to `site/findings.yaml`. To view it
-locally:
+gannet mirror. Nothing on it is typed in: when a study's run finishes, the
+workflow records its stage and commits its QC and methylation summary
+(`whale record-run`), and each summary becomes that study's finding. To view
+it locally:
 
 ```bash
 whale build-dashboard && python3 -m http.server --directory site 8765
@@ -61,7 +63,9 @@ whale fetch-samplesheet --bioproject PRJNA682817 --condition-attribute ploidy --
 # ...fill the study YAML...
 whale fetch-fastq --mark-staged      # from the gannet mirror (else ENA), MD5-verified; stage -> fastq_staged
 nextflow run workflows/methylation -c config/ROBERTS2022_PH_PLOIDY_WGBS.config -profile raven
-whale set-status --stage called
+#   or both at once (desktop, raven): whale fetch-fastq --launch
+#   on success the run records itself: QC gate, summaries and methylomes committed or uploaded,
+#   stage -> summarized, PR marked ready, finding on the dashboard (`whale record-run`)
 whale claims                        # every claimed study, its machine and stage
 ```
 
@@ -83,7 +87,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale release-study --branch <b> --reason …` | Give a claim up so another machine can take it |
 | `whale fetch-samplesheet --bioproject <PRJ…> --condition-attribute <a> […] [--show-attributes]` | Sample sheet, FASTQ manifest (ENA MD5s) and provenance from the deposited metadata; downloads nothing |
 | `whale fetch-reference [--rnaseq] [--plan] [--check]` | Fetch, MD5-verify and derive the reference bundle (genome, GTF, chrom.sizes, feature BEDs) |
-| `whale fetch-fastq [--dry-run] [--jobs N] [--run R] [--mark-staged]` | Stage a study's FASTQ: from the gannet mirror where it has the files, ENA otherwise; resumable, MD5-verified, recorded in `fastq_staged.tsv` |
+| `whale fetch-fastq [--dry-run] [--jobs N] [--run R] [--mark-staged \| --launch]` | Stage a study's FASTQ: from the gannet mirror where it has the files, ENA otherwise; resumable, MD5-verified, recorded in `fastq_staged.tsv`. `--launch` then starts the study's `nextflow run` (desktop, raven) |
 | `whale mirror-fastq [--accession <PRJ…>] [--plan] [--jobs N] [--max-gb G]` | Prefetch backlog FASTQ to gannet: NCBI `.sra` converted on raven (ENA as fallback), verified and resumable |
 | `whale build-dashboard [--no-claims] [--no-mirror]` | Write `site/data.json` for the progress dashboard (`site/index.html`, published to GitHub Pages) |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |

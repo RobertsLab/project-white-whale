@@ -65,4 +65,29 @@ jobs:
       - name: Check the run manifest
         run: |
           test -s results/test/TEST2026_FIXTURE_WGBS/run_manifest.json
+          test -s results/test/TEST2026_FIXTURE_WGBS/qc_summary.tsv
           ls results/test/TEST2026_FIXTURE_WGBS/cpg/S1.CpG_report.merged_CpG_evidence.cov.gz
+
+  nextflow-real:
+    # The stub run checks the DAG; this runs every real command, in the pinned
+    # containers, on reads simulated with known methylation
+    # (tests/fixtures/make_fixtures.py), and checks the calls against it.
+    name: Methylation workflow (real run on fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install Nextflow
+        env:
+          NXF_VER: 26.04.7
+        run: |
+          curl -s https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Run every step for real (Docker)
+        run: nextflow run workflows/methylation -profile test,docker
+      - name: Check the calls against the simulated methylation
+        run: python3 tests/check_real_run.py results/test/TEST2026_FIXTURE_WGBS

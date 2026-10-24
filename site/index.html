@@ -152,7 +152,7 @@
 
   <section aria-labelledby="h-findings">
     <h2 id="h-findings">Findings</h2>
-    <p class="lede">Results stated once they rest on reprocessed data, with the studies behind them. Goal 1: the comparative methylome. Goal 2: methylation and gene expression.</p>
+    <p class="lede">Written automatically from each study's committed summary once its run is recorded: QC, CpG methylation, and the same split by design factor. Provisional until the study's pull request is merged. Goal 1: the comparative methylome. Goal 2: methylation and gene expression.</p>
     <div class="findings" id="findings"></div>
   </section>
 
@@ -252,9 +252,9 @@
   $("findings").innerHTML = data.findings.length
     ? data.findings.map((f) => `<article class="card finding">
         <h3>${f.link ? `<a href="${esc(f.link)}">${esc(f.title)}</a>` : esc(f.title)}</h3>
-        <div class="meta">${esc(f.date)}${f.goal ? " · Goal " + esc(f.goal) : ""}${f.studies.length ? " · " + f.studies.map(esc).join(", ") : ""}</div>
+        <div class="meta">${esc(f.date)}${f.goal ? " · Goal " + esc(f.goal) : ""}${f.studies.length ? " · " + f.studies.map(esc).join(", ") : ""}${f.status ? " · " + esc(f.status) : ""}</div>
         <p>${esc(f.summary)}</p></article>`).join("")
-    : `<div class="card empty">No findings yet. The first study (${esc((data.studies.find((s) => s.state === "in progress") || {}).study_id || "—")}) is being processed; findings appear here once per-sample methylomes are summarized.</div>`;
+    : `<div class="card empty">No findings yet. The first study (${esc((data.studies.find((s) => s.state === "in progress") || {}).study_id || "—")}) is being processed; a finding appears here as soon as its run is recorded.</div>`;
 
   $("links").innerHTML = ` <a href="${esc(data.repo_url)}">Repository</a> · <a href="${esc(data.repo_url)}/blob/main/PLAN.md">Plan</a>`;
 })();
