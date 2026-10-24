@@ -7,7 +7,8 @@ Nothing on the page is typed in. It is assembled from:
 * study branches' status.yaml               claims: machine, profile, stage (via `list_claims`)
 * data/studies/*/status.yaml on main        stage of merged studies
 * raw/<ACCESSION>/mirror_manifest.tsv       FASTQ mirrored on gannet (data_host.yaml url_base)
-* site/findings.yaml                        findings, curated by hand as studies finish
+* data/studies/*/study_summary.yaml         findings, one per study (and part) whose run has been
+                                            recorded (`whale record-run`), on main or its branch
 
 The Pages workflow (.github/workflows/pages.yml) runs `whale build-dashboard`
 on every push to main and every few hours, so claims made on study branches
@@ -22,6 +23,7 @@ from pathlib import Path
 
 import yaml
 
+from whale.paths import SUMMARY_NAME
 from whale.registry import load_backlog, load_studies
 from whale.vocab import load_vocab
 
@@ -36,19 +38,88 @@ def _float(value) -> float | None:
         return None
 
 
-def load_findings(repo: Path) -> list[dict]:
-    path = Path(repo) / "site" / "findings.yaml"
-    if not path.exists():
-        return []
-    doc = yaml.safe_load(path.read_text()) or {}
+def _summary_paths(base: Path, study_id: str) -> list[tuple[str | None, Path]]:
+    d = base / "data" / "studies" / study_id
+    out = [(None, d / SUMMARY_NAME)]
+    if (d / "parts").is_dir():
+        out += [(p.name, p / SUMMARY_NAME) for p in sorted((d / "parts").iterdir())]
+    return [(part, path) for part, path in out if path.exists()]
+
+
+def summaries_on_main(repo: Path) -> list[dict]:
+    """Study summaries committed on main, each with ref = None."""
     out = []
-    for i, f in enumerate(doc.get("findings") or []):
-        missing = [k for k in ("date", "title", "summary") if not f.get(k)]
-        if missing:
-            raise ValueError(f"site/findings.yaml finding {i + 1} lacks {missing}")
-        out.append({"date": str(f["date"]), "title": f["title"], "summary": f["summary"].strip(),
-                    "goal": f.get("goal"), "studies": list(f.get("studies") or []), "link": f.get("link")})
-    return sorted(out, key=lambda f: f["date"], reverse=True)
+    base = Path(repo) / "data" / "studies"
+    for d in sorted(base.iterdir()) if base.is_dir() else []:
+        for _part, path in _summary_paths(Path(repo), d.name):
+            out.append({"summary": yaml.safe_load(path.read_text()) or {}, "ref": None,
+                        "path": str(path.relative_to(repo))})
+    return out
+
+
+def summaries_on_branches(repo: Path, claims: list[dict] | None, remote: str = "origin") -> list[dict]:
+    """Study summaries on the claim branches (already fetched by list_claims)."""
+    out = []
+    for c in claims or []:
+        rel = f"data/studies/{c['study_id']}/" + (f"parts/{c['part']}/" if c.get("part") else "") + SUMMARY_NAME
+        text = _git(Path(repo), "show", f"{remote}/{c['branch']}:{rel}")
+        if text:
+            out.append({"summary": yaml.safe_load(text) or {}, "ref": c["branch"], "path": rel})
+    return out
+
+
+def _pct(x) -> str:
+    return "—" if x is None else f"{x:g}%"
+
+
+def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
+    """One study's finding, stated from its study_summary.yaml and nothing else."""
+    s = entry["summary"]
+    label = s["study_id"] + (f" ({s['part']})" if s.get("part") else "")
+    qc = s.get("qc") or {}
+    meth = s.get("cpg_methylation_pct") or {}
+    cpgs = (qc.get("cpgs_5x") or {}).get("median")
+    sentences = [
+        f"{s['passed']} of {s['libraries']} libraries passed the QC gate (median mapping "
+        f"{_pct((qc.get('mapping_pct') or {}).get('median'))}, bisulfite conversion "
+        f"{_pct((qc.get('conversion_pct') or {}).get('median'))}"
+        + (f", {cpgs / 1e6:.1f} M CpGs at ≥5×" if cpgs else "") + ")."
+    ]
+    if meth:
+        sentences.append(f"CpG methylation per library ranged {_pct(meth['min'])}–{_pct(meth['max'])} "
+                         f"(median {_pct(meth['median'])}).")
+    for f in s.get("by_factor") or []:
+        parts = [f"{lv['level']} {_pct(lv.get('mean'))}" + (f" ± {lv['sd']:g}" if lv.get("sd") is not None else "")
+                 + f" (n={lv.get('n', 0)})" for lv in f["levels"]]
+        sentences.append(f"By {f['factor_id']}: " + ", ".join(parts) + ".")
+    if s.get("failed"):
+        sentences.append("Excluded: " + "; ".join(f"{x['sample_id']} ({x['reasons']})" for x in s["failed"]) + ".")
+    sentences.append("Descriptive; no differential test yet.")
+    ref = entry["ref"] or "main"
+    goals = (study or {}).get("goals") or []
+    return {
+        "date": str(s.get("generated_on") or ""),
+        "title": f"{label}: median CpG methylation {_pct(meth.get('median'))} across {s['passed']} libraries"
+                 if meth else f"{label}: no library passed the QC gate",
+        "summary": " ".join(sentences),
+        "goal": ", ".join(str(g) for g in goals) or None,
+        "studies": [s["study_id"]],
+        "status": "provisional: study PR not merged" if entry["ref"] else "merged",
+        "link": f"{repo_url}/blob/{ref}/{entry['path']}",
+    }
+
+
+def build_findings(repo: Path, registered: dict, branch_entries: list[dict] | None, repo_url: str) -> list[dict]:
+    seen = set()
+    out = []
+    # A branch's summary is newer than main's for the same study (a re-run before merging).
+    for e in [*(branch_entries or []), *summaries_on_main(repo)]:
+        key = (e["summary"].get("study_id"), e["summary"].get("part"))
+        if not key[0] or key in seen:
+            continue
+        seen.add(key)
+        out.append(finding(e, registered.get(key[0]), repo_url))
+    return sorted(out, key=lambda f: (f["date"], f["title"]), reverse=True)
 
 
 def mirror_summary(ledger: dict[str, dict] | None) -> dict | None:
@@ -75,9 +146,10 @@ def _git(repo: Path, *args: str) -> str:
 
 
 def build(repo: Path, *, claims: list[dict] | None, mirrors: dict[str, dict | None] | None,
-          repo_url: str, now: str | None = None) -> dict:
+          repo_url: str, now: str | None = None, branch_summaries: list[dict] | None = None) -> dict:
     """The dashboard's data. `claims` from list_claims (None if unavailable), `mirrors`
-    maps accession -> ledger (None if unreadable)."""
+    maps accession -> ledger (None if unreadable), `branch_summaries` from
+    summaries_on_branches."""
     repo = Path(repo)
     stages = load_vocab(repo, "pipeline_stage")
     stage_order = [s for s, v in sorted(stages.items(), key=lambda kv: kv[1]["order"]) if s not in CLOSED_STAGES]
@@ -149,7 +221,7 @@ def build(repo: Path, *, claims: list[dict] | None, mirrors: dict[str, dict | No
             "by_stage": {s: sum(r["stage"] == s for r in rows) for s in stage_order},
         },
         "studies": rows,
-        "findings": load_findings(repo),
+        "findings": build_findings(repo, registered, branch_summaries, repo_url),
     }
 
 

@@ -52,11 +52,25 @@ without opening a PR (also the case when the `gh` CLI is absent).
 
 ## Recording progress
 
-Inside the study's worktree:
+Progress is recorded by the commands that make it, never by hand:
+
+* `whale fetch-fastq --mark-staged` sets `fastq_staged` once every file is
+  verified;
+* a successful workflow run calls `whale record-run` itself
+  (workflows/methylation/main.nf, `onComplete`). It commits the QC table, run
+  manifest, methylome manifest and `study_summary.yaml`, uploads the
+  methylomes to the data host, and moves the study through `aligned`,
+  `called`, `qc_passed` (at least one library passes the QC gate) and
+  `summarized` (the methylomes are on the data host), then pushes and marks
+  the PR ready. Running it again is safe and only moves forward, which is how
+  an upload that failed is finished.
+
+`whale set-status` remains for what no command can know, such as `excluded`
+or a move to another machine:
 
 ```bash
-whale set-status --stage fastq_staged --note "105 GB, MD5 ok"
-whale set-status --stage aligned --run-name nostalgic_curie
+whale set-status --stage excluded --note "no CpG calls: RRBS with MspI fragments < 40 bp"
+whale set-status --stage fastq_staged --profile klone --force --note "moved from raven"
 ```
 
 Each call appends to the status file's history, commits and pushes. Stages

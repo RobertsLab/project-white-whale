@@ -65,6 +65,7 @@ jobs:
       - name: Check the run manifest
         run: |
           test -s results/test/TEST2026_FIXTURE_WGBS/run_manifest.json
+          test -s results/test/TEST2026_FIXTURE_WGBS/qc_summary.tsv
           ls results/test/TEST2026_FIXTURE_WGBS/cpg/S1.CpG_report.merged_CpG_evidence.cov.gz
 
   nextflow-real:
