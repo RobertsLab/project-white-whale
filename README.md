@@ -26,8 +26,10 @@ Progress and findings are published at
 <https://robertslab.github.io/project-white-whale/>, rebuilt by
 `.github/workflows/pages.yml` on every push to `main` and every three hours
 from the backlog, the registered studies, the claims on study branches and the
-gannet mirror. Findings are added by hand to `site/findings.yaml`. To view it
-locally:
+gannet mirror. Nothing on it is typed in: when a study's run finishes, the
+workflow records its stage and commits its QC and methylation summary
+(`whale record-run`), and each summary becomes that study's finding. To view
+it locally:
 
 ```bash
 whale build-dashboard && python3 -m http.server --directory site 8765
@@ -61,7 +63,8 @@ whale fetch-samplesheet --bioproject PRJNA682817 --condition-attribute ploidy --
 # ...fill the study YAML...
 whale fetch-fastq --mark-staged      # from the gannet mirror (else ENA), MD5-verified; stage -> fastq_staged
 nextflow run workflows/methylation -c config/ROBERTS2022_PH_PLOIDY_WGBS.config -profile raven
-whale set-status --stage called
+#   on success the run records itself: QC gate, summaries and methylomes committed or uploaded,
+#   stage -> summarized, PR marked ready, finding on the dashboard (`whale record-run`)
 whale claims                        # every claimed study, its machine and stage
 ```
 

@@ -10,7 +10,7 @@ import yaml
 from click.testing import CliRunner
 
 from whale.cli import main
-from whale.dashboard import build, load_findings, mirror_summary, write
+from whale.dashboard import build, mirror_summary, write
 
 URL = "https://github.com/RobertsLab/project-white-whale"
 
@@ -95,20 +95,39 @@ def test_unavailable_sources_are_flagged(repo):
     assert all(s["mirror"] is None for s in data["studies"])
 
 
-def test_findings(repo):
-    (repo / "site").mkdir()
-    (repo / "site" / "findings.yaml").write_text(yaml.safe_dump({"findings": [
-        {"date": "2026-11-01", "title": "A", "summary": "x ", "goal": 1, "studies": ["S1"]},
-        {"date": "2026-12-01", "title": "B", "summary": "y"}]}))
-    f = load_findings(repo)
-    assert [x["title"] for x in f] == ["B", "A"] and f[1]["summary"] == "x" and f[0]["studies"] == []
-    (repo / "site" / "findings.yaml").write_text(yaml.safe_dump({"findings": [{"date": "2026-11-01", "title": "A"}]}))
-    with pytest.raises(ValueError, match="lacks"):
-        load_findings(repo)
+def _summary(sid, date, part=None):
+    return {"study_id": sid, "part": part, "generated_on": date, "libraries": 2, "passed": 2, "failed": [],
+            "qc": {"mapping_pct": {"median": 50.0}, "conversion_pct": {"median": 99.1}, "cpgs_5x": {"median": 3e6}},
+            "cpg_methylation_pct": {"n": 2, "median": 12.5, "min": 12.0, "max": 13.0},
+            "by_factor": [{"factor_id": "heat", "column": "heat", "reference_level": "C",
+                           "levels": [{"level": "C", "n": 1, "mean": 12.0, "sd": None},
+                                      {"level": "H", "n": 1, "mean": 13.0, "sd": None}]}]}
 
 
-def test_committed_findings_file_is_valid(repo_root):
-    load_findings(repo_root)
+def test_findings_come_from_study_summaries(repo):
+    d = repo / "data" / "studies" / "WANG2020_TIDAL_HEAT_WGBS"
+    d.mkdir(parents=True)
+    (d / "study_summary.yaml").write_text(yaml.safe_dump(_summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01")))
+    branch = [{"summary": _summary("WANG2014_FIRST_METHYLOMES_WGBS", "2026-11-05"),
+               "ref": "study/PRJNA173440/WANG2014_FIRST_METHYLOMES_WGBS",
+               "path": "data/studies/WANG2014_FIRST_METHYLOMES_WGBS/study_summary.yaml"}]
+    f = build(repo, claims=[], mirrors={}, repo_url=URL, branch_summaries=branch)["findings"]
+    assert [x["studies"] for x in f] == [["WANG2014_FIRST_METHYLOMES_WGBS"], ["WANG2020_TIDAL_HEAT_WGBS"]]
+    newest, merged = f
+    assert newest["status"].startswith("provisional") and "/blob/study/PRJNA173440/" in newest["link"]
+    assert merged["status"] == "merged" and merged["goal"] == "1, 2"
+    assert merged["title"] == "WANG2020_TIDAL_HEAT_WGBS: median CpG methylation 12.5% across 2 libraries"
+    assert "3.0 M CpGs at ≥5×" in merged["summary"] and "By heat: C 12% (n=1), H 13% (n=1)." in merged["summary"]
+    assert merged["link"] == f"{URL}/blob/main/data/studies/WANG2020_TIDAL_HEAT_WGBS/study_summary.yaml"
+
+
+def test_branch_summary_supersedes_main(repo):
+    d = repo / "data" / "studies" / "WANG2020_TIDAL_HEAT_WGBS"
+    d.mkdir(parents=True)
+    (d / "study_summary.yaml").write_text(yaml.safe_dump(_summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01")))
+    branch = [{"summary": _summary("WANG2020_TIDAL_HEAT_WGBS", "2026-12-01"), "ref": "study/x/y", "path": "p"}]
+    f = build(repo, claims=[], mirrors={}, repo_url=URL, branch_summaries=branch)["findings"]
+    assert len(f) == 1 and f[0]["date"] == "2026-12-01"
 
 
 def test_mirror_summary_empty():
@@ -135,6 +154,8 @@ def test_page_reads_every_key_it_uses(repo_root):
     """The page and the builder agree on field names."""
     html = (repo_root / "site" / "index.html").read_text()
     data = build(repo_root, claims=[], mirrors={}, repo_url=URL)
+    for key in ("date", "title", "summary", "goal", "studies", "status", "link"):
+        assert f"f.{key}" in html, key
     for key in ("generated_at", "commit", "repo_url", "claims_available", "mirror_available", "stages",
                 "totals", "studies", "findings"):
         assert key in data and f"data.{key}" in html, key

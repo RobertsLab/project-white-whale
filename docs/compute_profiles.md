@@ -116,6 +116,11 @@ Apptainer is enabled by the profile. Lessons carried from AREE
 - Run the Nextflow **head job** on a non-preemptible partition (`coenv`
   `compute` first; see [Choosing a partition](#choosing-a-partition)),
   2 CPUs, 8 GB, a few days. Never on a login node.
+- The head job records the run when it ends (`whale record-run`), so it needs
+  `whale` on its `PATH` (`sbatch` passes on the submitting shell's
+  environment) or `WHALE_CMD` set, and must be launched from the study's
+  worktree, which pushes to GitHub. Uploading the methylomes needs an SSH key
+  for gannet on the machine; without one the study stops at `qc_passed`.
 - **Do not export `TMPDIR`** in the head job; Slurm forwards it to every task
   and into containers. Use `NXF_TEMP` for Nextflow's own temporary files.
 - `/gscratch/scrubbed` deletes files untouched for 21 days and is often >97%

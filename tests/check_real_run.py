@@ -10,6 +10,7 @@ almost no methylation outside CpGs. Exits non-zero, listing every failure.
 """
 from __future__ import annotations
 
+import csv
 import gzip
 import json
 import re
@@ -67,6 +68,19 @@ def check(run: Path) -> list[str]:
         if total and not CPG_RANGE[0] <= 100 * meth / total <= CPG_RANGE[1]:
             problems.append(f"{sample}: {cov.name} gives {100 * meth / total:.1f}% CpG methylation")
         print(f"{sample}: mapping {mapping}%, CpG {cpg}%, {len(rows)} CpG sites")
+
+    qc = run / "qc_summary.tsv"
+    if not qc.exists():
+        problems.append(f"{qc} is missing")
+    else:
+        with open(qc, newline="") as fh:
+            gate = {r["sample_id"]: r for r in csv.DictReader(fh, delimiter="\t")}
+        for sample in SAMPLES:
+            row = gate.get(sample)
+            if row is None:
+                problems.append(f"{sample}: not in qc_summary.tsv")
+            elif row["qc_pass"] != "true":
+                problems.append(f"{sample}: fails the QC gate ({row['qc_reasons']})")
 
     manifest = run / "run_manifest.json"
     if not manifest.exists():

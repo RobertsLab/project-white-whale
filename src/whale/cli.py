@@ -524,7 +524,7 @@ def build_dashboard_cmd(out, no_claims, no_mirror, remote):
     import os
     import re
 
-    from whale.dashboard import build, write
+    from whale.dashboard import build, summaries_on_branches, write
     from whale.fastq import load_ledger
     from whale.mirror import LEDGER_NAME, load_data_host
 
@@ -559,7 +559,8 @@ def build_dashboard_cmd(out, no_claims, no_mirror, remote):
         m = re.search(r"github\.com[:/](.+?)(\.git)?$", origin)
         repo_url = f"https://github.com/{m.group(1)}" if m else "https://github.com/RobertsLab/project-white-whale"
 
-    data = build(repo, claims=claims, mirrors=mirrors, repo_url=repo_url)
+    data = build(repo, claims=claims, mirrors=mirrors, repo_url=repo_url,
+                 branch_summaries=summaries_on_branches(repo, claims, remote))
     path = write(data, Path(out) if out else repo / "site" / "data.json")
     t = data["totals"]
     click.echo(f"Wrote {path}: {t['backlog']} studies, {t['registered']} registered, {t['in_progress']} in progress, "
@@ -633,6 +634,37 @@ def set_status_cmd(stage, note, nextflow_run, profile, machine, force, no_commit
         raise click.ClickException(str(exc)) from None
     click.echo(f"{new['study_id']}{' part ' + new['part'] if new.get('part') else ''}: "
                f"{new['stage']} on {new['machine']} [{new['profile']}]")
+
+
+@main.command("record-run")
+@click.option("--results", required=True, type=click.Path(exists=True, file_okay=False),
+              help="The run's output folder: <WHALE_METHYLOMES>/<STUDY_ID>[/parts/<PART>].")
+@click.option("--run-name", default=None, help="Nextflow run name (default: from run_manifest.json).")
+@click.option("--no-upload", is_flag=True, help="Do not copy the methylomes to the data host.")
+@click.option("--upload-target", default=None,
+              help="user@host:/path or a local folder (default: data/data_host.yaml upload_target).")
+@click.option("--no-commit", is_flag=True)
+@click.option("--no-push", is_flag=True)
+@click.option("--remote", default="origin", show_default=True)
+def record_run_cmd(results, run_name, no_upload, upload_target, no_commit, no_push, remote):
+    """Record a finished run on this study branch: summaries, methylomes, stage. The workflow runs this itself."""
+    from whale.results import RecordError, record_run
+
+    repo = _repo()
+    try:
+        res = record_run(repo, results, run_name=run_name, upload=not no_upload, upload_target=upload_target,
+                         commit=not no_commit, push=not (no_push or no_commit), remote=remote)
+    except (ClaimError, RecordError) as exc:
+        raise click.ClickException(str(exc)) from None
+    label = res["study_id"] + (f" part {res['part']}" if res["part"] else "")
+    click.echo(f"{label}: {res['passed']} of {res['libraries']} libraries pass the QC gate")
+    click.echo(f"{label}: stage {res['stage']}" + (f" (recorded {', '.join(res['added'])})" if res["added"] else ""))
+    if res["upload_error"]:
+        click.echo(click.style(f"methylomes not on the data host: {res['upload_error']}", fg="yellow"), err=True)
+        click.echo("The study stays below summarized; run `whale record-run` again once the host is reachable.",
+                   err=True)
+    if res["pushed"]:
+        click.echo(f"Pushed {res['branch']}" + ("; PR marked ready for review" if res["pr_ready"] else ""))
 
 
 @main.command("claims")
