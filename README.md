@@ -17,7 +17,7 @@ assay family.
 
 > **Status: Phase 1 under way.** The registry, validation, the claim system
 > for running studies on several machines, the compute profiles, a
-> stub-tested methylation workflow, the ENA sample-sheet generator, the
+> methylation workflow (run for real in CI on simulated reads), the ENA sample-sheet generator, the
 > reference-bundle fetcher and the FASTQ downloader are in place. No study has been registered or run yet. See [PLAN.md §9](PLAN.md#9-phases).
 
 ## Dashboard
