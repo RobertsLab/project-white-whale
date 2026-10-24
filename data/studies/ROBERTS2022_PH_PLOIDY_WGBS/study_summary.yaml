@@ -1,0 +1,125 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: ROBERTS2022_PH_PLOIDY_WGBS
+part: null
+generated_on: '2026-10-24'
+nextflow_run: determined_khorana
+commit: b9f6f1bdcc8271e91449f4cbfea67ecd2b6c878f
+genome_assembly: GCF_963853765.1
+chemistry: wgbs
+libraries: 24
+passed: 24
+failed: []
+qc:
+  mapping_pct:
+    n: 24
+    median: 29.9
+    mean: 29.82
+    min: 28.5
+    max: 30.2
+    sd: 0.34
+  duplication_pct:
+    n: 24
+    median: 11.21
+    mean: 11.13
+    min: 9.84
+    max: 12.02
+    sd: 0.62
+  conversion_pct:
+    n: 24
+    median: 98.63
+    mean: 98.64
+    min: 98.55
+    max: 98.73
+    sd: 0.04
+  cpgs_5x:
+    n: 24
+    median: 4220047.0
+    mean: 4191115.42
+    min: 2962959.0
+    max: 6231362.0
+    sd: 661379.29
+  mean_depth:
+    n: 24
+    median: 5.48
+    mean: 5.44
+    min: 4.28
+    max: 8.18
+    sd: 0.79
+cpg_methylation_pct:
+  n: 24
+  median: 10.87
+  mean: 10.94
+  min: 10.13
+  max: 12.26
+  sd: 0.43
+by_factor:
+- factor_id: ploidy
+  column: ploidy
+  reference_level: diploid
+  levels:
+  - level: diploid
+    n: 12
+    median: 10.82
+    mean: 10.81
+    min: 10.13
+    max: 11.39
+    sd: 0.39
+  - level: triploid
+    n: 12
+    median: 10.92
+    mean: 11.07
+    min: 10.73
+    max: 12.26
+    sd: 0.45
+- factor_id: ph
+  column: water_ph
+  reference_level: '8.2'
+  levels:
+  - level: '8.2'
+    n: 12
+    median: 10.89
+    mean: 10.98
+    min: 10.19
+    max: 12.26
+    sd: 0.53
+  - level: '7.7'
+    n: 12
+    median: 10.87
+    mean: 10.9
+    min: 10.13
+    max: 11.39
+    sd: 0.32
+by_condition:
+- condition: diploid_7_7
+  n: 6
+  median: 11.04
+  mean: 10.98
+  min: 10.13
+  max: 11.39
+  sd: 0.45
+- condition: diploid_8_2
+  n: 6
+  median: 10.73
+  mean: 10.63
+  min: 10.19
+  max: 10.85
+  sd: 0.25
+- condition: triploid_7_7
+  n: 6
+  median: 10.81
+  mean: 10.81
+  min: 10.73
+  max: 10.9
+  sd: 0.06
+- condition: triploid_8_2
+  n: 6
+  median: 11.1
+  mean: 11.33
+  min: 10.94
+  max: 12.26
+  sd: 0.52
+methylomes:
+  files: 264
+  bytes: 1548452967
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/ROBERTS2022_PH_PLOIDY_WGBS/
