@@ -9,6 +9,7 @@ variables instead.
 |---|---|---|
 | `WHALE_RAW` | directory holding `<STUDY_ID>/` FASTQ folders | `data/raw` |
 | `WHALE_REFERENCE` | directory holding `<ASSEMBLY>/genomic.fna` etc. | `data/reference` |
+| `WHALE_BISMARK_INDEX` | directory holding the cached `bismark_genome/` index | the reference bundle |
 | `WHALE_METHYLOMES` | where per-sample outputs are published | `data/methylomes` |
 | `WHALE_WORKDIR` | Nextflow work directory, on fast local disk | `work` (klone: scrubbed) |
 | `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` | local executor limits (desktop, raven) | 10 / 28 GB; 32 / 120 GB |
@@ -204,3 +205,14 @@ nextflow run workflows/methylation -profile test -stub
 ```
 
 runs the whole DAG on two tiny fixture samples without executing any tool.
+
+```bash
+make real-run      # nextflow run workflows/methylation -profile test,docker, then the check
+```
+
+runs every tool for real, in the pinned containers, on the same fixtures: a
+30 kb synthetic genome and 1,500 bisulfite read pairs (S1) and single reads
+(S2) simulated with known methylation by `tests/fixtures/make_fixtures.py`.
+`tests/check_real_run.py` then checks that nearly every read maps, that
+CpG methylation comes out near the simulated 83%, and that CHG/CHH stay near
+0%. It takes a few minutes and needs Docker; CI runs both on every PR.

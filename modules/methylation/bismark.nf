@@ -1,10 +1,15 @@
 // Bismark genome preparation, alignment, deduplication and methylation
 // extraction. Container pins as used by AREE's methylation workflow.
 
+// Built once per assembly and kept (storeDir) as <index dir>/bismark_genome,
+// by default inside the reference bundle, so later runs on the machine reuse it
+// instead of spending hours rebuilding it. Its genome.sha256 records the FASTA
+// it was built from, which main.nf checks against the bundle.
 process BISMARK_GENOME_PREPARATION {
     tag "${fasta.simpleName}"
     label 'process_high'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
+    storeDir "${params.bismark_index_dir ?: "${params.reference_dir}/${params.genome_assembly}"}"
 
     input:
     path fasta
@@ -17,16 +22,23 @@ process BISMARK_GENOME_PREPARATION {
     // genomic.fna, so it goes in under a name Bismark accepts. It is copied,
     // not linked: later tasks see this folder inside their own container,
     // where the staged input's real path (the reference drive) is not mounted.
+    // --parallel N runs each of Bismark's two indexing processes on N threads
+    // and must be 2 or more, so tasks with fewer than 4 CPUs (the test
+    // profile) leave it off and use Bismark's default.
+    def parallel = (task.cpus as int).intdiv(2)
+    def parallel_arg = parallel >= 2 ? "--parallel ${parallel}" : ''
     """
     mkdir bismark_genome
     cp -L ${fasta} bismark_genome/genome.fa
-    bismark_genome_preparation --parallel ${Math.max(1, (task.cpus as int) / 2 as int)} bismark_genome
+    sha256sum bismark_genome/genome.fa | cut -d' ' -f1 > bismark_genome/genome.sha256
+    bismark_genome_preparation ${parallel_arg} bismark_genome
     """
 
     stub:
     """
     mkdir -p bismark_genome/Bisulfite_Genome
     cp -L ${fasta} bismark_genome/genome.fa
+    sha256sum bismark_genome/genome.fa | cut -d' ' -f1 > bismark_genome/genome.sha256
     """
 }
 

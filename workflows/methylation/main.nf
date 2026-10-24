@@ -17,6 +17,7 @@
  *
  *   nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile raven,docker
  *   nextflow run workflows/methylation -profile test -stub        # smoke test
+ *   nextflow run workflows/methylation -profile test,docker       # every tool, simulated reads (make real-run)
  */
 
 nextflow.enable.dsl = 2
@@ -46,6 +47,21 @@ def resolveFastq(String p) {
     return f
 }
 
+// A cached Bismark index must have been built from the bundle's current
+// genomic.fna (fetch-reference may have replaced it since).
+def checkCachedIndex() {
+    def index = file("${params.bismark_index_dir ?: "${params.reference_dir}/${params.genome_assembly}"}/bismark_genome")
+    def built = index.resolve('genome.sha256')
+    def prov  = file("${params.reference_dir}/${params.genome_assembly}/reference_provenance.json")
+    if (!built.exists() || !prov.exists()) return
+    def want = new groovy.json.JsonSlurper().parse(prov.toFile()).files.find { it.file == 'genomic.fna' }?.sha256
+    def have = built.text.trim()
+    if (want && have != want) {
+        error "The Bismark index ${index} was built from a different genomic.fna than " +
+              "${params.genome_assembly}'s reference bundle now holds. Delete ${index} to rebuild it."
+    }
+}
+
 workflow {
     if (!params.study_id)    error "params.study_id is not set (study config)"
     if (!params.samplesheet) error "params.samplesheet is not set (study config)"
@@ -56,6 +72,7 @@ workflow {
     def chem = known[params.chemistry]
 
     def genome_fasta = file("${params.reference_dir}/${params.genome_assembly}/genomic.fna", checkIfExists: true)
+    checkCachedIndex()
     def samplesheet  = file(params.samplesheet, checkIfExists: true)
 
     reads_ch = Channel
