@@ -92,6 +92,13 @@ def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
         parts = [f"{lv['level']} {_pct(lv.get('mean'))}" + (f" ± {lv['sd']:g}" if lv.get("sd") is not None else "")
                  + f" (n={lv.get('n', 0)})" for lv in f["levels"]]
         sentences.append(f"By {f['factor_id']}: " + ", ".join(parts) + ".")
+    g = s.get("genes") or {}
+    for cls, kind in (("gene_body", "Gene bodies"), ("promoter", "Promoters")):
+        c = g.get(cls)
+        if c and c.get("meth_pct"):
+            sentences.append(f"{kind}: {c['covered_in_all']:,} of {g['universe']:,} genes have ≥{g['min_cpgs']} "
+                             f"covered CpGs in every library; median methylation {_pct(c['meth_pct']['median'])}, "
+                             f"{c['methylated_ge_50pct']:,} at ≥50%.")
     if s.get("failed"):
         sentences.append("Excluded: " + "; ".join(f"{x['sample_id']} ({x['reasons']})" for x in s["failed"]) + ".")
     sentences.append("Descriptive; no differential test yet.")

@@ -5,7 +5,9 @@
 Deterministic (fixed seed), so the committed files only change when this
 script does. The reads are a directional WGBS library simulated from the
 genome with known methylation, so a real (not stub) run of the workflow can
-be checked against the truth (tests/check_real_run.py):
+be checked against the truth (tests/check_real_run.py). The four genes in
+reference/TEST/features/*.bed are written by hand, not by this script.
+In the reads:
 
 * every CpG is methylated with probability CPG_METHYLATION, on both strands;
 * every other C is unmethylated, so bisulfite converts it to T;

@@ -74,6 +74,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 [compute profiles (desktop, raven, klone)](docs/compute_profiles.md),
 [adding a study](docs/adding_a_study.md),
 [the reference bundle](docs/reference_bundle.md),
+[gene-level methylation](docs/gene_methylation.md),
 [mirroring FASTQ to gannet](docs/fastq_mirror.md).
 
 ## Commands
