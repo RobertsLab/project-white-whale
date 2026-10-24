@@ -81,8 +81,10 @@
    the machine and the date (committed). `--jobs` sets parallel downloads
    (default 2), `--run` limits it to some runs, `--source ena|mirror` forces
    one source. It refuses to start if free space is short, and refuses a
-   second downloader into the same directory. On klone, run it as a job, not
-   on a login node.
+   second downloader into the same directory. On klone, run it as an
+   `sbatch` job on the first non-preemptible partition with room, not on
+   `ckpt-all` and not on a login node
+   ([choosing a partition](compute_profiles.md#choosing-a-partition)).
 
    If a study is not mirrored yet, mirror it from raven first
    (`whale mirror-fastq --accession <PRJ…>`): ENA is slow from most machines
