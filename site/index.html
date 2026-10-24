@@ -182,7 +182,7 @@
 
   <section aria-labelledby="h-genes">
     <h2 id="h-genes">Genes</h2>
-    <p class="lede">Every library is scored over the same genes of the reference annotation, so studies can be compared gene by gene. A gene's value is its CpG methylation averaged over the libraries with at least five covered CpGs in it. Descriptive only: no C/T SNP mask yet and no differential test.</p>
+    <p class="lede">Every library is scored over the same genes of the reference annotation, so studies can be compared gene by gene. A gene's value is its CpG methylation averaged over the libraries with at least five covered CpGs in it. Descriptive only; each card says whether CpGs on C/T SNPs were masked.</p>
     <div class="findings" id="genes"></div>
   </section>
 
@@ -329,7 +329,7 @@
 
   genesEl.innerHTML = views.map((v, k) => `<article class="card gene-study" data-k="${k}">
       <div><h3>${esc(v.study_id)}${v.part ? " (" + esc(v.part) + ")" : ""}</h3>
-        <div class="meta">${fmt(v.genes)} genes × ${fmt(v.libraries)} libraries · ${esc(v.status)}</div></div>
+        <div class="meta">${fmt(v.genes)} genes × ${fmt(v.libraries)} libraries · ${v.snp_mask ? "CpGs on C/T SNPs masked (" + esc(v.snp_mask) + ")" : "not SNP-masked"} · ${esc(v.status)}</div></div>
       <div class="hists">${v.hist.map((h, j) => `<div class="hist">
           <h4>${esc(h.label)} methylation</h4>
           <div class="sub">${fmt(h.genes)} genes with ≥${v.min_cpgs} covered CpGs in every library; genes per ${v.bin}% bin, log scale</div>

@@ -123,7 +123,9 @@ def test_record_run_summarizes_uploads_and_pushes(study):
     with gzip.open(d / "genes" / "promoter.cpgs.tsv.gz", "rt") as fh:
         assert [r[1] for r in csv.reader(fh, delimiter="\t")] == ["S1", "10", "2", "0"]
     assert sorted(p.name for p in (d / "genes").iterdir()) == sorted(
-        f"{c}.{m}.tsv.gz" for c in ("gene_body", "promoter") for m in ("meth_pct", "cpgs", "calls"))
+        f"{c}.{m}.tsv.gz" for c in ("gene_body", "promoter") for m in ("meth_pct", "cpgs", "meth", "calls"))
+    with gzip.open(d / "genes" / "gene_body.meth.tsv.gz", "rt") as fh:
+        assert [r[1:] for r in csv.reader(fh, delimiter="\t")][1] == ["110", "120", "130"]
     cpg = next(r for r in rows if r["sample_id"] == "S1" and r["file"].endswith(".cov.gz"))
     assert cpg["url"] == f"https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/{SID}/S1/{cpg['file']}"
     uploaded = host / "methylomes" / SID / "S1" / cpg["file"]

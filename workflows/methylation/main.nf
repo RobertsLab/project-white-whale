@@ -116,6 +116,17 @@ workflow {
     checkCachedIndex()
     def samplesheet  = file(params.samplesheet, checkIfExists: true)
     def features     = file("${params.reference_dir}/${params.genome_assembly}/features", checkIfExists: true)
+    // C/T SNP mask (docs/snp_mask.md): a mask folder with cpg_mask.bed.gz and mask_manifest.json.
+    def snp_mask = null
+    def mask_bed = []
+    if (params.snp_mask) {
+        mask_bed = file("${params.snp_mask}/cpg_mask.bed.gz", checkIfExists: true)
+        def mm = new groovy.json.JsonSlurper().parse(file("${params.snp_mask}/mask_manifest.json", checkIfExists: true).toFile())
+        if (mm.params.genome_assembly != params.genome_assembly) {
+            error "SNP mask ${mm.params.mask_id} is for ${mm.params.genome_assembly}, not ${params.genome_assembly}"
+        }
+        snp_mask = [mask_id: mm.params.mask_id, sha256: mm.outputs['cpg_mask.bed.gz'], cpgs_masked: mm.counts.cpgs_masked]
+    }
 
     reads_ch = Channel
         .fromPath(samplesheet)
@@ -152,7 +163,7 @@ workflow {
              CPG_SUMMARY.out.summary)
         .collect()
     QC_GATE(qc_inputs, samplesheet)
-    FEATURE_SUMMARY(BISMARK_METHYLATION_EXTRACTOR.out.cpg, features)
+    FEATURE_SUMMARY(BISMARK_METHYLATION_EXTRACTOR.out.cpg, features, mask_bed)
 
     versions_ch = FASTQC.out.versions
         .mix(TRIM_GALORE.out.versions, BISMARK_ALIGN.out.versions, BISMARK_METHYLATION_EXTRACTOR.out.versions)
@@ -164,7 +175,7 @@ workflow {
         chemistry_align_args: chem.align,
         extractor_args: params.extractor_args, trim_args: params.trim_args,
         qc_min_mapping: params.qc_min_mapping, qc_min_conversion: params.qc_min_conversion,
-        qc_min_cpgs_5x: params.qc_min_cpgs_5x,
+        qc_min_cpgs_5x: params.qc_min_cpgs_5x, snp_mask: snp_mask,
         deduplicate: chem.deduplicate, profile: workflow.profile,
         nextflow_version: nextflow.version.toString(), run_name: workflow.runName,
         commit: workflow.commitId ?: gitCommit(), session: workflow.sessionId.toString(),

@@ -32,6 +32,13 @@ heterozygous animal in 24 gives ~1-3 definite reads and is often below the
 threshold. The mask removes the systematic bias of population SNPs; it does
 not remove every private variant.
 
+## Applying it
+
+`nextflow run workflows/methylation ... --snp_mask <mask folder>` (or
+`WHALE_SNP_MASK=<mask folder>`) leaves the masked CpGs out of every gene table;
+`run_manifest.json` and `study_summary.yaml` record the mask id and checksum.
+Re-running a finished study with `-resume` redoes only the gene step.
+
 ## Outputs
 
 Published to `<WHALE_REFERENCE>/<ASSEMBLY>/snp_mask/<MASK_ID>/`:

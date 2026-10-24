@@ -108,6 +108,9 @@ def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
                              f"{c['methylated_ge_50pct']:,} at ≥50%.")
     if s.get("failed"):
         sentences.append("Excluded: " + "; ".join(f"{x['sample_id']} ({x['reasons']})" for x in s["failed"]) + ".")
+    if s.get("snp_mask"):
+        sentences.append(f"Gene values leave out {s['snp_mask']['cpgs_masked']:,} CpGs on C/T SNPs "
+                         f"(mask {s['snp_mask']['mask_id']}).")
     sentences.append("Descriptive; no differential test yet.")
     ref = entry["ref"] or "main"
     goals = (study or {}).get("goals") or []
@@ -221,7 +224,8 @@ def gene_view(repo: Path, entry: dict, repo_url: str, remote: str = "origin") ->
         "factors": [{"id": fid, "levels": levels} for fid, _, levels in factors],
         "tables": [{"label": f"{label} {metric.replace('_', ' ')}",
                     "url": f"{repo_url}/raw/{ref}/{base}/genes/{cls}.{metric}.tsv.gz"}
-                   for cls, label in GENE_CLASSES for metric in ("meth_pct", "cpgs", "calls")],
+                   for cls, label in GENE_CLASSES for metric in ("meth_pct", "cpgs", "meth", "calls")],
+        "snp_mask": (s.get("snp_mask") or {}).get("mask_id"),
         "per_sample_url": (s.get("methylomes") or {}).get("url"),
         "columns": columns,
         "rows": rows,
