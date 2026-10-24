@@ -37,3 +37,7 @@ docs/_site/
 
 # Dashboard data, rebuilt by `whale build-dashboard` / the Pages workflow
 site/data.json
+
+# Built by `whale build-dashboard` (in CI for Pages); never committed.
+site/data.json
+site/genes/

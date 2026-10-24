@@ -117,6 +117,30 @@
     font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: none;
   }
   .tip b { display: block; margin-bottom: 2px; }
+  .gene-study { padding: 16px; display: grid; gap: 14px; }
+  .gene-study h3 { margin: 0; font-size: 16px; }
+  .gene-study .meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .hists { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .hist h4 { margin: 0; font-size: 14px; }
+  .hist .sub { font-size: 12px; color: var(--text-muted); margin: 2px 0 6px; }
+  .hist svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .hist .bar { fill: var(--fill); }
+  .hist .bar.hover { fill: var(--fill-current); }
+  .hist .grid { stroke: var(--border); stroke-width: 1; }
+  .hist .axis { fill: var(--text-muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .gene-links { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+  .gene-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .gene-controls input { flex: 1 1 240px; min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--surface-1); color: var(--text-primary); }
+  button.load { font: inherit; font-size: 14px; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface-1); color: var(--link); }
+  .gene-count { font-size: 12px; color: var(--text-muted); }
+  .gene-table th { cursor: pointer; user-select: none; }
+  .gene-table th[aria-sort="descending"]::after { content: " ↓"; }
+  .gene-table th[aria-sort="ascending"]::after { content: " ↑"; }
+  .gene-table th, .gene-table td { padding: 8px 10px; }
+  .gene-table td.desc { white-space: normal; min-width: 220px; color: var(--text-secondary); }
+  .gene-table .gid { font-size: 12px; color: var(--text-muted); }
   footer { margin-top: 40px; font-size: 13px; color: var(--text-muted); }
   .warn { margin-top: 12px; font-size: 13px; color: var(--text-secondary); }
 </style>
@@ -154,6 +178,12 @@
     <h2 id="h-findings">Findings</h2>
     <p class="lede">Written automatically from each study's committed summary once its run is recorded: QC, CpG methylation, and the same split by design factor. Provisional until the study's pull request is merged. Goal 1: the comparative methylome. Goal 2: methylation and gene expression.</p>
     <div class="findings" id="findings"></div>
+  </section>
+
+  <section aria-labelledby="h-genes">
+    <h2 id="h-genes">Genes</h2>
+    <p class="lede">Every library is scored over the same genes of the reference annotation, so studies can be compared gene by gene. A gene's value is its CpG methylation averaged over the libraries with at least five covered CpGs in it. Descriptive only: no C/T SNP mask yet and no differential test.</p>
+    <div class="findings" id="genes"></div>
   </section>
 
   <footer>
@@ -255,6 +285,173 @@
         <div class="meta">${esc(f.date)}${f.goal ? " · Goal " + esc(f.goal) : ""}${f.studies.length ? " · " + f.studies.map(esc).join(", ") : ""}${f.status ? " · " + esc(f.status) : ""}</div>
         <p>${esc(f.summary)}</p></article>`).join("")
     : `<div class="card empty">No findings yet. The first study (${esc((data.studies.find((s) => s.state === "in progress") || {}).study_id || "—")}) is being processed; a finding appears here as soon as its run is recorded.</div>`;
+
+
+  // --- Genes: per-study histograms, links to the matrices, and a searchable gene table.
+  const genesEl = $("genes");
+  const views = data.genes || [];
+  if (!views.length) {
+    genesEl.innerHTML = `<div class="card empty">No study has gene-level results yet; they appear when a run is recorded.</div>`;
+  }
+  const pctFmt = (v) => v == null ? "—" : `${fmt(v, 1)}%`;
+
+  function histogram(h, bin, svgId) {
+    // Log count scale: a few thousand genes near 0% would otherwise flatten the
+    // methylated mode. y(0) is the baseline; a bin of 1 gene still shows.
+    const W = 520, H = 220, L = 56, R = 8, T = 8, B = 28;
+    const max = Math.max(1, ...h.bins);
+    const top = Math.pow(10, Math.ceil(Math.log10(max + 1)));
+    const x = (i) => L + (i * (W - L - R)) / h.bins.length;
+    const y = (v) => T + (H - T - B) * (1 - Math.log10(1 + v) / Math.log10(1 + top));
+    const bw = (W - L - R) / h.bins.length;
+    let g = "";
+    for (let v = 1; v <= top; v *= 10) {
+      g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/>` +
+           `<text class="axis" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
+    }
+    g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/>`;
+    for (const p of [0, 25, 50, 75, 100]) {
+      g += `<text class="axis" x="${L + (p / 100) * (W - L - R)}" y="${H - 8}" text-anchor="middle">${p}%</text>`;
+    }
+    const bars = h.bins.map((n, i) => {
+      if (!n) return "";
+      const hgt = Math.max(1, y(0) - y(n)), w = Math.max(1, bw - 2);
+      const r = Math.min(4, w / 2, hgt);
+      const x0 = x(i) + 1, y0 = y(0) - hgt;
+      // Rounded top, square base on the axis.
+      const d = `M${x0},${y(0)}V${y0 + r}Q${x0},${y0} ${x0 + r},${y0}H${x0 + w - r}Q${x0 + w},${y0} ${x0 + w},${y0 + r}V${y(0)}Z`;
+      return `<path class="bar" d="${d}"/>`;
+    }).join("");
+    const hits = h.bins.map((n, i) =>
+      `<rect class="hit" data-i="${i}" x="${x(i)}" y="${T}" width="${bw}" height="${H - T - B}" fill="transparent"/>`).join("");
+    return `<svg id="${svgId}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Histogram of ${esc(h.label.toLowerCase())} methylation across ${fmt(h.genes)} genes">${g}${bars}${hits}</svg>`;
+  }
+
+  genesEl.innerHTML = views.map((v, k) => `<article class="card gene-study" data-k="${k}">
+      <div><h3>${esc(v.study_id)}${v.part ? " (" + esc(v.part) + ")" : ""}</h3>
+        <div class="meta">${fmt(v.genes)} genes × ${fmt(v.libraries)} libraries · ${esc(v.status)}</div></div>
+      <div class="hists">${v.hist.map((h, j) => `<div class="hist">
+          <h4>${esc(h.label)} methylation</h4>
+          <div class="sub">${fmt(h.genes)} genes with ≥${v.min_cpgs} covered CpGs in every library; genes per ${v.bin}% bin, log scale</div>
+          ${histogram(h, v.bin, `hist-${k}-${j}`)}</div>`).join("")}</div>
+      <div class="gene-links">Gene × library tables (gzipped TSV, libraries that passed QC):
+        ${v.tables.map((t) => `<a href="${esc(t.url)}">${esc(t.label)}</a>`).join(" · ")}
+        ${v.per_sample_url ? `<br>Per-library tables with exons and introns: <a href="${esc(v.per_sample_url)}">on gannet</a>, under each library's folder.` : ""}</div>
+      <div class="gene-controls">
+        <button class="load" type="button">Show the gene table</button>
+        <input type="search" placeholder="Search gene ID, symbol or description" aria-label="Search genes" hidden>
+        <span class="gene-count" aria-live="polite"></span></div>
+      <div class="gene-count" hidden>n: libraries with ≥${v.min_cpgs} covered CpGs in the gene's body or promoter. Group columns average gene-body methylation over those libraries in each group. Sorting puts genes measured in fewer than half the libraries last.</div>
+      <div class="scroll" hidden><table class="gene-table"><thead></thead><tbody></tbody></table></div>
+    </article>`).join("");
+
+  views.forEach((v, k) => {
+    const card = genesEl.querySelector(`[data-k="${k}"]`);
+    v.hist.forEach((h, j) => {
+      const svg = $(`hist-${k}-${j}`);
+      const bars = svg.querySelectorAll(".bar");
+      const barAt = {};
+      let b = 0;
+      h.bins.forEach((n, i) => { if (n) barAt[i] = bars[b++]; });
+      svg.querySelectorAll(".hit").forEach((el) => {
+        const i = +el.dataset.i;
+        el.addEventListener("mousemove", (e) => {
+          Object.values(barAt).forEach((x) => x.classList.remove("hover"));
+          if (barAt[i]) barAt[i].classList.add("hover");
+          tip.innerHTML = `<b>${i * v.bin}–${(i + 1) * v.bin}% methylated</b>${fmt(h.bins[i])} genes`;
+          tip.style.display = "block";
+          const r = tip.getBoundingClientRect();
+          tip.style.left = Math.min(e.clientX + 14, window.innerWidth - r.width - 8) + "px";
+          tip.style.top = Math.min(e.clientY + 14, window.innerHeight - r.height - 8) + "px";
+        });
+        el.addEventListener("mouseleave", () => { tip.style.display = "none"; if (barAt[i]) barAt[i].classList.remove("hover"); });
+      });
+    });
+
+    const btn = card.querySelector("button.load");
+    const input = card.querySelector("input");
+    const count = card.querySelector(".gene-count");
+    const wrap = card.querySelector(".scroll");
+    const thead = card.querySelector("thead");
+    const tbody = card.querySelector("tbody");
+    let table = null, sortCol = null, sortDir = -1;
+    const LIMIT = 100;
+
+    function label(c) {
+      if (c === "gene_body") return "Gene body";
+      if (c === "promoter") return "Promoter";
+      const m = c.match(/^gene_body:(.+)=(.+)$/);
+      // "Body, triploid"; a numeric level keeps its factor: "Body, ph 7.7".
+      return m ? `Body, ${/^[0-9.]+$/.test(m[2]) ? m[1] + " " : ""}${m[2]}` : c;
+    }
+    function render() {
+      const cols = table.columns;
+      const ix = Object.fromEntries(cols.map((c, i) => [c, i]));
+      const shown = ["gene", "description", "gene_body", "gene_body_n", "promoter", "promoter_n",
+        ...cols.filter((c) => c.startsWith("gene_body:"))];
+      const q = input.value.trim().toLowerCase();
+      let rows = q ? table.rows.filter((r) => (r[ix.gene_id] + " " + r[ix.symbol] + " " + r[ix.description]).toLowerCase().includes(q)) : table.rows.slice();
+      if (sortCol) {
+        const i = sortCol === "gene" ? ix.symbol : ix[sortCol];
+        // A mean over one or two libraries sorts last, whichever way: it is not comparable.
+        const nCol = sortCol.startsWith("promoter") ? ix.promoter_n : sortCol.startsWith("gene_body") ? ix.gene_body_n : null;
+        const few = (r) => nCol != null && r[nCol] < Math.ceil(v.libraries / 2);
+        rows.sort((a, b) => {
+          if (few(a) !== few(b)) return few(a) ? 1 : -1;
+          const x = a[i], y = b[i];
+          if (x == null && y == null) return 0;
+          if (x == null) return 1;
+          if (y == null) return -1;
+          return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * sortDir;
+        });
+      }
+      thead.innerHTML = "<tr>" + shown.map((c) => {
+        const num = !["gene", "description"].includes(c);
+        const name = c === "gene" ? "Gene" : c === "description" ? "Description" : c.endsWith("_n") ? "n" : label(c);
+        const sort = c === sortCol ? (sortDir < 0 ? "descending" : "ascending") : "none";
+        return `<th class="${num ? "num" : ""}" data-c="${c}" aria-sort="${sort}" tabindex="0">${esc(name)}</th>`;
+      }).join("") + "</tr>";
+      tbody.innerHTML = rows.slice(0, LIMIT).map((r) => "<tr>" + shown.map((c) => {
+        if (c === "gene") return `<td><div>${esc(r[ix.symbol] || r[ix.gene_id])}</div><div class="gid">GeneID ${esc(r[ix.gene_id])}</div></td>`;
+        if (c === "description") return `<td class="desc">${esc(r[ix.description])}</td>`;
+        if (c.endsWith("_n")) return `<td class="num">${fmt(r[ix[c]])}</td>`;
+        return `<td class="num">${pctFmt(r[ix[c]])}</td>`;
+      }).join("") + "</tr>").join("");
+      count.textContent = `${fmt(Math.min(LIMIT, rows.length))} of ${fmt(rows.length)} genes shown` +
+        (rows.length > LIMIT ? "; search or sort to see others" : "");
+      thead.querySelectorAll("th").forEach((th) => {
+        const go = () => {
+          const c = th.dataset.c;
+          if (sortCol === c) sortDir = -sortDir; else { sortCol = c; sortDir = ["gene", "description"].includes(c) ? 1 : -1; }
+          render();
+        };
+        th.addEventListener("click", go);
+        th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+      });
+    }
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Loading…";
+      try {
+        const res = await fetch(v.file, { cache: "no-store" });
+        if (!res.ok) throw new Error(res.status);
+        table = await res.json();
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = "Could not load the gene table; try again";
+        return;
+      }
+      btn.hidden = true;
+      input.hidden = false;
+      wrap.hidden = false;
+      card.querySelectorAll(".gene-count[hidden]").forEach((el) => (el.hidden = false));
+      sortCol = "gene_body";
+      render();
+      let t;
+      input.addEventListener("input", () => { clearTimeout(t); t = setTimeout(render, 150); });
+      input.focus();
+    });
+  });
 
   $("links").innerHTML = ` <a href="${esc(data.repo_url)}">Repository</a> · <a href="${esc(data.repo_url)}/blob/main/PLAN.md">Plan</a>`;
 })();

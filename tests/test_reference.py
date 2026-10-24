@@ -209,3 +209,31 @@ def test_download_failure_is_a_reference_error(tmp_path, monkeypatch):
     monkeypatch.setattr(mirror, "download", gone)
     with pytest.raises(ReferenceError, match="gave up"):
         ref._http_download("https://ftp.ncbi.nlm.nih.gov/x/genomic.fna.gz", tmp_path / "genomic.fna.gz")
+
+
+def test_gene_info(tmp_path):
+    from whale.reference import build_gene_info, read_gene_info, write_gene_info
+    gtf = tmp_path / "g.gtf"
+    gtf.write_text(
+        '#gtf-version 2.2\n'
+        'c1\tGnomon\tgene\t11\t50\t.\t-\t.\tgene_id "LOC1"; db_xref "GeneID:1"; description "heat shock protein 70"; '
+        'gene "LOC1"; gene_biotype "protein_coding";\n'
+        'c1\tGnomon\texon\t11\t20\t.\t-\t.\tgene_id "LOC1"; transcript_id "XM_1"; db_xref "GeneID:1";\n'
+        'c2\tGnomon\tgene\t1\t9\t.\t+\t.\tgene_id "trnaa"; db_xref "GeneID:2"; gene_biotype "tRNA";\n')
+    rows = build_gene_info(gtf)
+    assert [(r["gene_id"], r["symbol"], r["description"], r["start"], r["strand"]) for r in rows] == [
+        ("1", "LOC1", "heat shock protein 70", 10, "-"), ("2", "trnaa", "", 0, "+")]
+    out = tmp_path / "info.tsv.gz"
+    write_gene_info(rows, out)
+    first = out.read_bytes()
+    write_gene_info(rows, out)
+    assert out.read_bytes() == first
+    assert read_gene_info(out)["1"]["biotype"] == "protein_coding"
+
+
+def test_committed_gene_info_matches_the_default_assembly(repo_root):
+    """The dashboard names genes from this file; it must cover every gene the features use."""
+    from whale.reference import gene_info_path, read_gene_info, resolve_assembly
+    acc = resolve_assembly(repo_root)["ncbi_assembly_accession"]
+    info = read_gene_info(gene_info_path(repo_root, acc))
+    assert len(info) == 33_331
