@@ -3,12 +3,12 @@
 study_id: ROBERTS2022_PH_PLOIDY_WGBS
 accession: PRJNA682817
 part: null
-stage: fastq_staged
+stage: qc_passed
 profile: klone
-machine: klone
+machine: n3441
 claimed_by: Steven Roberts
 claimed_on: '2026-10-23'
-nextflow_run: null
+nextflow_run: determined_khorana
 notes: null
 history:
 - stage: claimed
@@ -24,3 +24,15 @@ history:
   machine: klone
   note: 48 files, 145.2 GB from ENA, MD5 verified; 3 ckpt jobs (2 corrupt downloads
     caught and re-fetched)
+- stage: aligned
+  date: '2026-10-24'
+  machine: n3441
+  note: 24 libraries aligned; median mapping 29.9%
+- stage: called
+  date: '2026-10-24'
+  machine: n3441
+  note: CpG calls for 24 libraries (run determined_khorana)
+- stage: qc_passed
+  date: '2026-10-24'
+  machine: n3441
+  note: 24 of 24 libraries pass the QC gate
