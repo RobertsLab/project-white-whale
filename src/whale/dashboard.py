@@ -9,6 +9,8 @@ Nothing on the page is typed in. It is assembled from:
 * raw/<ACCESSION>/mirror_manifest.tsv       FASTQ mirrored on gannet (data_host.yaml url_base)
 * data/studies/*/study_summary.yaml         findings, one per study (and part) whose run has been
                                             recorded (`whale record-run`), on main or its branch
+* data/studies/*/genes/*.tsv.gz             gene x sample matrices: each study's gene section, with
+                                            names from data/reference/gene_info/<ASSEMBLY>.tsv.gz
 
 The Pages workflow (.github/workflows/pages.yml) runs `whale build-dashboard`
 on every push to main and every few hours, so claims made on study branches
@@ -16,7 +18,11 @@ show up without a merge.
 """
 from __future__ import annotations
 
+import csv
+import gzip
+import io
 import json
+import statistics
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +30,7 @@ from pathlib import Path
 import yaml
 
 from whale.paths import SUMMARY_NAME
+from whale.reference import gene_info_path, read_gene_info
 from whale.registry import load_backlog, load_studies
 from whale.vocab import load_vocab
 
@@ -129,6 +136,112 @@ def build_findings(repo: Path, registered: dict, branch_entries: list[dict] | No
     return sorted(out, key=lambda f: (f["date"], f["title"]), reverse=True)
 
 
+GENE_MIN_CPGS = 5        # a library counts towards a gene's mean only with >= 5 covered CpGs
+HIST_BIN = 2             # % methylation per histogram bin
+GENE_CLASSES = [("gene_body", "Gene body"), ("promoter", "Promoter")]
+
+
+def _read(repo: Path, ref: str | None, rel: str, remote: str) -> bytes | None:
+    """A file from the working tree (ref None: main as checked out) or from a remote branch."""
+    if ref is None:
+        path = Path(repo) / rel
+        return path.read_bytes() if path.exists() else None
+    proc = subprocess.run(["git", "show", f"{remote}/{ref}:{rel}"], cwd=repo, capture_output=True)
+    return proc.stdout if proc.returncode == 0 else None
+
+
+def _matrix(raw: bytes) -> tuple[list[str], list[str], list[list[str]]]:
+    rows = list(csv.reader(io.StringIO(gzip.decompress(raw).decode()), delimiter="\t"))
+    return rows[0][1:], [r[0] for r in rows[1:]], [r[1:] for r in rows[1:]]
+
+
+def _mean(values: list[float]) -> float | None:
+    return round(statistics.fmean(values), 1) if values else None
+
+
+def gene_view(repo: Path, entry: dict, repo_url: str, remote: str = "origin") -> dict | None:
+    """A study's gene section: per-gene means for the table, histograms, and links to the matrices.
+    None if the study has no gene matrices (recorded before FEATURE_SUMMARY existed)."""
+    s = entry["summary"]
+    base = entry["path"].rsplit("/", 1)[0]
+    raw = {}
+    for cls, _ in GENE_CLASSES:
+        for metric in ("meth_pct", "cpgs"):
+            raw[(cls, metric)] = _read(repo, entry["ref"], f"{base}/genes/{cls}.{metric}.tsv.gz", remote)
+    if any(v is None for v in raw.values()):
+        return None
+    sheet_raw = _read(repo, entry["ref"], f"data/studies/{s['study_id']}/samplesheet.tsv", remote)
+    sheet = {r["sample_id"]: r for r in csv.DictReader(io.StringIO(sheet_raw.decode()), delimiter="\t")} \
+        if sheet_raw else {}
+    info_path = gene_info_path(repo, s.get("genome_assembly") or "")
+    info = read_gene_info(info_path) if info_path.exists() else {}
+
+    factors = [(f["factor_id"], f["column"], [lv["level"] for lv in f["levels"]]) for f in s.get("by_factor") or []]
+    per_class, samples, genes = {}, None, None
+    for cls, _ in GENE_CLASSES:
+        smp, gns, pct = _matrix(raw[(cls, "meth_pct")])
+        _, _, cpg = _matrix(raw[(cls, "cpgs")])
+        samples, genes = samples or smp, genes or gns
+        per_class[cls] = (pct, cpg)
+
+    columns = ["gene_id", "symbol", "description", "biotype"]
+    for cls, _ in GENE_CLASSES:
+        columns += [cls, f"{cls}_n"]
+    for fid, _, levels in factors:
+        columns += [f"gene_body:{fid}={lv}" for lv in levels]
+    rows, hists = [], {}
+    for cls, _ in GENE_CLASSES:
+        hists[cls] = {"bins": [0] * (100 // HIST_BIN), "genes": 0}
+    for i, g in enumerate(genes):
+        gi = info.get(g, {})
+        row = [g, gi.get("symbol", ""), gi.get("description", ""), gi.get("biotype", "")]
+        for cls, _ in GENE_CLASSES:
+            pct, cpg = per_class[cls]
+            ok = [float(pct[i][j]) for j in range(len(samples)) if pct[i][j] and int(cpg[i][j]) >= GENE_MIN_CPGS]
+            m = _mean(ok)
+            row += [m, len(ok)]
+            if m is not None and len(ok) == len(samples):
+                h = hists[cls]
+                h["bins"][min(int(m // HIST_BIN), len(h["bins"]) - 1)] += 1
+                h["genes"] += 1
+        pct, cpg = per_class["gene_body"]
+        for _, col, levels in factors:
+            for lv in levels:
+                row.append(_mean([float(pct[i][j]) for j, smp in enumerate(samples)
+                                  if str(sheet.get(smp, {}).get(col, "")) == lv
+                                  and pct[i][j] and int(cpg[i][j]) >= GENE_MIN_CPGS]))
+        rows.append(row)
+
+    ref = entry["ref"] or "main"
+    return {
+        "study_id": s["study_id"], "part": s.get("part"), "libraries": len(samples),
+        "min_cpgs": GENE_MIN_CPGS, "bin": HIST_BIN, "genes": len(genes),
+        "named": bool(info), "status": "provisional: study PR not merged" if entry["ref"] else "merged",
+        "hist": [{"id": cls, "label": label, **hists[cls]} for cls, label in GENE_CLASSES],
+        "factors": [{"id": fid, "levels": levels} for fid, _, levels in factors],
+        "tables": [{"label": f"{label} {metric.replace('_', ' ')}",
+                    "url": f"{repo_url}/raw/{ref}/{base}/genes/{cls}.{metric}.tsv.gz"}
+                   for cls, label in GENE_CLASSES for metric in ("meth_pct", "cpgs", "calls")],
+        "per_sample_url": (s.get("methylomes") or {}).get("url"),
+        "columns": columns,
+        "rows": rows,
+    }
+
+
+def build_gene_views(repo: Path, branch_entries: list[dict] | None, repo_url: str,
+                     remote: str = "origin") -> list[dict]:
+    seen, out = set(), []
+    for e in [*(branch_entries or []), *summaries_on_main(repo)]:
+        key = (e["summary"].get("study_id"), e["summary"].get("part"))
+        if not key[0] or key in seen:
+            continue
+        seen.add(key)
+        v = gene_view(repo, e, repo_url, remote)
+        if v:
+            out.append(v)
+    return sorted(out, key=lambda v: v["study_id"])
+
+
 def mirror_summary(ledger: dict[str, dict] | None) -> dict | None:
     if not ledger:
         return None
@@ -153,7 +266,8 @@ def _git(repo: Path, *args: str) -> str:
 
 
 def build(repo: Path, *, claims: list[dict] | None, mirrors: dict[str, dict | None] | None,
-          repo_url: str, now: str | None = None, branch_summaries: list[dict] | None = None) -> dict:
+          repo_url: str, now: str | None = None, branch_summaries: list[dict] | None = None,
+          remote: str = "origin") -> dict:
     """The dashboard's data. `claims` from list_claims (None if unavailable), `mirrors`
     maps accession -> ledger (None if unreadable), `branch_summaries` from
     summaries_on_branches."""
@@ -229,11 +343,28 @@ def build(repo: Path, *, claims: list[dict] | None, mirrors: dict[str, dict | No
         },
         "studies": rows,
         "findings": build_findings(repo, registered, branch_summaries, repo_url),
+        "genes": build_gene_views(repo, branch_summaries, repo_url, remote),
     }
 
 
 def write(data: dict, out: Path) -> Path:
+    """data.json, and each study's gene table as genes/<STUDY_ID>[.<PART>].json beside it
+    (several MB each, so the page loads one only when asked)."""
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
+    data = dict(data)
+    views = []
+    for v in data.get("genes") or []:
+        v = dict(v)
+        rows = v.pop("rows", None)
+        if rows is not None:
+            name = v["study_id"] + (f".{v['part']}" if v.get("part") else "") + ".json"
+            (out.parent / "genes").mkdir(exist_ok=True)
+            (out.parent / "genes" / name).write_text(
+                json.dumps({"columns": v["columns"], "rows": rows}, separators=(",", ":")))
+            v["file"] = f"genes/{name}"
+        views.append(v)
+    if "genes" in data:
+        data["genes"] = views
     out.write_text(json.dumps(data, indent=2) + "\n")
     return out

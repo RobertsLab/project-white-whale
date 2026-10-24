@@ -287,6 +287,35 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
     click.echo(f"\nWrote {target}/reference_provenance.json")
 
 
+@main.command("build-gene-info")
+@click.option("--assembly", default=None, help="Default: the default assembly in genome_assemblies.yaml.")
+@click.option("--gtf", default=None, type=click.Path(exists=True, dir_okay=False),
+              help="Default: genomic.gtf in the assembly's reference bundle.")
+def build_gene_info_cmd(assembly, gtf):
+    """Write data/reference/gene_info/<ACCESSION>.tsv.gz (GeneID, symbol, description) from the GTF; commit it."""
+    from whale.reference import (
+        ReferenceError,
+        build_gene_info,
+        default_bundle_dir,
+        gene_info_path,
+        resolve_assembly,
+        write_gene_info,
+    )
+
+    repo = _repo()
+    try:
+        acc = resolve_assembly(repo, assembly)["ncbi_assembly_accession"]
+    except ReferenceError as exc:
+        raise click.ClickException(str(exc)) from None
+    src = Path(gtf) if gtf else default_bundle_dir(repo, acc) / "genomic.gtf"
+    if not src.exists():
+        raise click.ClickException(f"{src} not found; run `whale fetch-reference` or pass --gtf.")
+    rows = build_gene_info(src)
+    out = gene_info_path(repo, acc)
+    write_gene_info(rows, out)
+    click.echo(f"Wrote {out}: {len(rows):,} genes")
+
+
 @main.command("fetch-fastq")
 @click.option("--study", "study_id", default=None, help="Default: the study of the current study branch.")
 @click.option("--manifest", default=None, type=click.Path(exists=True, dir_okay=False),
@@ -593,7 +622,7 @@ def build_dashboard_cmd(out, no_claims, no_mirror, remote):
         repo_url = f"https://github.com/{m.group(1)}" if m else "https://github.com/RobertsLab/project-white-whale"
 
     data = build(repo, claims=claims, mirrors=mirrors, repo_url=repo_url,
-                 branch_summaries=summaries_on_branches(repo, claims, remote))
+                 branch_summaries=summaries_on_branches(repo, claims, remote), remote=remote)
     path = write(data, Path(out) if out else repo / "site" / "data.json")
     t = data["totals"]
     click.echo(f"Wrote {path}: {t['backlog']} studies, {t['registered']} registered, {t['in_progress']} in progress, "

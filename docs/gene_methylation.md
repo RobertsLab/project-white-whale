@@ -29,6 +29,27 @@ their median methylation and how many are >= 50%), which the dashboard's
 finding quotes. No coverage cut-off is applied to the matrices: choose one
 from `cpgs` and `calls` for the question at hand.
 
+## On the dashboard
+
+The dashboard's **Genes** section has one card per study with gene tables,
+built by `whale build-dashboard` from the committed matrices:
+
+- histograms of gene-body and promoter methylation over the genes with
+  >= 5 covered CpGs in every library (2% bins, log count scale);
+- links to the six matrices and to the per-library tables on gannet;
+- a searchable, sortable table of every gene: GeneID, symbol and
+  description, gene-body and promoter methylation, the number of libraries
+  each rests on, and gene-body methylation per level of each design factor.
+  A library counts towards a gene's value only with >= 5 covered CpGs in it.
+  The table (a few MB per study, `site/genes/<STUDY_ID>.json`) loads when
+  asked for.
+
+Gene names come from `data/reference/gene_info/<ASSEMBLY>.tsv.gz` (GeneID,
+symbol, description, biotype, position), written from the bundle's GTF by
+`whale build-gene-info` and committed, since the Pages build has no
+reference bundle. Rebuild and commit it whenever the registered annotation
+changes.
+
 ## Before comparing studies
 
 - **No C/T SNP mask yet** (PLAN.md §6.1). A C→T SNP reads as an unmethylated
