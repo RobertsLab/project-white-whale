@@ -3,7 +3,7 @@ PRJNA173440	WANG2014_FIRST_METHYLOMES_WGBS	wgbs	4	36	PRJNA146329	desktop	literat
 PRJNA682817	ROBERTS2022_PH_PLOIDY_WGBS	wgbs	24	145	check	raven	SRA sweep 2026-08	Diploid/triploid ctenidia x pH. Roberts Lab.
 PRJNA562805	WANG2020_TIDAL_HEAT_WGBS	wgbs	12	141	PRJNA407831	raven	SRA sweep 2026-08; AREE	Same animals as RNA-seq PRJNA407831 (AREE LI2018_HEAT_TIDAL). AREE has a full registration to import.
 PRJNA807732	(name on claim)	wgbs	24		check	raven	SRA sweep 2026-08	"Magallana gigas Epigenomics" series; read metadata before naming.
-PRJNA213124	(name on claim)	wgbs	14		check	desktop	SRA sweep 2026-08	"Magallana gigas Epigenomics" series; read metadata before naming.
+PRJNA213124	(name on claim)	wgbs	14	32	same project	desktop	SRA sweep 2026-08	"Magallana gigas Epigenomics" series. Mixed: 12 BS runs of male gonad and their 72/120 hpf larvae (2 males), 1 gonad BS run, 1 MBD-enriched BS run of pooled gill; RNA-seq of gonad and gill in the same project. Likely holds the Olson 2014 sperm and Gavery 2013 gill sets from PLAN.md §4.2; split by sample set when claimed.
 PRJEB58545	PESTO2022_METHYLSEQ_WGBS	wgbs	48	375	check	klone	SRA sweep 2026-08	PESTO project.
 PRJNA609264	(name on claim)	wgbs	47	625	check	klone	SRA sweep 2026-08	Transgenerational infection resistance after early microbial exposure.
 PRJEB105019	DECICOMP2025_POMS_AGE_EMSEQ	wgbs	60	475	same project	klone	SRA sweep 2026-08; AREE	Three ages, DECICOMP. AREE registration to import; check chemistry (AREE id says EM-seq).
@@ -11,3 +11,12 @@ PRJEB81880	VALDIVIESO2025_POMS_RS_EMSEQ	emseq	40	425	check	klone	SRA sweep 2026-
 PRJEB60400	POMS2023_ADAPTATION_WGBS	wgbs	246	475	check	klone	SRA sweep 2026-08	Largest set; claim in parts once sample metadata is read.
 PRJNA690951	CIBNOR2021_HEAT_RRSS	rrbs			none	desktop	AREE	RRBS tier. AREE has processed this study; import its registration.
 PRJNA324546	RIVIERE2017_DEVELOPMENT_MEDIP	medip	21	8	published	desktop	SRA sweep 2026-08	Enrichment tier.
+PRJNA917710	OUC2024_SEX_REVERSAL_WGBS	wgbs	24	171	PRJNA917707	raven	SRA sweep 2026-10	Gonad sex reversal (FF/FM/MF/MM x a/b x 3). Deposited as library_strategy WGS; reads are bisulfite-converted (C 0.6%), so pass --library-strategy WGS. RNA-seq PRJNA917707 has the same 24 sample codes.
+PRJNA684407	OUC2023_TRIPLOID_GONAD_WGBS	wgbs	18	94	PRJNA690125	raven	SRA sweep 2026-10	Gonads of diploid, triploid (3na/3nb) and HPM triploid, male and female, 3 each; triploid infertility. RNA-seq PRJNA690125 has the same sample codes.
+PRJNA1113357	OUC2025_VALGINOLYTICUS_GILL_WGBS	wgbs	9	110	PRJNA830931	raven	SRA sweep 2026-10	Gill 0/6/48 h after Vibrio alginolyticus infection, 3 each. RNA-seq PRJNA830931 has the same library names. Probably the Li 2024 Vibrio candidate in PLAN.md §4.2.
+PRJNA833956	OUC2024_GROWTH_STRAINS_WGBS	wgbs	6	67	PRJNA1113800	desktop	SRA sweep 2026-10	Whole soft tissue, fast- (HH) vs slow-growing (CC) strains, 3 each. RNA-seq PRJNA1113800 shares the CC codes but has CH, not HH; check before calling it same animals. Probably the Tan 2022 growth candidate.
+PRJNA806944	WHOI2022_GONAD_LOWPH_WGBS	wgbs	8	139	check	raven	SRA sweep 2026-10	Female gonad after low-pH exposure (WHOI/Zymo zr3616). Read sample attributes for the treatment split.
+PRJNA678408	UW2020_PLOIDY_DESICCATION_HEAT_WGBS	wgbs	10	91	check	raven	SRA sweep 2026-10	Diploid vs triploid ctenidia after 24 h desiccation + 1 h 45 C heat, 5 each. Roberts Lab; companion to PRJNA682817.
+PRJNA291364	PERPIGNAN2016_DIURON_PARENTAL_WGBS	wgbs	6	89	same project	desktop	SRA sweep 2026-10	Parental diuron exposure (TE control / D diuron; Univ. Perpignan). RNA-seq in the project is of spat offspring on GAII; check whether same families.
+PRJNA689936	IOCAS2021_WILD_TIDAL_WGBS	wgbs	6	52	none	desktop	SRA sweep 2026-10	Gill of wild F0 oysters, intertidal vs subtidal, Laoting, China, 3 each. Possibly the Wang 2023 transgenerational tidal candidate (no F1 methylation deposited).
+PRJNA802599	CEMM2023_580SPECIES_RRBS	rrbs	13	6	none	desktop	SRA sweep 2026-10 (PMID 36646694)	580-species RRBS atlas; 13 single-end C. gigas runs (mantle, gill) in a multi-species project. fetch-samplesheet refuses non-29159 runs, so it needs a taxon filter or run list first.

@@ -47,7 +47,7 @@ def test_build_merges_backlog_registry_claims_and_mirror(repo):
     data = build(repo, claims=claims, mirrors={"PRJNA173440": ledger, "PRJNA682817": None},
                  repo_url=URL, now="2026-10-24T00:00:00Z")
     s = _by_acc(data)
-    assert len(data["studies"]) == 12 and data["totals"]["backlog"] == 12
+    assert len(data["studies"]) == 21 and data["totals"]["backlog"] == 21
 
     w = s["PRJNA173440"]
     assert (w["state"], w["stage"], w["machine"]) == ("in progress", "fastq_staged", "raven")
@@ -123,7 +123,7 @@ def test_cli_writes_data_json(repo, tmp_path, monkeypatch):
     res = CliRunner().invoke(main, ["build-dashboard", "--no-claims", "--no-mirror", "--out", str(out)])
     assert res.exit_code == 0, res.output
     data = json.loads(out.read_text())
-    assert data["repo_url"] == URL and data["totals"]["backlog"] == 12
+    assert data["repo_url"] == URL and data["totals"]["backlog"] == 21
 
 
 def test_write(tmp_path):
