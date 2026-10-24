@@ -2,7 +2,7 @@ process FASTQC {
     tag "${sample_id}"
     label 'process_low'
     container 'quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0'
-    publishDir "${params.outdir}/${params.study_id}/qc", mode: params.publish_mode, pattern: "*_fastqc.*"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*_fastqc.*"
 
     input:
     tuple val(sample_id), path(reads)

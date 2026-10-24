@@ -58,6 +58,7 @@ from pathlib import Path
 
 import yaml
 
+from whale.checksums import md5_file
 from whale.ena import (
     EXPECTED_TAXID,
     METHYLATION_STRATEGIES,
@@ -65,6 +66,7 @@ from whale.ena import (
     fetch_run_report,
     run_fastq_files,
 )
+from whale.net import https_url
 from whale.registry import load_backlog, load_studies
 
 LEDGER_NAME = "mirror_manifest.tsv"
@@ -75,6 +77,8 @@ TIMEOUT = 120
 CHUNK = 1 << 20
 RETRIES = 5
 BACKOFF = [10, 30, 60, 120, 300]
+LEDGER_LOCK = ".ledger.lock"     # a directory beside the ledger: mkdir is atomic everywhere
+LEDGER_LOCK_WAIT = 300           # seconds to wait for another writer's lock
 
 _sleep = time.sleep
 
@@ -84,15 +88,6 @@ class MirrorError(RuntimeError):
 
 
 # --- what to mirror ------------------------------------------------------------
-
-def https_url(url: str) -> str:
-    """ENA's ftp:// FASTQ URLs are served over HTTPS too, which allows resuming with Range."""
-    if url.startswith("ftp://"):
-        return "https://" + url[len("ftp://"):]
-    if url.startswith(("https://", "http://")):
-        return url
-    return "https://" + url
-
 
 def registered_runs(repo: Path, accession: str) -> set[str] | None:
     """Run accessions in the committed fastq_manifest.tsv of the study registered for this accession."""
@@ -154,10 +149,31 @@ def wanted_files(repo: Path, accession: str, library_strategies: list[str] | Non
 
 # --- where it goes -------------------------------------------------------------
 
-def _read_ledger_text(text: str) -> dict[str, dict]:
+def read_ledger_text(text: str) -> dict[str, dict]:
     if not text.strip():
         return {}
     return {r["file"]: r for r in csv.DictReader(io.StringIO(text), delimiter="\t")}
+
+
+def _lock_held(path: str, wait: int) -> MirrorError:
+    return MirrorError(f"the ledger lock {path} was held for {wait}s. If no mirror-fastq is "
+                       "writing this accession (on any machine), remove that directory and re-run.")
+
+
+def record_in_ledger(store, acc: str, row: dict, staging: Path, *, wait: int = LEDGER_LOCK_WAIT) -> None:
+    """Add one row to the accession's ledger on the store, keeping rows others wrote meanwhile.
+
+    The ledger is rewritten whole, so two writers (two machines, or two staging
+    directories) could each drop the other's rows. The store's ledger lock is
+    held across re-reading the current ledger, adding the row and writing it.
+    """
+    store.lock_ledger(acc, wait)
+    try:
+        rows = store.read_ledger(acc)
+        rows[row["file"]] = row
+        store.write_ledger(acc, rows, staging)
+    finally:
+        store.unlock_ledger(acc)
 
 
 def _ledger_text(rows: dict[str, dict]) -> str:
@@ -185,7 +201,23 @@ class LocalStore:
 
     def read_ledger(self, acc: str) -> dict[str, dict]:
         p = self._dir(acc) / LEDGER_NAME
-        return _read_ledger_text(p.read_text()) if p.exists() else {}
+        return read_ledger_text(p.read_text()) if p.exists() else {}
+
+    def lock_ledger(self, acc: str, wait: int) -> None:
+        lock = self._dir(acc) / LEDGER_LOCK
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        deadline = time.monotonic() + wait
+        while True:
+            try:
+                lock.mkdir()
+                return
+            except FileExistsError:
+                if time.monotonic() >= deadline:
+                    raise _lock_held(str(lock), wait) from None
+                _sleep(1)
+
+    def unlock_ledger(self, acc: str) -> None:
+        (self._dir(acc) / LEDGER_LOCK).rmdir()
 
     def write_ledger(self, acc: str, rows: dict[str, dict], staging: Path) -> None:
         d = self._dir(acc)
@@ -236,7 +268,23 @@ class SSHStore:
 
     def read_ledger(self, acc: str) -> dict[str, dict]:
         p = shlex.quote(f"{self._dir(acc)}/{LEDGER_NAME}")
-        return _read_ledger_text(self._ssh(f"if [ -f {p} ]; then cat {p}; fi"))
+        return read_ledger_text(self._ssh(f"if [ -f {p} ]; then cat {p}; fi"))
+
+    def lock_ledger(self, acc: str, wait: int) -> None:
+        d, lock = shlex.quote(self._dir(acc)), shlex.quote(f"{self._dir(acc)}/{LEDGER_LOCK}")
+        # One round trip: wait on the host itself; exit 75 if still held after `wait` s.
+        proc = subprocess.run(
+            ["ssh", "-o", "BatchMode=yes", self.host,
+             f"mkdir -p {d} || exit 1; i=0; until mkdir {lock} 2>/dev/null; do i=$((i+1)); "
+             f"[ $i -ge {int(wait)} ] && exit 75; sleep 1; done"],
+            capture_output=True, text=True)
+        if proc.returncode == 75:
+            raise _lock_held(f"{self.host}:{self._dir(acc)}/{LEDGER_LOCK}", wait)
+        if proc.returncode != 0:
+            raise MirrorError(f"ssh {self.host} failed: {proc.stderr.strip() or proc.returncode}")
+
+    def unlock_ledger(self, acc: str) -> None:
+        self._ssh(f"rmdir {shlex.quote(f'{self._dir(acc)}/{LEDGER_LOCK}')}")
 
     def write_ledger(self, acc: str, rows: dict[str, dict], staging: Path) -> None:
         local = Path(staging) / acc / LEDGER_NAME
@@ -267,14 +315,6 @@ def default_staging(repo: Path) -> Path:
 
 # --- downloading ---------------------------------------------------------------
 
-def md5_file(path: Path) -> str:
-    h = hashlib.md5()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(CHUNK), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
 class Throttle:
     """A total download rate shared by every worker thread (bytes/s; None = unlimited)."""
 
@@ -303,7 +343,9 @@ def download(url: str, dest: Path, *, expected_bytes: int | None = None,
     """Fetch url to dest via dest.part, resuming a partial file; return the MD5 of what was written.
 
     Network errors are retried with back-off, each time resuming where the
-    partial file ends. A server that ignores the Range header restarts the file.
+    partial file ends, and so is a response that ends early without an error
+    (when the size is known). A server that ignores the Range header restarts
+    the file.
     """
     part = dest.with_name(dest.name + ".part")
     if part.exists() and expected_bytes is not None and part.stat().st_size > expected_bytes:
@@ -328,8 +370,12 @@ def download(url: str, dest: Path, *, expected_bytes: int | None = None,
                     for chunk in iter(lambda: resp.read(CHUNK), b""):
                         out.write(chunk)
                         h.update(chunk)
+                        have += len(chunk)
                         if throttle:
                             throttle.take(len(chunk))
+            if expected_bytes is not None and have < expected_bytes:
+                # Retried below like a reset, resuming from here rather than from zero.
+                raise ConnectionError(f"response ended at {have:,} of {expected_bytes:,} bytes")
             break
         except (urllib.error.URLError, HTTPException, OSError) as exc:
             if isinstance(exc, urllib.error.HTTPError) and exc.code in (403, 404, 410):
@@ -371,7 +417,7 @@ class _Lock:
             self.fh.close()
 
 
-def _ena_md5(done: dict) -> str:
+def ena_md5(done: dict) -> str:
     """The ENA MD5 a ledger row was mirrored against (rows converted from NCBI hold their own MD5 in md5)."""
     return done.get("ena_md5") or done.get("md5", "")
 
@@ -392,10 +438,10 @@ def plan_mirror(repo: Path, accessions: list[str], store, *, library_strategies=
         todo = []
         for f in files:
             done = ledger.get(f["file"])
-            if done and _ena_md5(done) == f["md5"] and f["file"] in present \
+            if done and ena_md5(done) == f["md5"] and f["file"] in present \
                     and str(present[f["file"]]) == str(done.get("bytes") or present[f["file"]]):
                 continue
-            if done and _ena_md5(done) != f["md5"]:
+            if done and ena_md5(done) != f["md5"]:
                 notes.append(f"{f['file']}: ENA's MD5 changed since it was mirrored; fetching again")
             todo.append(f)
         plans.append({"accession": acc, "files": files, "todo": todo, "notes": notes, "ledger": ledger})
@@ -559,7 +605,6 @@ def mirror(repo: Path, accessions: list[str], store, *, staging: Path, jobs: int
                 if budget is not None:
                     budget -= sum(int(f["bytes"] or 0) for f in fs)
 
-        ledgers = {p["accession"]: dict(p["ledger"]) for p in plans}
         ledger_lock = threading.Lock()
         throttle = Throttle(rate_mb * 1e6 if rate_mb else None)
 
@@ -571,8 +616,7 @@ def mirror(repo: Path, accessions: list[str], store, *, staging: Path, jobs: int
                 if remote != row["md5"]:
                     raise MirrorError(f"MD5 on {store.label} is {remote}, not {row['md5']}")
             with ledger_lock:
-                ledgers[acc][row["file"]] = {**row, "bytes": str(size), "mirrored_on": today}
-                store.write_ledger(acc, ledgers[acc], staging)
+                record_in_ledger(store, acc, {**row, "bytes": str(size), "mirrored_on": today}, staging)
             return size
 
         def from_ena(acc: str, f: dict) -> int:

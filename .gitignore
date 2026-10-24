@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 .venv/
 .pytest_cache/
+.coverage
 .ruff_cache/
 
 # R / RStudio
@@ -33,3 +34,6 @@ docs/_site/
 
 .DS_Store
 .claude/
+
+# Dashboard data, rebuilt by `whale build-dashboard` / the Pages workflow
+site/data.json

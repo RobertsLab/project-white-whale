@@ -32,10 +32,10 @@ include { MANIFEST }                      from '../../modules/methylation/manife
 // Mirrors registry/controlled_vocabularies/assay_chemistry.yaml (base-resolution terms).
 def chemistries() {
     return [
-        wgbs : [deduplicate: true,  trim: ''],
-        emseq: [deduplicate: true,  trim: ''],
-        pbat : [deduplicate: true,  trim: ''],
-        rrbs : [deduplicate: false, trim: '--rrbs'],
+        wgbs : [deduplicate: true,  trim: '',       align: ''],
+        emseq: [deduplicate: true,  trim: '',       align: ''],
+        pbat : [deduplicate: true,  trim: '',       align: '--pbat'],
+        rrbs : [deduplicate: false, trim: '--rrbs', align: ''],
     ]
 }
 
@@ -44,6 +44,21 @@ def resolveFastq(String p) {
     def f = p.startsWith('/') ? file(p) : file("${params.raw_dir}/${params.study_id}/${p}")
     if (!f.exists()) error "FASTQ not found: ${f}"
     return f
+}
+
+// A cached Bismark index must have been built from the bundle's current
+// genomic.fna (fetch-reference may have replaced it since).
+def checkCachedIndex() {
+    def index = file("${params.bismark_index_dir ?: "${params.reference_dir}/${params.genome_assembly}"}/bismark_genome")
+    def built = index.resolve('genome.sha256')
+    def prov  = file("${params.reference_dir}/${params.genome_assembly}/reference_provenance.json")
+    if (!built.exists() || !prov.exists()) return
+    def want = new groovy.json.JsonSlurper().parse(prov.toFile()).files.find { it.file == 'genomic.fna' }?.sha256
+    def have = built.text.trim()
+    if (want && have != want) {
+        error "The Bismark index ${index} was built from a different genomic.fna than " +
+              "${params.genome_assembly}'s reference bundle now holds. Delete ${index} to rebuild it."
+    }
 }
 
 workflow {
@@ -56,6 +71,7 @@ workflow {
     def chem = known[params.chemistry]
 
     def genome_fasta = file("${params.reference_dir}/${params.genome_assembly}/genomic.fna", checkIfExists: true)
+    checkCachedIndex()
     def samplesheet  = file(params.samplesheet, checkIfExists: true)
 
     reads_ch = Channel
@@ -70,7 +86,8 @@ workflow {
     FASTQC(reads_ch)
     TRIM_GALORE(reads_ch, [chem.trim, params.trim_args].findAll { it }.join(' '))
     BISMARK_GENOME_PREPARATION(genome_fasta)
-    BISMARK_ALIGN(TRIM_GALORE.out.reads, BISMARK_GENOME_PREPARATION.out.genome_dir.first())
+    BISMARK_ALIGN(TRIM_GALORE.out.reads, BISMARK_GENOME_PREPARATION.out.genome_dir.first(),
+                  [chem.align, params.bismark_align_args].findAll { it }.join(' '))
 
     bam_ch = chem.deduplicate
         ? BISMARK_DEDUPLICATE(BISMARK_ALIGN.out.bam).bam
@@ -85,6 +102,7 @@ workflow {
     def run_params = groovy.json.JsonOutput.toJson([
         study_id: params.study_id, part: params.part, chemistry: params.chemistry,
         genome_assembly: params.genome_assembly, bismark_align_args: params.bismark_align_args,
+        chemistry_align_args: chem.align,
         extractor_args: params.extractor_args, trim_args: params.trim_args,
         deduplicate: chem.deduplicate, profile: workflow.profile,
         nextflow_version: nextflow.version.toString(), run_name: workflow.runName,

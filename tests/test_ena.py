@@ -238,3 +238,18 @@ def test_cli_requires_condition_or_show(wang2014, repo_root, monkeypatch):
     assert res.exit_code != 0 and "--condition-attribute is required" in res.output
     res = CliRunner().invoke(main, ["fetch-samplesheet", "--bioproject", "PRJNA173440", "--show-attributes"])
     assert res.exit_code == 0 and "sample_title" in res.output
+
+
+def test_cli_network_failure_is_a_clean_error(repo_root, monkeypatch):
+    import urllib.error
+
+    monkeypatch.setenv("WHALE_REPO", str(repo_root))
+
+    def down(url):
+        raise urllib.error.URLError("Connection refused")
+    monkeypatch.setattr(ena, "_get", down)
+    res = CliRunner().invoke(main, ["fetch-samplesheet", "--bioproject", "PRJNA173440", "--study",
+                                    "WANG2014_FIRST_METHYLOMES_WGBS", "--condition-attribute", "sample_title"])
+    assert res.exit_code == 1
+    assert "could not read from ENA" in res.output and "Connection refused" in res.output
+    assert not isinstance(res.exception, urllib.error.URLError)

@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import csv
 import fcntl
-import hashlib
 import shutil
 import socket
 import time
@@ -37,6 +36,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+
+from whale.checksums import md5_file
+from whale.mirror import ena_md5, read_ledger_text
+from whale.net import get_text, https_url
 
 TIMEOUT = 120
 CHUNK = 1 << 20
@@ -67,7 +70,7 @@ class ManifestFile:
 
     @property
     def https_url(self) -> str:
-        return "https://" + self.url[len("ftp://"):] if self.url.startswith("ftp://") else self.url
+        return https_url(self.url)
 
 
 def read_manifest(path: Path, runs: list[str] | None = None) -> list[ManifestFile]:
@@ -92,14 +95,6 @@ def read_manifest(path: Path, runs: list[str] | None = None) -> list[ManifestFil
     return out
 
 
-def md5_file(path: Path) -> str:
-    h = hashlib.md5()  # noqa: S324 - ENA publishes MD5; integrity, not security
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(CHUNK), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
 def _sidecar(dest: Path, f: ManifestFile) -> tuple[str, str] | None:
     """(md5, source) recorded when the file was verified, or None."""
     path = dest / f"{f.file}.md5"
@@ -120,11 +115,9 @@ def is_staged(dest: Path, f: ManifestFile) -> bool:
 
 def load_ledger(url: str, get=None) -> dict[str, dict] | None:
     """The mirror ledger at `url` (file -> row), or None if there is none (HTTP 404)."""
-    from whale.mirror import _read_ledger_text
-
     get = get or _http_get_text
     try:
-        return _read_ledger_text(get(url))
+        return read_ledger_text(get(url))
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
             return None
@@ -132,8 +125,7 @@ def load_ledger(url: str, get=None) -> dict[str, dict] | None:
 
 
 def _http_get_text(url: str) -> str:
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as resp:  # noqa: S310 - data host from data_host.yaml
-        return resp.read().decode()
+    return get_text(url, timeout=TIMEOUT)
 
 
 def apply_mirror(files: list[ManifestFile], ledger: dict[str, dict] | None, base_url: str) -> tuple[list[ManifestFile], dict]:
@@ -143,8 +135,6 @@ def apply_mirror(files: list[ManifestFile], ledger: dict[str, dict] | None, base
     mirror lacks, and files whose mirror copy is stale (mirrored against an
     older ENA MD5, so ENA has reprocessed the run since).
     """
-    from whale.mirror import _ena_md5
-
     counts = {"mirror": 0, "not_mirrored": 0, "stale": 0}
     out = []
     for f in files:
@@ -152,7 +142,7 @@ def apply_mirror(files: list[ManifestFile], ledger: dict[str, dict] | None, base
         if row is None:
             counts["not_mirrored"] += 1
             out.append(f)
-        elif _ena_md5(row) != f.md5:
+        elif ena_md5(row) != f.md5:
             counts["stale"] += 1
             out.append(f)
         else:

@@ -60,7 +60,12 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 
 
 @pytest.fixture
-def server():
+def server(monkeypatch):
+    # Clusters that route web traffic through a proxy (klone sets http_proxy,
+    # with 127.0.0.1 missing from no_proxy) would send these requests to the
+    # proxy, which cannot reach the test server.
+    for var in ("no_proxy", "NO_PROXY"):
+        monkeypatch.setenv(var, "127.0.0.1,localhost")
     _Handler.requests = []
     _Handler.ignore_range = False
     _Handler.routes = {}

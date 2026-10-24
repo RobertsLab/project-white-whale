@@ -39,6 +39,14 @@ If two machines claim the same study at the same moment, only one push can
 create the branch. The other is rejected and `start-study` stops before
 anything is downloaded, printing the commands that remove its local worktree.
 
+That holds when both use the same branch name. If they race under different
+names (the same accession with different study IDs, or the same study ID with
+different accessions), both pushes succeed. `start-study` therefore lists the
+study branches again right after its push and fails, naming the rival branch,
+if it finds one; the study PR's scope check in CI fails for the same reason.
+Agree which claim to keep and `whale release-study` the other before
+downloading anything.
+
 `--no-push` builds the worktree without claiming anything. `--no-pr` claims
 without opening a PR (also the case when the `gh` CLI is absent).
 

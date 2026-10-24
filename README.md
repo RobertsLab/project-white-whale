@@ -20,6 +20,19 @@ assay family.
 > stub-tested methylation workflow, the ENA sample-sheet generator, the
 > reference-bundle fetcher and the FASTQ downloader are in place. No study has been registered or run yet. See [PLAN.md §9](PLAN.md#9-phases).
 
+## Dashboard
+
+Progress and findings are published at
+<https://robertslab.github.io/project-white-whale/>, rebuilt by
+`.github/workflows/pages.yml` on every push to `main` and every three hours
+from the backlog, the registered studies, the claims on study branches and the
+gannet mirror. Findings are added by hand to `site/findings.yaml`. To view it
+locally:
+
+```bash
+whale build-dashboard && python3 -m http.server --directory site 8765
+```
+
 ## Install
 
 ```bash
@@ -36,7 +49,8 @@ Docker or Apptainer.
 Every public study is one entry in [`registry/backlog.tsv`](registry/backlog.tsv).
 A machine **checks a study out** by claiming it: `whale start-study` creates a
 branch and worktree for the study and pushes the branch. The push is the claim,
-so two machines cannot take the same study. Progress is recorded on the branch
+so two machines cannot take the same study (a race under two different branch
+names is caught right after the push and by CI). Progress is recorded on the branch
 and every machine can see it.
 
 ```bash
@@ -71,6 +85,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale fetch-reference [--rnaseq] [--plan] [--check]` | Fetch, MD5-verify and derive the reference bundle (genome, GTF, chrom.sizes, feature BEDs) |
 | `whale fetch-fastq [--dry-run] [--jobs N] [--run R] [--mark-staged]` | Stage a study's FASTQ: from the gannet mirror where it has the files, ENA otherwise; resumable, MD5-verified, recorded in `fastq_staged.tsv` |
 | `whale mirror-fastq [--accession <PRJ…>] [--plan] [--jobs N] [--max-gb G]` | Prefetch backlog FASTQ to gannet: NCBI `.sra` converted on raven (ENA as fallback), verified and resumable |
+| `whale build-dashboard [--no-claims] [--no-mirror]` | Write `site/data.json` for the progress dashboard (`site/index.html`, published to GitHub Pages) |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |
 | `whale build-registry` | Rebuild `registry/study_registry.csv` (not committed) |

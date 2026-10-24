@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project White Whale</title>
+<meta name="description" content="Progress and findings of Project White Whale: public Pacific oyster DNA methylation data reprocessed on one reference.">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f6f5f2;
+    --surface-1: #fcfcfb;
+    --border: #e3e1db;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #77756f;
+    --track: #e6e4de;
+    --fill: #2a78d6;          /* categorical slot 1 / sequential 450 */
+    --fill-current: #184f95;  /* sequential 600 */
+    --done: #0ca30c;          /* status: good */
+    --link: #1c5cab;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-0: #121211;
+      --surface-1: #1a1a19;
+      --border: #2e2e2c;
+      --text-primary: #f0efec;
+      --text-secondary: #c3c2b7;
+      --text-muted: #9a988f;
+      --track: #383835;
+      --fill: #3987e5;
+      --fill-current: #86b6ef;
+      --done: #0ca30c;
+      --link: #86b6ef;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --border: #2e2e2c;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #9a988f;
+    --track: #383835;
+    --fill: #3987e5;
+    --fill-current: #86b6ef;
+    --done: #0ca30c;
+    --link: #86b6ef;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: var(--link); }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { margin: 0; font-size: 28px; letter-spacing: -0.01em; }
+  header p { margin: 4px 0 0; color: var(--text-secondary); }
+  header .tagline { margin: 6px 0 0; font-size: 18px; font-style: italic; color: var(--text-primary); }
+  .updated { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+  section { margin-top: 32px; }
+  h2 { font-size: 17px; margin: 0 0 4px; }
+  .lede { margin: 0 0 12px; color: var(--text-secondary); font-size: 14px; }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 24px; }
+  @media (max-width: 420px) {
+    .tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tile { padding: 12px; }
+    .tile .value { font-size: 24px; }
+  }
+  .tile { padding: 16px; }
+  .tile .label { font-size: 13px; color: var(--text-secondary); }
+  .tile .value { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .tile .sub { font-size: 13px; color: var(--text-muted); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+  th { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+  .study { font-weight: 600; }
+  .acc { font-size: 12px; color: var(--text-muted); }
+  .muted { color: var(--text-muted); }
+  .track { display: flex; gap: 2px; width: 176px; }
+  .track span { flex: 1; height: 10px; background: var(--track); }
+  .track span:first-child { border-radius: 4px 0 0 4px; }
+  .track span:last-child { border-radius: 0 4px 4px 0; }
+  .track span.on { background: var(--fill); }
+  .track span.now { background: var(--fill-current); }
+  .track.done span.on, .track.done span.now { background: var(--done); }
+  .stage-cell { display: flex; align-items: center; gap: 10px; cursor: default; }
+  .stage-name { font-size: 13px; color: var(--text-secondary); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--text-secondary); margin: 8px 0 0; padding: 0; list-style: none; }
+  .legend li { display: flex; align-items: center; gap: 6px; }
+  .legend .n { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .findings { display: grid; gap: 12px; }
+  .finding { padding: 16px; }
+  .finding h3 { margin: 0; font-size: 16px; }
+  .finding .meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .finding p { margin: 8px 0 0; color: var(--text-secondary); }
+  .empty { padding: 20px 16px; color: var(--text-secondary); }
+  .tip {
+    position: fixed; pointer-events: none; z-index: 10; max-width: 280px;
+    background: var(--surface-1); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+    font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: none;
+  }
+  .tip b { display: block; margin-bottom: 2px; }
+  footer { margin-top: 40px; font-size: 13px; color: var(--text-muted); }
+  .warn { margin-top: 12px; font-size: 13px; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Project White Whale</h1>
+    <p class="tagline">A big, elusive quarry: every oyster methylome ever sequenced, chased down and brought aboard.</p>
+    <p>Every public DNA methylation dataset for the Pacific oyster, reprocessed from raw reads on one reference genome.</p>
+    <div class="updated" id="updated">Loading…</div>
+    <div class="warn" id="warn" hidden></div>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section aria-labelledby="h-studies">
+    <h2 id="h-studies">Where every study is</h2>
+    <p class="lede">One row per BioProject in the backlog. The bar fills as a study moves through the pipeline; green means summarized.</p>
+    <div class="card scroll">
+      <table id="studies">
+        <thead>
+          <tr>
+            <th>Study</th><th>Chemistry</th><th class="num">Runs</th><th class="num">FASTQ GB</th>
+            <th>On gannet</th><th>Stage</th><th>Machine</th><th>RNA-seq</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <ul class="legend" id="stage-legend" aria-label="Studies per stage"></ul>
+  </section>
+
+  <section aria-labelledby="h-findings">
+    <h2 id="h-findings">Findings</h2>
+    <p class="lede">Results stated once they rest on reprocessed data, with the studies behind them. Goal 1: the comparative methylome. Goal 2: methylation and gene expression.</p>
+    <div class="findings" id="findings"></div>
+  </section>
+
+  <footer>
+    Built from the repository by <code>whale build-dashboard</code> on every push to <code>main</code> and every three hours.
+    <span id="links"></span>
+  </footer>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+(async function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = (n, d = 0) => n == null ? "—" : Number(n).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d });
+
+  let data;
+  try {
+    const res = await fetch("data.json", { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    data = await res.json();
+  } catch (e) {
+    $("updated").textContent = "Could not load data.json. Run `whale build-dashboard` and serve this folder.";
+    return;
+  }
+
+  const t = data.totals;
+  const when = new Date(data.generated_at);
+  $("updated").innerHTML = `Updated ${esc(when.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }))}` +
+    (data.commit ? ` from <a href="${esc(data.repo_url)}/commit/${esc(data.commit)}">${esc(data.commit)}</a>` : "");
+  const warns = [];
+  if (!data.claims_available) warns.push("Claims on study branches could not be read; in-progress studies may be missing.");
+  if (!data.mirror_available) warns.push("The gannet mirror could not be read; the On gannet column is empty.");
+  if (warns.length) { $("warn").hidden = false; $("warn").textContent = warns.join(" "); }
+
+  const tiles = [
+    { label: "Studies in the backlog", value: fmt(t.backlog), sub: `${fmt(t.backlog_gb / 1000, 1)} TB of FASTQ` },
+    { label: "In progress", value: fmt(t.in_progress), sub: `claimed by a machine · ${fmt(t.registered)} registered on main` },
+    { label: "Summarized", value: fmt(t.done), sub: "per-sample methylomes done" },
+    { label: "FASTQ on gannet", value: `${fmt(t.mirrored_gb, 1)} GB`, sub: `${fmt(t.mirrored_studies)} of ${fmt(t.backlog)} studies, any part` },
+    { label: "Findings", value: fmt(data.findings.length), sub: data.findings.length ? `latest ${esc(data.findings[0].date)}` : "none yet" },
+  ];
+  $("tiles").innerHTML = tiles.map((x) => `<div class="card tile"><div class="label">${esc(x.label)}</div>` +
+    `<div class="value">${x.value}</div><div class="sub">${x.sub}</div></div>`).join("");
+
+  const stages = data.stages;
+  const tip = $("tip");
+  const body = $("studies").querySelector("tbody");
+  body.innerHTML = data.studies.map((s, i) => {
+    const idx = s.stage_index;
+    const done = s.state === "done";
+    const segs = stages.map((_, k) => `<span class="${idx == null ? "" : k < idx ? "on" : k === idx ? "now" : ""}"></span>`).join("");
+    const stageLabel = s.stage ? s.stage.replace(/_/g, " ") : (s.state === "excluded" ? "excluded" : "not started");
+    const name = s.study_id ? esc(s.study_id) : `<span class="muted">not named yet</span>`;
+    const linked = s.branch_url ? `<a href="${esc(s.branch_url)}">${name}</a>` : name;
+    const m = s.mirror;
+    const mirror = m ? `${fmt(m.gb, 1)} GB · ${fmt(m.runs)} runs` : `<span class="muted">—</span>`;
+    return `<tr>
+      <td><div class="study">${linked}</div><div class="acc">${esc(s.accession)}${s.parts.length ? " · parts " + esc(s.parts.join(", ")) : ""}</div></td>
+      <td>${esc(s.chemistry)}</td>
+      <td class="num">${fmt(s.runs)}</td>
+      <td class="num">${fmt(s.fastq_gb)}</td>
+      <td>${mirror}</td>
+      <td><div class="stage-cell" data-i="${i}" tabindex="0" aria-label="Stage: ${esc(stageLabel)}">
+        <div class="track${done ? " done" : ""}" aria-hidden="true">${segs}</div><span class="stage-name">${esc(stageLabel)}</span></div></td>
+      <td>${s.machine ? esc(s.machine) : `<span class="muted">${esc(s.profile || "—")} (suggested)</span>`}</td>
+      <td>${esc(s.paired_rnaseq || "—")}</td>
+    </tr>`;
+  }).join("");
+
+  function showTip(el, x, y) {
+    const s = data.studies[+el.dataset.i];
+    const lines = stages.map((st, k) => {
+      const mark = s.stage_index == null ? "○" : k < s.stage_index ? "●" : k === s.stage_index ? "◉" : "○";
+      return `${mark} ${esc(st.id.replace(/_/g, " "))}`;
+    }).join("<br>");
+    tip.innerHTML = `<b>${esc(s.study_id || s.accession)}</b>` +
+      (s.updated ? `<span class="muted">updated ${esc(s.updated)}${s.machine ? " on " + esc(s.machine) : ""}</span><br>` : "") + lines +
+      (s.notes ? `<div class="muted" style="margin-top:6px;white-space:normal">${esc(s.notes)}</div>` : "");
+    tip.style.display = "block";
+    const r = tip.getBoundingClientRect();
+    tip.style.left = Math.min(x + 14, window.innerWidth - r.width - 8) + "px";
+    tip.style.top = Math.min(y + 14, window.innerHeight - r.height - 8) + "px";
+  }
+  body.querySelectorAll(".stage-cell").forEach((el) => {
+    el.addEventListener("mousemove", (e) => showTip(el, e.clientX, e.clientY));
+    el.addEventListener("mouseleave", () => (tip.style.display = "none"));
+    el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); showTip(el, r.left, r.bottom); });
+    el.addEventListener("blur", () => (tip.style.display = "none"));
+  });
+
+  const notStarted = data.studies.filter((s) => s.stage == null && s.state !== "excluded").length;
+  $("stage-legend").innerHTML =
+    `<li><span class="sw" style="background:var(--track)"></span>not started <span class="n">${notStarted}</span></li>` +
+    stages.map((st) => `<li title="${esc(st.label)}"><span class="sw" style="background:var(--fill)"></span>${esc(st.id.replace(/_/g, " "))} <span class="n">${t.by_stage[st.id]}</span></li>`).join("");
+
+  $("findings").innerHTML = data.findings.length
+    ? data.findings.map((f) => `<article class="card finding">
+        <h3>${f.link ? `<a href="${esc(f.link)}">${esc(f.title)}</a>` : esc(f.title)}</h3>
+        <div class="meta">${esc(f.date)}${f.goal ? " · Goal " + esc(f.goal) : ""}${f.studies.length ? " · " + f.studies.map(esc).join(", ") : ""}</div>
+        <p>${esc(f.summary)}</p></article>`).join("")
+    : `<div class="card empty">No findings yet. The first study (${esc((data.studies.find((s) => s.state === "in progress") || {}).study_id || "—")}) is being processed; findings appear here once per-sample methylomes are summarized.</div>`;
+
+  $("links").innerHTML = ` <a href="${esc(data.repo_url)}">Repository</a> · <a href="${esc(data.repo_url)}/blob/main/PLAN.md">Plan</a>`;
+})();
+</script>
+</body>
+</html>
