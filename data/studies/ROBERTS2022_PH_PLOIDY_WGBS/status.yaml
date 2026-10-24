@@ -3,7 +3,7 @@
 study_id: ROBERTS2022_PH_PLOIDY_WGBS
 accession: PRJNA682817
 part: null
-stage: registered
+stage: fastq_staged
 profile: klone
 machine: klone
 claimed_by: Steven Roberts
@@ -19,3 +19,8 @@ history:
   date: '2026-10-23'
   machine: klone
   note: YAML, sample sheet and manifest committed (from the Mac)
+- stage: fastq_staged
+  date: '2026-10-23'
+  machine: klone
+  note: 48 files, 145.2 GB from ENA, MD5 verified; 3 ckpt jobs (2 corrupt downloads
+    caught and re-fetched)
