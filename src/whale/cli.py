@@ -299,6 +299,9 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
 @click.option("--ignore-space", is_flag=True, help="Start even if free space looks too small.")
 @click.option("--mark-staged", is_flag=True,
               help="When every file is verified, set the study's stage to fastq_staged (commits and pushes).")
+@click.option("--launch", is_flag=True,
+              help="Implies --mark-staged; then start the study's `nextflow run` for its claimed profile "
+                   "in the foreground (desktop and raven only).")
 @click.option("--source", type=click.Choice(["auto", "mirror", "ena"]), default="auto", show_default=True,
               help="auto: the gannet mirror where it has a file, ENA otherwise; mirror: refuse unless every "
                    "file is mirrored; ena: ENA only.")
@@ -306,7 +309,7 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
               help="BioProject whose mirror to use (default: the study branch's, else ena_provenance.json's).")
 @click.option("--mirror-url", default=None,
               help="Mirror folder URL (default: data_host.yaml url_base + /raw/<ACCESSION>).")
-def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space, mark_staged,
+def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space, mark_staged, launch,
                     source, accession, mirror_url):
     """Download a study's FASTQ from its manifest, resuming and MD5-verifying every file.
 
@@ -315,9 +318,10 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
     """
     import json
     import os
+    import shutil
 
     from whale.claims import ClaimError as _CE
-    from whale.claims import current_branch
+    from whale.claims import current_branch, nextflow_command
     from whale.fastq import (
         FastqError,
         apply_mirror,
@@ -344,6 +348,27 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
         raise click.ClickException(f"{manifest_path} is missing; run whale fetch-samplesheet first.")
     raw = os.environ.get("WHALE_RAW")
     target = Path(dest) if dest else (Path(raw) if raw else repo / "data" / "raw") / study_id
+
+    # Check everything --launch needs before a download that can take hours.
+    if launch:
+        mark_staged = True
+        if runs:
+            raise click.UsageError("--launch needs every file staged; drop --run.")
+        if parsed is None or parsed[1] != study_id:
+            raise click.UsageError("--launch runs from the study's own worktree; cd there first.")
+        if target.name != study_id:
+            raise click.UsageError(f"--launch needs the FASTQ in a folder named {study_id}; "
+                                   "the pipeline reads $WHALE_RAW/<STUDY_ID>.")
+        from whale.paths import status_path
+        sp = status_path(repo, study_id, parsed[2])
+        if not sp.exists():
+            raise click.ClickException(f"{sp.relative_to(repo)} is missing on this branch.")
+        profile = yaml.safe_load(sp.read_text()).get("profile")
+        if profile == "klone":
+            raise click.UsageError("klone runs need an sbatch head job (docs/compute_profiles.md); "
+                                   "stage with --mark-staged and submit the run from there.")
+        if not shutil.which("nextflow"):
+            raise click.ClickException("nextflow is not on PATH.")
 
     try:
         files = read_manifest(manifest_path, list(runs) or None)
@@ -391,6 +416,8 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
     if short:
         click.echo(click.style("  Not enough free space for what is left.", fg="red"))
     if dry_run:
+        if launch:
+            click.echo(f"Would then launch: {' '.join(nextflow_command(study_id, profile, parsed[2]))}")
         return
     if short and not ignore_space:
         raise click.ClickException("not enough free space; free some or pass --ignore-space.")
@@ -420,6 +447,12 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
         except ClaimError as exc:
             raise click.ClickException(f"downloads verified, but the stage was not set: {exc}") from None
         click.echo(f"Stage: {new['stage']} on {new['machine']}")
+    if launch:
+        cmd = nextflow_command(study_id, new["profile"], parsed[2])
+        # The pipeline finds the FASTQ under $WHALE_RAW, so point it at where they went.
+        env = {**os.environ, "WHALE_RAW": str(target.resolve().parent)}
+        click.echo(f"Launching: {' '.join(cmd)}")
+        sys.exit(subprocess.run(cmd, cwd=repo, env=env).returncode)
 
 
 @main.command("mirror-fastq")

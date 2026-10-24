@@ -55,7 +55,8 @@ without opening a PR (also the case when the `gh` CLI is absent).
 Progress is recorded by the commands that make it, never by hand:
 
 * `whale fetch-fastq --mark-staged` sets `fastq_staged` once every file is
-  verified;
+  verified (`--launch` does the same, then starts the run on desktop and
+  raven claims);
 * a successful workflow run calls `whale record-run` itself
   (workflows/methylation/main.nf, `onComplete`). It commits the QC table, run
   manifest, methylome manifest and `study_summary.yaml`, uploads the
