@@ -74,6 +74,10 @@ jobs:
         run: |
           test -s results/test/snp_mask/mask_manifest.json
           test -s results/test/snp_mask/cpg_mask.bed.gz
+      - name: Re-run the gene step with the SNP mask
+        run: |
+          nextflow run workflows/methylation -profile test -stub -resume --snp_mask results/test/snp_mask
+          python3 -c "import json,sys; m=json.load(open('results/test/TEST2026_FIXTURE_WGBS/run_manifest.json'))['params']['snp_mask']; sys.exit(0 if m and m['mask_id']=='TEST.snpmask' else 1)"
 
   nextflow-real:
     # The stub run checks the DAG; this runs every real command, in the pinned

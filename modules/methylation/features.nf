@@ -12,17 +12,18 @@ process FEATURE_SUMMARY {
     input:
     tuple val(sample_id), path(cov)
     path features
+    path mask       // a SNP mask's cpg_mask.bed.gz, or [] for none
 
     output:
     path "${sample_id}.features.tsv.gz", emit: table
 
     script:
     """
-    methylome_features.py ${sample_id} ${cov} ${features} ${sample_id}.features.tsv.gz
+    methylome_features.py ${sample_id} ${cov} ${features} ${sample_id}.features.tsv.gz ${mask ?: ''}
     """
 
     stub:
     """
-    methylome_features.py ${sample_id} ${cov} ${features} ${sample_id}.features.tsv.gz
+    methylome_features.py ${sample_id} ${cov} ${features} ${sample_id}.features.tsv.gz ${mask ?: ''}
     """
 }

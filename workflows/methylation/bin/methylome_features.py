@@ -4,7 +4,7 @@
 the pinned python container, and tests/test_methylome_features.py loads it
 from this file.
 
-    methylome_features.py SAMPLE COV_GZ FEATURES_DIR OUT_TSV_GZ
+    methylome_features.py SAMPLE COV_GZ FEATURES_DIR OUT_TSV_GZ [MASK_BED_GZ]
 
 COV_GZ is one strand-merged CpG file from coverage2cytosine (chrom, start,
 end, % methylated, count methylated, count unmethylated; covered CpGs only).
@@ -25,7 +25,8 @@ kept so that coverage cut-offs can be chosen downstream:
     mean_meth_5x_pct   mean of the per-CpG methylation of the CpGs at >= 5x
 
 A CpG in two overlapping exons (or introns) of one gene is counted once for
-that gene; a CpG in two genes counts for both.
+that gene; a CpG in two genes counts for both. With MASK_BED_GZ (a C/T SNP
+mask's cpg_mask.bed.gz, docs/snp_mask.md), CpGs listed there are left out.
 """
 from __future__ import annotations
 
@@ -78,9 +79,27 @@ class Sweep:
         return {a[2] for a in self.active}
 
 
-def summarize(cov_gz: Path, features_dir: Path) -> dict[tuple[str, str], list]:
-    """(class, gene) -> [cpgs, cpgs_5x, meth, unmeth, sum of per-CpG fractions at >= 5x]."""
+def read_mask(path: Path | None) -> dict[str, set[int]]:
+    """chrom -> C positions (0-based) of masked CpGs."""
+    out: dict[str, set[int]] = {}
+    if path is None:
+        return out
+    with gzip.open(path, "rt") if path.suffix == ".gz" else open(path) as fh:
+        for line in fh:
+            f = line.split("\t")
+            if len(f) >= 2 and not line.startswith(("#", "track")):
+                out.setdefault(f[0], set()).add(int(f[1]))
+    return out
+
+
+def summarize(cov_gz: Path, features_dir: Path, mask: dict[str, set[int]] | None = None,
+              stats: dict | None = None) -> dict[tuple[str, str], list]:
+    """(class, gene) -> [cpgs, cpgs_5x, meth, unmeth, sum of per-CpG fractions at >= 5x].
+    CpGs in `mask` are skipped; `stats` (if given) gets the number covered and masked."""
     beds = {cls: read_bed(features_dir / name) for cls, name in CLASSES}
+    mask = mask or {}
+    masked_here: set[int] = set()
+    n_covered = n_masked = 0
     acc: dict[tuple[str, str], list] = {}
     chrom, sweeps, last, done = None, {}, -1, set()
     with gzip.open(cov_gz, "rt") as fh:
@@ -96,11 +115,16 @@ def summarize(cov_gz: Path, features_dir: Path) -> dict[tuple[str, str], list]:
                     done.add(chrom)
                 chrom, last = f[0], -1
                 sweeps = {cls: Sweep(beds[cls].get(chrom, [])) for cls, _ in CLASSES}
+                masked_here = mask.get(chrom, set())
             if pos < last:
                 raise ValueError(f"{cov_gz}: {chrom}:{pos} comes after {last}; the CpG file must be sorted")
             last = pos
             d = m + u
             if d == 0:
+                continue
+            n_covered += 1
+            if pos in masked_here:
+                n_masked += 1
                 continue
             frac5 = m / d if d >= 5 else None
             for cls, _ in CLASSES:
@@ -114,6 +138,8 @@ def summarize(cov_gz: Path, features_dir: Path) -> dict[tuple[str, str], list]:
                     if frac5 is not None:
                         a[1] += 1
                         a[4] += frac5
+    if stats is not None:
+        stats.update(covered=n_covered, masked=n_masked)
     return acc
 
 
@@ -136,15 +162,19 @@ def write(out: Path, acc: dict, genes: list[str]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    if len(argv) != 4:
+    if len(argv) not in (4, 5):
         print(__doc__, file=sys.stderr)
         return 2
     sample, cov, features, out = argv[0], Path(argv[1]), Path(argv[2]), Path(argv[3])
+    mask = read_mask(Path(argv[4])) if len(argv) == 5 else None
     genes = gene_universe(features)
-    acc = summarize(cov, features)
+    stats: dict = {}
+    acc = summarize(cov, features, mask, stats)
     write(out, acc, genes)
     covered = sum(1 for g in genes if acc.get(("gene_body", g), [0])[0])
-    print(f"{sample}: {covered} of {len(genes)} gene bodies have a covered CpG", file=sys.stderr)
+    print(f"{sample}: {covered} of {len(genes)} gene bodies have a covered CpG"
+          + (f"; {stats['masked']:,} of {stats['covered']:,} covered CpGs masked as SNPs" if mask is not None else ""),
+          file=sys.stderr)
     return 0
 
 

@@ -70,6 +70,20 @@ def test_feature_summary(tmp_path, features):
     assert again.read_bytes() == out.read_bytes()
 
 
+def test_snp_mask_leaves_cpgs_out(tmp_path, features):
+    cov = _cov(tmp_path / "s.cov.gz", [("c1", 160, 8, 2), ("c1", 300, 0, 3), ("c1", 450, 5, 0)])
+    mask = tmp_path / "cpg_mask.bed.gz"
+    with gzip.open(mask, "wt") as fh:
+        fh.write("c1\t300\t302\t301C>T\t9\t.\n")       # the unmethylated-looking CpG
+    out = tmp_path / "m.tsv.gz"
+    assert mf.main(["s", str(cov), str(features), str(out), str(mask)]) == 0
+    ga = _read(out)[("gene_body", "GA")]
+    assert (ga["cpgs"], ga["meth"], ga["unmeth"]) == ("2", "13", "2")
+    stats = {}
+    mf.summarize(cov, features, mf.read_mask(mask), stats)
+    assert stats == {"covered": 3, "masked": 1}
+
+
 def test_unsorted_input_is_refused(tmp_path, features):
     cov = _cov(tmp_path / "u.cov.gz", [("c1", 300, 1, 0), ("c1", 160, 1, 0)])
     with pytest.raises(ValueError, match="sorted"):

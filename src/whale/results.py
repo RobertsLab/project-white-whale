@@ -57,7 +57,7 @@ MANIFEST_COLUMNS = ["sample_id", "file", "bytes", "sha256", "url"]
 RECORDED_STAGES = ["aligned", "called", "qc_passed", "summarized"]
 FEATURE_SUFFIX = ".features.tsv.gz"
 MATRIX_CLASSES = ["gene_body", "promoter"]
-MATRIX_METRICS = ["meth_pct", "cpgs", "calls"]
+MATRIX_METRICS = ["meth_pct", "cpgs", "meth", "calls"]
 GENE_MIN_CPGS = 5   # for the study summary only; the matrices keep every count
 
 
@@ -113,6 +113,7 @@ def summarize(study: dict, sheet: list[dict], qc: list[dict], manifest: dict, *,
         "commit": params.get("commit"),
         "genome_assembly": params.get("genome_assembly"),
         "chemistry": params.get("chemistry"),
+        "snp_mask": params.get("snp_mask"),
         "libraries": len(qc),
         "passed": len(passed),
         "failed": [{"sample_id": r["sample_id"], "reasons": r.get("qc_reasons", "")}
@@ -166,9 +167,10 @@ def _write_gz(path: Path, lines) -> None:
 def gene_matrices(results: Path, samples: list[str], dest: Path) -> dict | None:
     """Gene x sample matrices from the per-sample feature tables (FEATURE_SUMMARY).
 
-    For gene bodies and promoters, three gzipped TSVs each under dest/genes/:
+    For gene bodies and promoters, four gzipped TSVs each under dest/genes/:
     <class>.meth_pct.tsv.gz (methylated / all calls, %), <class>.cpgs.tsv.gz
-    (CpGs with a call) and <class>.calls.tsv.gz (calls). Rows are every gene
+    (CpGs with a call), <class>.meth.tsv.gz (methylated calls) and
+    <class>.calls.tsv.gz (all calls). With a SNP mask, masked CpGs are out of all four. Rows are every gene
     of the reference bundle in its order; columns `samples`; an empty cell is
     a gene with no call. Returns the summary's `genes` block, or None when
     the run made no feature tables (runs before FEATURE_SUMMARY existed).
@@ -193,6 +195,7 @@ def gene_matrices(results: Path, samples: list[str], dest: Path) -> dict | None:
                 calls = int(r["meth"]) + int(r["unmeth"])
                 cols[cls]["meth_pct"].append(r["meth_pct"])
                 cols[cls]["cpgs"].append(int(r["cpgs"]))
+                cols[cls]["meth"].append(int(r["meth"]))
                 cols[cls]["calls"].append(calls)
         for cls in MATRIX_CLASSES:
             if genes is None:

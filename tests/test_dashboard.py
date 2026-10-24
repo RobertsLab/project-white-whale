@@ -123,6 +123,14 @@ def test_findings_come_from_study_summaries(repo):
     assert merged["link"] == f"{URL}/blob/main/data/studies/WANG2020_TIDAL_HEAT_WGBS/study_summary.yaml"
 
 
+def test_finding_names_the_snp_mask(repo):
+    from whale.dashboard import finding
+    s = _summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01")
+    s["snp_mask"] = {"mask_id": "GCF_X.snpmask.v1", "cpgs_masked": 628253, "sha256": "x"}
+    f = finding({"summary": s, "ref": None, "path": "p"}, None, URL)
+    assert "leave out 628,253 CpGs on C/T SNPs (mask GCF_X.snpmask.v1)" in f["summary"]
+
+
 def test_branch_summary_supersedes_main(repo):
     d = repo / "data" / "studies" / "WANG2020_TIDAL_HEAT_WGBS"
     d.mkdir(parents=True)
@@ -219,7 +227,7 @@ def test_page_reads_every_key_it_uses(repo_root):
     for key in ("date", "title", "summary", "goal", "studies", "status", "link"):
         assert f"f.{key}" in html, key
     for key in ("study_id", "part", "libraries", "genes", "status", "hist", "tables", "per_sample_url", "file",
-                "min_cpgs", "bin"):
+                "min_cpgs", "bin", "snp_mask"):
         assert f"v.{key}" in html, key
     for key in ("generated_at", "commit", "repo_url", "claims_available", "mirror_available", "stages",
                 "totals", "studies", "findings", "genes"):

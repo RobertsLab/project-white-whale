@@ -20,6 +20,7 @@ not, so every sample of every study has the same rows.
 | `<sample>.features.tsv.gz` | gannet, `methylomes/<STUDY_ID>/<sample>/`, listed in `methylome_manifest.tsv` | one row per gene and class: `cpgs`, `cpgs_5x`, `meth`, `unmeth`, `meth_pct`, `mean_meth_5x_pct` (~1.7 MB) |
 | `genes/{gene_body,promoter}.meth_pct.tsv.gz` | committed, `data/studies/<STUDY_ID>/` | genes x libraries: methylated / all calls, % (empty: no call) |
 | `genes/{gene_body,promoter}.cpgs.tsv.gz` | committed | CpGs with at least one call |
+| `genes/{gene_body,promoter}.meth.tsv.gz` | committed | methylated calls |
 | `genes/{gene_body,promoter}.calls.tsv.gz` | committed | methylated + unmethylated calls |
 
 The matrices hold the libraries that passed the QC gate, in `qc_summary.tsv`
@@ -53,9 +54,11 @@ changes.
 ## Before comparing studies
 
 - **C/T SNPs.** A C→T SNP reads as an unmethylated C, so populations with
-  different SNPs differ in apparent methylation. The gene tables are not yet
-  masked; apply a [SNP mask](snp_mask.md) (CpGs listed in `cpg_mask.bed.gz`)
-  before comparing groups.
+  different SNPs differ in apparent methylation. Run the workflow with
+  `--snp_mask <mask folder>` (or `WHALE_SNP_MASK`) to leave CpGs on SNPs out
+  of every gene table ([SNP mask](snp_mask.md)); the mask id is recorded in
+  `run_manifest.json` and `study_summary.yaml`, and the dashboard says
+  whether a study's tables are masked.
 - **Coverage.** Only CpGs with a call are counted; a gene's `cpgs` is not the
   number of CpGs it holds. ROBERTS2022 averages ~5.5 calls per CpG.
 - **Design.** Tissue, chemistry, pooling and ploidy differ between studies
