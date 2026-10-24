@@ -14,16 +14,16 @@
     "deduplicate": true,
     "profile": "klone",
     "nextflow_version": "26.04.7",
-    "run_name": "determined_khorana",
-    "commit": "b9f6f1bdcc8271e91449f4cbfea67ecd2b6c878f",
+    "run_name": "elated_meninsky",
+    "commit": "1d8d069bfea0d694d9bf93ab5b5a75b9be61c18c",
     "session": "9ca7d852-ecb3-407d-9aae-bba89034041e"
   },
   "tool_versions": {
-    "TRIM_GALORE": {
-      "trim_galore": "0.6.10"
-    },
     "FASTQC": {
       "fastqc": "0.12.1"
+    },
+    "TRIM_GALORE": {
+      "trim_galore": "0.6.10"
     },
     "BISMARK_ALIGN": {
       "bismark": "v0.24.2"
@@ -40,6 +40,13 @@
     "genome_fasta": {
       "name": "genomic.fna",
       "sha256": "64cbe0d84cb24a3f190cfc2cfbe856eb5c3a4697cd8c2605fc48fdf80814cf02"
+    },
+    "features": {
+      "exons.bed": "4a8421a67815726bb4506c90c3b75b00186aeab853972c3ded6c8daf853ba916",
+      "genes.bed": "62561759a62cc440ac74277c71abd54a1f9059bb438bd811ee66324088f512cd",
+      "intergenic.bed": "f60656a47505d5dbdd422cab1caf4e6d4ab6cbabc200acb49b836ce641ec1dad",
+      "introns.bed": "a564b3a31a97aa802d0607de3447d7418dee589c692d89f723d78f90f7672216",
+      "promoters.bed": "a0ec018df2274812da9491dc11bc8d659cbdb3f378f51e68cc31bd6fd28b71ae"
     }
   }
 }
