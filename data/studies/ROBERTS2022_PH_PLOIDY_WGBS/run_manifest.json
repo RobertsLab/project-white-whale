@@ -11,19 +11,24 @@
     "qc_min_mapping": 20.0,
     "qc_min_conversion": 98.0,
     "qc_min_cpgs_5x": 1000000,
+    "snp_mask": {
+      "mask_id": "GCF_963853765.1.snpmask.v1",
+      "sha256": "3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895",
+      "cpgs_masked": 628253
+    },
     "deduplicate": true,
     "profile": "klone",
     "nextflow_version": "26.04.7",
-    "run_name": "elated_meninsky",
-    "commit": "1d8d069bfea0d694d9bf93ab5b5a75b9be61c18c",
+    "run_name": "curious_mestorf",
+    "commit": "c08293ef932300062b3c8f658ac1aa6877611e49",
     "session": "9ca7d852-ecb3-407d-9aae-bba89034041e"
   },
   "tool_versions": {
-    "FASTQC": {
-      "fastqc": "0.12.1"
-    },
     "TRIM_GALORE": {
       "trim_galore": "0.6.10"
+    },
+    "FASTQC": {
+      "fastqc": "0.12.1"
     },
     "BISMARK_ALIGN": {
       "bismark": "v0.24.2"
