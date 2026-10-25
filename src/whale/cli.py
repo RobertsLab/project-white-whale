@@ -583,8 +583,6 @@ def mirror_fastq_cmd(accessions, dest, staging, source, jobs, threads, tmp, rate
 @click.option("--remote", default="origin", show_default=True)
 def build_dashboard_cmd(out, no_claims, no_mirror, remote):
     """Write site/data.json for the GitHub Pages dashboard (site/index.html)."""
-    import os
-    import re
 
     from whale.dashboard import build, summaries_on_branches, write
     from whale.fastq import load_ledger
@@ -614,19 +612,41 @@ def build_dashboard_cmd(out, no_claims, no_mirror, remote):
                     click.echo(click.style(f"mirror ledger unreadable for {b['accession']}: {exc}", fg="yellow"), err=True)
                     mirrors[b["accession"]] = None
 
-    if os.environ.get("GITHUB_REPOSITORY"):
-        repo_url = f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ['GITHUB_REPOSITORY']}"
-    else:
-        origin = subprocess.run(["git", "remote", "get-url", remote], cwd=repo, capture_output=True, text=True).stdout.strip()
-        m = re.search(r"github\.com[:/](.+?)(\.git)?$", origin)
-        repo_url = f"https://github.com/{m.group(1)}" if m else "https://github.com/RobertsLab/project-white-whale"
-
+    repo_url = _repo_url(repo, remote)
     data = build(repo, claims=claims, mirrors=mirrors, repo_url=repo_url,
                  branch_summaries=summaries_on_branches(repo, claims, remote), remote=remote)
     path = write(data, Path(out) if out else repo / "site" / "data.json")
     t = data["totals"]
     click.echo(f"Wrote {path}: {t['backlog']} studies, {t['registered']} registered, {t['in_progress']} in progress, "
                f"{t['done']} done; {t['mirrored_gb']} GB mirrored; {len(data['findings'])} finding(s)")
+
+
+def _repo_url(repo: Path, remote: str) -> str:
+    """The GitHub URL of the repository: from Actions' environment, else the remote."""
+    import os
+    import re
+
+    if os.environ.get("GITHUB_REPOSITORY"):
+        return f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ['GITHUB_REPOSITORY']}"
+    origin = subprocess.run(["git", "remote", "get-url", remote], cwd=repo, capture_output=True, text=True).stdout.strip()
+    m = re.search(r"github\.com[:/](.+?)(\.git)?$", origin)
+    return f"https://github.com/{m.group(1)}" if m else "https://github.com/RobertsLab/project-white-whale"
+
+
+@main.command("build-atlas")
+@click.option("--out", default=None, type=click.Path(file_okay=False), help="Default: site/atlas/data.")
+@click.option("--remote", default="origin", show_default=True)
+def build_atlas_cmd(out, remote):
+    """Pool the merged studies' gene tables and write the atlas pages' data (site/atlas/)."""
+    from whale.atlas import AtlasError, build, summary_text, write
+
+    repo = _repo()
+    try:
+        data, pooled = build(repo, repo_url=_repo_url(repo, remote))
+    except AtlasError as exc:
+        raise click.ClickException(str(exc)) from exc
+    path = write(data, pooled, Path(out) if out else repo / "site" / "atlas" / "data")
+    click.echo(f"Wrote {path}: {summary_text(data)}")
 
 
 # --- claims ------------------------------------------------------------------

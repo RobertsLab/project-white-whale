@@ -2,7 +2,8 @@ name: Dashboard
 
 # Rebuilds site/data.json from the repository, the study branches' claims and
 # the gannet mirror ledgers, and publishes site/ to GitHub Pages. Claims and
-# mirror progress change without a push to main, hence the schedule.
+# mirror progress change without a push to main, hence the schedule. It also
+# rebuilds the cross-study atlas (site/atlas/data) from the studies on main.
 on:
   push:
     branches: [main]
@@ -32,6 +33,9 @@ jobs:
       - run: pip install -e .
       - name: Build site/data.json
         run: whale build-dashboard
+      # The atlas pools only what is merged to main, so it changes when a study PR merges.
+      - name: Build site/atlas/data (pooled tables, landscape, concordance)
+        run: whale build-atlas
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

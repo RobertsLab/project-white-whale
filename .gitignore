@@ -44,3 +44,5 @@ site/data.json
 # Built by `whale build-dashboard` (in CI for Pages); never committed.
 site/data.json
 site/genes/
+# Built by `whale build-atlas` (in CI for Pages); never committed.
+site/atlas/data/
