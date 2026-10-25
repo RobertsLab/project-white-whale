@@ -3,7 +3,7 @@
 study_id: WANG2020_TIDAL_HEAT_WGBS
 accession: PRJNA562805
 part: null
-stage: claimed
+stage: registered
 profile: klone
 machine: klone
 claimed_by: STEVEN
@@ -15,3 +15,7 @@ history:
   date: '2026-10-24'
   machine: klone
   note: null
+- stage: registered
+  date: '2026-10-24'
+  machine: klone
+  note: YAML (imported from AREE), sample sheet and FASTQ manifest committed
