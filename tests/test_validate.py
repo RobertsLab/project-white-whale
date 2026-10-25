@@ -85,3 +85,16 @@ def test_status_validation(repo_root):
     assert validate_status(status, repo_root) == []
     assert validate_status({**status, "profile": "laptop"}, repo_root)
     assert validate_status({**status, "stage": "called"}, repo_root)
+
+
+def test_cli_reports_unparseable_status_yaml(repo_root, tmp_path, monkeypatch):
+    from click.testing import CliRunner
+
+    from whale.cli import main
+
+    monkeypatch.setenv("WHALE_REPO", str(repo_root))
+    bad = tmp_path / "status.yaml"
+    bad.write_text("stage: [claimed\n")
+    res = CliRunner().invoke(main, ["validate-status", str(bad)])
+    assert res.exit_code == 1
+    assert "FAIL" in res.output and "could not parse YAML" in res.output

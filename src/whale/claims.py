@@ -10,7 +10,11 @@ opened as a draft pull request against main. Pushing the branch is the claim:
 two machines racing for one study push different commits to the same branch
 name and git rejects the second, so the loser stops before downloading
 anything. Before pushing, `start_study` also refuses a study that is already
-registered on main or already claimed by a pushed `study/` branch.
+registered on main or already claimed by a pushed `study/` branch. That check
+cannot see a claim pushed a moment later under a different branch name (the
+same accession under another study_id, or the same study_id under another
+accession), so `start_study` looks again after its push and reports any such
+rival, and the study PR's scope check fails until one of the two is released.
 
 Each branch carries data/studies/<STUDY_ID>/status.yaml (or, for a part,
 data/studies/<STUDY_ID>/parts/<PART>/status.yaml): which machine and profile
@@ -25,7 +29,9 @@ Adapted from AREE's intake/study_claims.py (github.com/sr320/AREE).
 """
 from __future__ import annotations
 
+import contextlib
 import getpass
+import os
 import re
 import shutil
 import socket
@@ -59,7 +65,18 @@ class ClaimError(RuntimeError):
 
 
 def machine_name() -> str:
-    return socket.gethostname().split(".")[0]
+    """The machine a claim or stage is recorded against.
+
+    WHALE_MACHINE if set. Inside a Slurm job, the cluster (SLURM_CLUSTER_NAME):
+    klone's compute nodes are named n3012, n3441, ..., which says nothing
+    about where a study is. Otherwise the short host name, with a cluster
+    login node (klone-login03) named after its cluster.
+    """
+    if os.environ.get("WHALE_MACHINE"):
+        return os.environ["WHALE_MACHINE"]
+    if os.environ.get("SLURM_CLUSTER_NAME"):
+        return os.environ["SLURM_CLUSTER_NAME"]
+    return re.sub(r"-login\d*$", "", socket.gethostname().split(".")[0])
 
 
 def default_user(repo: Path) -> str:
@@ -131,6 +148,28 @@ def find_conflicts(accession: str, study_id: str, part: str | None,
     return problems
 
 
+def rival_claims(branch: str, claimed: list[str]) -> list[str]:
+    """Other study branches holding the same study under a different branch name.
+
+    A rival claims the same accession under another study_id, or (both being
+    whole-study claims) the same study_id under another accession. Parts of one
+    registered study are not rivals of each other.
+    """
+    own = parse_branch(branch)
+    if own is None:
+        return []
+    accession, study_id, part = own
+    rivals = []
+    for other in claimed:
+        parsed = parse_branch(other)
+        if parsed is None or other == branch:
+            continue
+        if (parsed[0] == accession and parsed[1] != study_id) or \
+                (parsed[1] == study_id and part is None and parsed[2] is None):
+            rivals.append(other)
+    return sorted(rivals)
+
+
 # --- files a claim writes ----------------------------------------------------
 
 def _sub_once(text: str, pattern: str, repl: str, what: str) -> str:
@@ -155,6 +194,12 @@ def config_name(study_id: str, part: str | None = None) -> str:
     return f"config/{study_id}.part-{part}.config" if part else f"config/{study_id}.config"
 
 
+def nextflow_command(study_id: str, profile: str, part: str | None = None) -> list[str]:
+    """The `nextflow run` that processes a claimed study, from the root of its worktree."""
+    return ["nextflow", "run", "workflows/methylation", "-c", config_name(study_id, part),
+            "-profile", f"{profile},docker" if profile == "desktop" else profile]
+
+
 def render_config(study_id: str, accession: str, profile: str, part: str | None = None) -> str:
     part_line = f"\n        part         = '{part}'" if part else ""
     sheet = (f"data/studies/{study_id}/parts/{part}/samplesheet.tsv" if part
@@ -165,7 +210,7 @@ def render_config(study_id: str, accession: str, profile: str, part: str | None 
  * Claimed with `whale start-study` for profile `{profile}`. Run from the
  * repository root of this study's worktree:
  *
- *   nextflow run workflows/methylation -c {config_name(study_id, part)} -profile {profile}{',docker' if profile == 'desktop' else ''}
+ *   {' '.join(nextflow_command(study_id, profile, part))}
  *
  * Machine-specific paths come from WHALE_RAW, WHALE_REFERENCE, WHALE_METHYLOMES
  * and WHALE_WORKDIR (docs/compute_profiles.md); never write one here.
@@ -290,7 +335,8 @@ def start_study(accession: str, study_id: str, *, repo, profile: str, part: str 
                 open_pr: bool = True) -> dict:
     """Create the study branch in its own worktree, commit the stubs, and claim it.
 
-    Returns {branch, worktree, files, linked, pushed, pr_url}.
+    Returns {branch, worktree, files, linked, pushed, pr_url, rivals}; `rivals` are
+    other branches found holding the same study right after the push (see rival_claims).
     """
     repo = Path(repo)
     if profile not in load_vocab(repo, "compute_profile"):
@@ -331,7 +377,7 @@ def start_study(accession: str, study_id: str, *, repo, profile: str, part: str 
     _run(["git", "commit", "--quiet", "-m", f"Claim {what} ({accession}) on {machine} [{profile}]"], worktree)
 
     result = {"branch": branch, "worktree": str(worktree), "files": sorted(files),
-              "linked": link_drives(repo, worktree), "pushed": False, "pr_url": None}
+              "linked": link_drives(repo, worktree), "pushed": False, "pr_url": None, "rivals": []}
     if not push:
         return result
     try:
@@ -343,6 +389,9 @@ def start_study(accession: str, study_id: str, *, repo, profile: str, part: str 
             f"  git worktree remove {worktree} && git branch -D {branch}"
         ) from None
     result["pushed"] = True
+    # If the listing fails the claim still stands; CI's scope check looks for rivals too.
+    with contextlib.suppress(ClaimError):
+        result["rivals"] = rival_claims(branch, remote_study_branches(remote, repo))
 
     if open_pr and shutil.which("gh"):
         body = (f"Claimed by `whale start-study` on **{machine}** (profile `{profile}`), {today}. "

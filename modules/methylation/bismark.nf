@@ -1,10 +1,15 @@
 // Bismark genome preparation, alignment, deduplication and methylation
 // extraction. Container pins as used by AREE's methylation workflow.
 
+// Built once per assembly and kept (storeDir) as <index dir>/bismark_genome,
+// by default inside the reference bundle, so later runs on the machine reuse it
+// instead of spending hours rebuilding it. Its genome.sha256 records the FASTA
+// it was built from, which main.nf checks against the bundle.
 process BISMARK_GENOME_PREPARATION {
     tag "${fasta.simpleName}"
     label 'process_high'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
+    storeDir "${params.bismark_index_dir ?: "${params.reference_dir}/${params.genome_assembly}"}"
 
     input:
     path fasta
@@ -13,28 +18,42 @@ process BISMARK_GENOME_PREPARATION {
     path "bismark_genome", emit: genome_dir
 
     script:
+    // Bismark only recognises .fa/.fasta(.gz) files, and NCBI's genome is
+    // genomic.fna, so it goes in under a name Bismark accepts. It is copied,
+    // not linked: later tasks see this folder inside their own container,
+    // where the staged input's real path (the reference drive) is not mounted.
+    // --parallel N runs each of Bismark's two indexing processes on N threads
+    // and must be 2 or more, so tasks with fewer than 4 CPUs (the test
+    // profile) leave it off and use Bismark's default.
+    def parallel = (task.cpus as int).intdiv(2)
+    def parallel_arg = parallel >= 2 ? "--parallel ${parallel}" : ''
     """
     mkdir bismark_genome
-    ln -s ../${fasta} bismark_genome/
-    bismark_genome_preparation --parallel ${Math.max(1, (task.cpus as int) / 2 as int)} bismark_genome
+    cp -L ${fasta} bismark_genome/genome.fa
+    sha256sum bismark_genome/genome.fa | cut -d' ' -f1 > bismark_genome/genome.sha256
+    bismark_genome_preparation ${parallel_arg} bismark_genome
     """
 
     stub:
     """
     mkdir -p bismark_genome/Bisulfite_Genome
-    ln -s ../${fasta} bismark_genome/
+    cp -L ${fasta} bismark_genome/genome.fa
+    sha256sum bismark_genome/genome.fa | cut -d' ' -f1 > bismark_genome/genome.sha256
     """
 }
 
+// `align_args` carries the chemistry preset (--pbat for PBAT libraries) plus
+// params.bismark_align_args.
 process BISMARK_ALIGN {
     tag "${sample_id}"
     label 'process_high'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
-    publishDir "${params.outdir}/${params.study_id}/qc", mode: params.publish_mode, pattern: "*report.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*report.txt"
 
     input:
     tuple val(sample_id), path(reads)
     path genome_dir
+    val align_args
 
     output:
     tuple val(sample_id), path("${sample_id}.bam"), emit: bam
@@ -46,10 +65,13 @@ process BISMARK_ALIGN {
     def input = paired ? "-1 ${reads[0]} -2 ${reads[1]}" : "${reads}"
     // Each Bismark instance runs ~3 bowtie2 threads; --multicore = cpus / 3.
     def multicore = Math.max(1, (task.cpus as int) / 3 as int)
+    // No --basename: Bismark 0.24 refuses it together with --multicore, so
+    // outputs are named after the first input file and renamed here.
     """
-    bismark --genome ${genome_dir} --multicore ${multicore} --temp_dir . ${params.bismark_align_args} \\
-        --basename ${sample_id} ${input}
-    mv ${sample_id}*.bam ${sample_id}.bam
+    bismark --genome ${genome_dir} --multicore ${multicore} --temp_dir . ${align_args} \\
+        ${input}
+    mv *_bismark_bt2*.bam ${sample_id}.bam
+    for r in *_bismark_bt2*_report.txt; do mv "\$r" "${sample_id}_\${r#*_bismark_bt2_}"; done
     printf 'BISMARK_ALIGN:\\n  bismark: "%s"\\n' "\$(bismark --version | grep -Eo 'v[0-9.]+' | head -1)" > versions.yml
     """
 
@@ -64,7 +86,8 @@ process BISMARK_DEDUPLICATE {
     tag "${sample_id}"
     label 'process_medium'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
-    publishDir "${params.outdir}/${params.study_id}/qc", mode: params.publish_mode, pattern: "*report.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*report.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/bam", mode: params.publish_mode, pattern: "*.dedup.bam", enabled: params.publish_bams
 
     input:
     tuple val(sample_id), path(bam)
@@ -89,8 +112,8 @@ process BISMARK_METHYLATION_EXTRACTOR {
     tag "${sample_id}"
     label 'process_high'
     container 'quay.io/biocontainers/bismark:0.24.2--hdfd78af_0'
-    publishDir "${params.outdir}/${params.study_id}/qc", mode: params.publish_mode, pattern: "*.txt"
-    publishDir "${params.outdir}/${params.study_id}/cpg", mode: params.publish_mode, pattern: "*.cov.gz"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/qc", mode: params.publish_mode, pattern: "*.txt"
+    publishDir "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}/cpg", mode: params.publish_mode, pattern: "*.cov.gz"
 
     input:
     tuple val(sample_id), path(bam)
@@ -106,8 +129,11 @@ process BISMARK_METHYLATION_EXTRACTOR {
     // (PLAN.md §6.2). Non-CpG context files are kept for the CHH-based
     // conversion estimate when a study has no spike-in.
     """
+    # Paired-end if the first read's SAM flag has bit 1 set. Plain shell
+    # arithmetic: awk's and() is GNU-only and the container's awk may not be.
     PE=""
-    if samtools view ${bam} 2>/dev/null | head -1000 | awk '{ if (and(\$2, 1)) found=1 } END { exit !found }'; then PE="--paired-end --no_overlap"; fi
+    FLAG=\$(samtools view ${bam} 2>/dev/null | head -1 | cut -f2)
+    if [ -n "\$FLAG" ] && [ \$(( FLAG & 1 )) -eq 1 ]; then PE="--paired-end --no_overlap"; fi
     bismark_methylation_extractor \$PE --gzip --bedGraph --comprehensive --merge_non_CpG \\
         --genome_folder ${genome_dir} --multicore ${Math.max(1, (task.cpus as int) / 3 as int)} \\
         ${params.extractor_args} ${bam}

@@ -39,16 +39,40 @@ If two machines claim the same study at the same moment, only one push can
 create the branch. The other is rejected and `start-study` stops before
 anything is downloaded, printing the commands that remove its local worktree.
 
+That holds when both use the same branch name. If they race under different
+names (the same accession with different study IDs, or the same study ID with
+different accessions), both pushes succeed. `start-study` therefore lists the
+study branches again right after its push and fails, naming the rival branch,
+if it finds one; the study PR's scope check in CI fails for the same reason.
+Agree which claim to keep and `whale release-study` the other before
+downloading anything.
+
 `--no-push` builds the worktree without claiming anything. `--no-pr` claims
 without opening a PR (also the case when the `gh` CLI is absent).
 
 ## Recording progress
 
-Inside the study's worktree:
+Progress is recorded by the commands that make it, never by hand:
+
+* `whale fetch-fastq --mark-staged` sets `fastq_staged` once every file is
+  verified (`--launch` does the same, then starts the run on desktop and
+  raven claims);
+* a successful workflow run calls `whale record-run` itself
+  (workflows/methylation/main.nf, `onComplete`). It commits the QC table, run
+  manifest, methylome manifest, `study_summary.yaml` and the gene x sample
+  matrices ([gene-level methylation](gene_methylation.md)), uploads the
+  methylomes to the data host, and moves the study through `aligned`,
+  `called`, `qc_passed` (at least one library passes the QC gate) and
+  `summarized` (the methylomes are on the data host), then pushes and marks
+  the PR ready. Running it again is safe and only moves forward, which is how
+  an upload that failed is finished.
+
+`whale set-status` remains for what no command can know, such as `excluded`
+or a move to another machine:
 
 ```bash
-whale set-status --stage fastq_staged --note "105 GB, MD5 ok"
-whale set-status --stage aligned --run-name nostalgic_curie
+whale set-status --stage excluded --note "no CpG calls: RRBS with MspI fragments < 40 bp"
+whale set-status --stage fastq_staged --profile klone --force --note "moved from raven"
 ```
 
 Each call appends to the status file's history, commits and pushes. Stages
@@ -56,7 +80,11 @@ Each call appends to the status file's history, commits and pushes. Stages
 
 `claimed → registered → fastq_staged → aligned → called → qc_passed → summarized → merged`
 
-plus `excluded` (will not be processed; say why in `--note`). `--force` moves
+plus `excluded` (will not be processed; say why in `--note`). The machine recorded with
+each stage is the host name, except that a cluster is recorded by its name:
+inside a Slurm job `SLURM_CLUSTER_NAME` (klone, not the compute node `n3441`),
+and a login node by its cluster (`klone-login03` → klone). Set
+`WHALE_MACHINE` to override it. `--force` moves
 back, e.g. after a failed run is restarted from alignment. `--profile klone`
 records a study moving to another machine mid-way.
 

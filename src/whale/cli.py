@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from http.client import HTTPException
 from pathlib import Path
 
 import click
@@ -15,6 +16,7 @@ from whale.claims import (
     parse_branch,
     registered_on,
     release_study,
+    remote_study_branches,
     set_status,
     start_study,
 )
@@ -80,7 +82,10 @@ def validate_status_cmd(files):
     paths = [Path(f) for f in files] or sorted((repo / "data" / "studies").rglob("status.yaml"))
     failed = False
     for path in paths:
-        errors = validate_status(yaml.safe_load(path.read_text()) or {}, repo)
+        try:
+            errors = validate_status(yaml.safe_load(path.read_text()) or {}, repo)
+        except yaml.YAMLError as exc:
+            errors = [f"could not parse YAML: {exc}"]
         click.echo(f"{'FAIL' if errors else 'ok  '}  {path}")
         for e in errors:
             click.echo(click.style(f"      error: {e}", fg="red"))
@@ -196,6 +201,8 @@ def fetch_samplesheet_cmd(bioproject, study_id, show_attributes, condition_attri
             design_join=design_join, design_source=design_source, repo=repo)
     except ENAError as exc:
         raise click.ClickException(str(exc)) from None
+    except (OSError, HTTPException) as exc:
+        raise click.ClickException(f"could not read from ENA (retried): {exc}") from None
 
     click.echo(f"{report['bioproject']} -> {study_id}: {report['n_runs']} runs, "
                f"{report['n_libraries']} libraries, {report['n_biosamples']} BioSamples")
@@ -265,6 +272,8 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
         prov = fetch_bundle(repo, assembly, dest=target, rnaseq=rnaseq, log=click.echo)
     except ReferenceError as exc:
         raise click.ClickException(str(exc)) from None
+    except (OSError, HTTPException) as exc:
+        raise click.ClickException(f"could not read from NCBI (retried): {exc}") from None
 
     click.echo(f"\n{prov['assembly_id']}: {prov['sequences']} sequences, {prov['genome_length'] / 1e6:.1f} Mb")
     for name, n in prov["feature_counts"].items():
@@ -276,6 +285,35 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
             fg="red"))
         sys.exit(1)
     click.echo(f"\nWrote {target}/reference_provenance.json")
+
+
+@main.command("build-gene-info")
+@click.option("--assembly", default=None, help="Default: the default assembly in genome_assemblies.yaml.")
+@click.option("--gtf", default=None, type=click.Path(exists=True, dir_okay=False),
+              help="Default: genomic.gtf in the assembly's reference bundle.")
+def build_gene_info_cmd(assembly, gtf):
+    """Write data/reference/gene_info/<ACCESSION>.tsv.gz (GeneID, symbol, description) from the GTF; commit it."""
+    from whale.reference import (
+        ReferenceError,
+        build_gene_info,
+        default_bundle_dir,
+        gene_info_path,
+        resolve_assembly,
+        write_gene_info,
+    )
+
+    repo = _repo()
+    try:
+        acc = resolve_assembly(repo, assembly)["ncbi_assembly_accession"]
+    except ReferenceError as exc:
+        raise click.ClickException(str(exc)) from None
+    src = Path(gtf) if gtf else default_bundle_dir(repo, acc) / "genomic.gtf"
+    if not src.exists():
+        raise click.ClickException(f"{src} not found; run `whale fetch-reference` or pass --gtf.")
+    rows = build_gene_info(src)
+    out = gene_info_path(repo, acc)
+    write_gene_info(rows, out)
+    click.echo(f"Wrote {out}: {len(rows):,} genes")
 
 
 @main.command("fetch-fastq")
@@ -290,6 +328,9 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
 @click.option("--ignore-space", is_flag=True, help="Start even if free space looks too small.")
 @click.option("--mark-staged", is_flag=True,
               help="When every file is verified, set the study's stage to fastq_staged (commits and pushes).")
+@click.option("--launch", is_flag=True,
+              help="Implies --mark-staged; then start the study's `nextflow run` for its claimed profile "
+                   "in the foreground (desktop and raven only).")
 @click.option("--source", type=click.Choice(["auto", "mirror", "ena"]), default="auto", show_default=True,
               help="auto: the gannet mirror where it has a file, ENA otherwise; mirror: refuse unless every "
                    "file is mirrored; ena: ENA only.")
@@ -297,7 +338,7 @@ def fetch_reference_cmd(assembly, dest, rnaseq, plan_only, check_only):
               help="BioProject whose mirror to use (default: the study branch's, else ena_provenance.json's).")
 @click.option("--mirror-url", default=None,
               help="Mirror folder URL (default: data_host.yaml url_base + /raw/<ACCESSION>).")
-def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space, mark_staged,
+def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space, mark_staged, launch,
                     source, accession, mirror_url):
     """Download a study's FASTQ from its manifest, resuming and MD5-verifying every file.
 
@@ -306,9 +347,10 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
     """
     import json
     import os
+    import shutil
 
     from whale.claims import ClaimError as _CE
-    from whale.claims import current_branch
+    from whale.claims import current_branch, nextflow_command
     from whale.fastq import (
         FastqError,
         apply_mirror,
@@ -335,6 +377,27 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
         raise click.ClickException(f"{manifest_path} is missing; run whale fetch-samplesheet first.")
     raw = os.environ.get("WHALE_RAW")
     target = Path(dest) if dest else (Path(raw) if raw else repo / "data" / "raw") / study_id
+
+    # Check everything --launch needs before a download that can take hours.
+    if launch:
+        mark_staged = True
+        if runs:
+            raise click.UsageError("--launch needs every file staged; drop --run.")
+        if parsed is None or parsed[1] != study_id:
+            raise click.UsageError("--launch runs from the study's own worktree; cd there first.")
+        if target.name != study_id:
+            raise click.UsageError(f"--launch needs the FASTQ in a folder named {study_id}; "
+                                   "the pipeline reads $WHALE_RAW/<STUDY_ID>.")
+        from whale.paths import status_path
+        sp = status_path(repo, study_id, parsed[2])
+        if not sp.exists():
+            raise click.ClickException(f"{sp.relative_to(repo)} is missing on this branch.")
+        profile = yaml.safe_load(sp.read_text()).get("profile")
+        if profile == "klone":
+            raise click.UsageError("klone runs need an sbatch head job (docs/compute_profiles.md); "
+                                   "stage with --mark-staged and submit the run from there.")
+        if not shutil.which("nextflow"):
+            raise click.ClickException("nextflow is not on PATH.")
 
     try:
         files = read_manifest(manifest_path, list(runs) or None)
@@ -382,6 +445,8 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
     if short:
         click.echo(click.style("  Not enough free space for what is left.", fg="red"))
     if dry_run:
+        if launch:
+            click.echo(f"Would then launch: {' '.join(nextflow_command(study_id, profile, parsed[2]))}")
         return
     if short and not ignore_space:
         raise click.ClickException("not enough free space; free some or pass --ignore-space.")
@@ -403,12 +468,20 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
             total = sum(f.bytes for f in files)
             # Commit the verification record with the stage change.
             if record.resolve().is_relative_to(repo.resolve()):
-                subprocess.run(["git", "add", str(record.resolve().relative_to(repo.resolve()))],
-                               cwd=repo, check=True)
+                add = subprocess.run(["git", "add", str(record.resolve().relative_to(repo.resolve()))],
+                                     cwd=repo, capture_output=True, text=True)
+                if add.returncode != 0:
+                    raise ClaimError(f"git add {record.name} failed: {add.stderr.strip()}")
             new = set_status("fastq_staged", repo=repo, note=f"{len(files)} files, {total / gb:.1f} GB, MD5 verified")
         except ClaimError as exc:
             raise click.ClickException(f"downloads verified, but the stage was not set: {exc}") from None
         click.echo(f"Stage: {new['stage']} on {new['machine']}")
+    if launch:
+        cmd = nextflow_command(study_id, new["profile"], parsed[2])
+        # The pipeline finds the FASTQ under $WHALE_RAW, so point it at where they went.
+        env = {**os.environ, "WHALE_RAW": str(target.resolve().parent)}
+        click.echo(f"Launching: {' '.join(cmd)}")
+        sys.exit(subprocess.run(cmd, cwd=repo, env=env).returncode)
 
 
 @main.command("mirror-fastq")
@@ -503,6 +576,59 @@ def mirror_fastq_cmd(accessions, dest, staging, source, jobs, threads, tmp, rate
         sys.exit(1)
 
 
+@main.command("build-dashboard")
+@click.option("--out", default=None, type=click.Path(dir_okay=False), help="Default: site/data.json.")
+@click.option("--no-claims", is_flag=True, help="Do not read claims from the remote's study branches.")
+@click.option("--no-mirror", is_flag=True, help="Do not read the gannet mirror ledgers.")
+@click.option("--remote", default="origin", show_default=True)
+def build_dashboard_cmd(out, no_claims, no_mirror, remote):
+    """Write site/data.json for the GitHub Pages dashboard (site/index.html)."""
+    import os
+    import re
+
+    from whale.dashboard import build, summaries_on_branches, write
+    from whale.fastq import load_ledger
+    from whale.mirror import LEDGER_NAME, load_data_host
+
+    repo = _repo()
+    claims = None
+    if not no_claims:
+        try:
+            claims = list_claims(repo, remote=remote)
+        except ClaimError as exc:
+            click.echo(click.style(f"claims unavailable: {exc}", fg="yellow"), err=True)
+
+    mirrors = None
+    if not no_mirror:
+        try:
+            base = load_data_host(repo).get("url_base")
+        except FileNotFoundError:
+            base = None
+        if base:
+            mirrors = {}
+            for b in load_backlog(repo):
+                url = f"{base.rstrip('/')}/raw/{b['accession']}/{LEDGER_NAME}"
+                try:
+                    mirrors[b["accession"]] = load_ledger(url)
+                except (OSError, ValueError) as exc:
+                    click.echo(click.style(f"mirror ledger unreadable for {b['accession']}: {exc}", fg="yellow"), err=True)
+                    mirrors[b["accession"]] = None
+
+    if os.environ.get("GITHUB_REPOSITORY"):
+        repo_url = f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ['GITHUB_REPOSITORY']}"
+    else:
+        origin = subprocess.run(["git", "remote", "get-url", remote], cwd=repo, capture_output=True, text=True).stdout.strip()
+        m = re.search(r"github\.com[:/](.+?)(\.git)?$", origin)
+        repo_url = f"https://github.com/{m.group(1)}" if m else "https://github.com/RobertsLab/project-white-whale"
+
+    data = build(repo, claims=claims, mirrors=mirrors, repo_url=repo_url,
+                 branch_summaries=summaries_on_branches(repo, claims, remote), remote=remote)
+    path = write(data, Path(out) if out else repo / "site" / "data.json")
+    t = data["totals"]
+    click.echo(f"Wrote {path}: {t['backlog']} studies, {t['registered']} registered, {t['in_progress']} in progress, "
+               f"{t['done']} done; {t['mirrored_gb']} GB mirrored; {len(data['findings'])} finding(s)")
+
+
 # --- claims ------------------------------------------------------------------
 
 @main.command("start-study")
@@ -541,6 +667,11 @@ def start_study_cmd(accession, study_id, profile, part, worktree_dir, machine, r
     else:
         click.echo(click.style("NOT claimed: --no-push given; other machines cannot see this study.",
                                fg="yellow"))
+    if res["rivals"]:
+        raise click.ClickException(
+            "another machine claimed the same study at the same moment: " + ", ".join(res["rivals"])
+            + ". Download nothing yet: agree which claim to keep and run "
+            "`whale release-study --branch <the other>`.")
     click.echo(f"\nNext: cd {res['worktree']} and follow docs/adding_a_study.md.")
 
 
@@ -565,6 +696,60 @@ def set_status_cmd(stage, note, nextflow_run, profile, machine, force, no_commit
         raise click.ClickException(str(exc)) from None
     click.echo(f"{new['study_id']}{' part ' + new['part'] if new.get('part') else ''}: "
                f"{new['stage']} on {new['machine']} [{new['profile']}]")
+
+
+@main.command("record-run")
+@click.option("--results", required=True, type=click.Path(exists=True, file_okay=False),
+              help="The run's output folder: <WHALE_METHYLOMES>/<STUDY_ID>[/parts/<PART>].")
+@click.option("--run-name", default=None, help="Nextflow run name (default: from run_manifest.json).")
+@click.option("--no-upload", is_flag=True, help="Do not copy the methylomes to the data host.")
+@click.option("--upload-target", default=None,
+              help="user@host:/path or a local folder (default: data/data_host.yaml upload_target).")
+@click.option("--no-commit", is_flag=True)
+@click.option("--no-push", is_flag=True)
+@click.option("--remote", default="origin", show_default=True)
+def record_run_cmd(results, run_name, no_upload, upload_target, no_commit, no_push, remote):
+    """Record a finished run on this study branch: summaries, methylomes, stage. The workflow runs this itself."""
+    from whale.results import RecordError, record_run
+
+    repo = _repo()
+    try:
+        res = record_run(repo, results, run_name=run_name, upload=not no_upload, upload_target=upload_target,
+                         commit=not no_commit, push=not (no_push or no_commit), remote=remote)
+    except (ClaimError, RecordError) as exc:
+        raise click.ClickException(str(exc)) from None
+    label = res["study_id"] + (f" part {res['part']}" if res["part"] else "")
+    click.echo(f"{label}: {res['passed']} of {res['libraries']} libraries pass the QC gate")
+    click.echo(f"{label}: stage {res['stage']}" + (f" (recorded {', '.join(res['added'])})" if res["added"] else ""))
+    if res["upload_error"]:
+        click.echo(click.style(f"methylomes not on the data host: {res['upload_error']}", fg="yellow"), err=True)
+        click.echo("The study stays below summarized; run `whale record-run` again once the host is reachable.",
+                   err=True)
+    if res["pushed"]:
+        click.echo(f"Pushed {res['branch']}" + ("; PR marked ready for review" if res["pr_ready"] else ""))
+
+
+@main.command("record-mask")
+@click.option("--dir", "mask_dir", required=True, type=click.Path(exists=True, file_okay=False),
+              help="The snp_mask run's output folder (cpg_mask.bed.gz, snps.tsv.gz, mask_manifest.json).")
+@click.option("--no-upload", is_flag=True, help="Register only; do not copy the files to the data host.")
+@click.option("--upload-target", default=None,
+              help="user@host:/path or a local folder (default: data/data_host.yaml upload_target).")
+def record_mask_cmd(mask_dir, no_upload, upload_target):
+    """Upload a C/T SNP mask to the data host and register it in data/reference/snp_masks.yaml."""
+    from whale.results import RecordError
+    from whale.snp_mask import record_mask
+
+    repo = _repo()
+    try:
+        res = record_mask(repo, mask_dir, upload=not no_upload, upload_target=upload_target)
+    except RecordError as exc:
+        raise click.ClickException(str(exc)) from None
+    e, c = res["entry"], res["entry"]["counts"]
+    click.echo(f"{e['mask_id']}: {c['snps']:,} SNPs from {e['libraries']} libraries of {', '.join(e['studies'])}; "
+               f"{c['cpgs_masked']:,} of {c['cpgs']:,} CpGs masked ({100 * c['cpgs_masked_frac']:.2f}%)")
+    click.echo(("Uploaded and registered" if res["uploaded"] else "Registered (not uploaded)")
+               + f" in {res['registry']}; commit it in a pull request.")
 
 
 @main.command("claims")
@@ -620,7 +805,14 @@ def check_study_scope_cmd(branch, base):
         registered = registered_on(base, repo)
     except ClaimError:
         registered = {}
-    errors, warnings = check_scope(branch, changed, study, registered)
+    remote = base.split("/", 1)[0] if "/" in base else "origin"
+    try:
+        claimed = remote_study_branches(remote, repo)
+    except ClaimError as exc:
+        click.echo(click.style(f"warning: could not list study branches on {remote}, so rival "
+                               f"claims were not checked: {exc}", fg="yellow"))
+        claimed = None
+    errors, warnings = check_scope(branch, changed, study, registered, claimed)
     for w in warnings:
         click.echo(click.style(f"warning: {w}", fg="yellow"))
     for e in errors:

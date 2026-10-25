@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 
 MARKER = Path("registry/controlled_vocabularies")
+# A study's recorded run, summarized (whale.results); the dashboard's findings.
+SUMMARY_NAME = "study_summary.yaml"
 
 
 def find_repo(start: Path | None = None) -> Path:

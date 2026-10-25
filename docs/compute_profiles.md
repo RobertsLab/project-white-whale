@@ -9,6 +9,7 @@ variables instead.
 |---|---|---|
 | `WHALE_RAW` | directory holding `<STUDY_ID>/` FASTQ folders | `data/raw` |
 | `WHALE_REFERENCE` | directory holding `<ASSEMBLY>/genomic.fna` etc. | `data/reference` |
+| `WHALE_BISMARK_INDEX` | directory holding the cached `bismark_genome/` index | the reference bundle |
 | `WHALE_METHYLOMES` | where per-sample outputs are published | `data/methylomes` |
 | `WHALE_WORKDIR` | Nextflow work directory, on fast local disk | `work` (klone: scrubbed) |
 | `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` | local executor limits (desktop, raven) | 10 / 28 GB; 32 / 120 GB |
@@ -108,19 +109,26 @@ but the workflow uses its pinned containers, not those.
 ## klone
 
 UW Hyak's checkpoint partition, for the deep studies. Tasks are preemptible
-and capped below Hyak's ckpt limit (4 h 45 min each) with six retries;
+and capped at the ckpt window (4.5 h each) with six retries;
 Apptainer is enabled by the profile. Lessons carried from AREE
 ([running_on_klone.md](https://github.com/sr320/AREE/blob/main/docs/running_on_klone.md)):
 
-- Run the Nextflow **head job** on a non-preemptible partition (e.g. `cpu-g2`
-  under the group account), 2 CPUs, 8 GB, a few days. Never on a login node.
+- Run the Nextflow **head job** on a non-preemptible partition (`coenv`
+  `compute` first; see [Choosing a partition](#choosing-a-partition)),
+  2 CPUs, 8 GB, a few days. Never on a login node.
+- The head job records the run when it ends (`whale record-run`), so it needs
+  `whale` on its `PATH` (`sbatch` passes on the submitting shell's
+  environment) or `WHALE_CMD` set, and must be launched from the study's
+  worktree, which pushes to GitHub. Uploading the methylomes needs an SSH key
+  for gannet on the machine; without one the study stops at `qc_passed`.
 - **Do not export `TMPDIR`** in the head job; Slurm forwards it to every task
   and into containers. Use `NXF_TEMP` for Nextflow's own temporary files.
 - `/gscratch/scrubbed` deletes files untouched for 21 days and is often >97%
   full. Check `hyakstorage /gscratch/scrubbed` first; copy what you keep.
 - Read-sized intermediates go to the node's `/scr`.
 - ENA downloads through the cluster proxy ran at ~12 MB/s aggregate in
-  October 2026: plan ~15 h per 600 GB, as a job.
+  October 2026: plan ~15 h per 600 GB, as a job on a non-preemptible
+  partition (the first with room, as for the head job), not `ckpt-all`.
 - Select a subset of libraries with a directory of links, not a brace pattern
   in a glob.
 - Put Klone-only settings (e.g. chunk size, once chunked alignment lands) in a
@@ -128,7 +136,7 @@ Apptainer is enabled by the profile. Lessons carried from AREE
   limits do not override the profile.
 
 ```bash
-#SBATCH --account=srlab --partition=cpu-g2 --cpus-per-task=2 --mem=8G --time=4-00:00:00
+#SBATCH --account=coenv --partition=compute --cpus-per-task=2 --mem=8G --time=4-00:00:00
 export NXF_HOME=/gscratch/scrubbed/$USER/whale/nxf-home
 export NXF_TEMP=/gscratch/scrubbed/$USER/whale/tmp
 export WHALE_RAW=/gscratch/scrubbed/$USER/whale/raw
@@ -137,6 +145,75 @@ export WHALE_METHYLOMES=/gscratch/scrubbed/$USER/whale/methylomes
 nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile klone
 ```
 
+Stage the FASTQ beforehand the same way, as its own job on the first
+partition with room, with `--time` sized from the rate above:
+
+```bash
+#SBATCH --account=coenv --partition=compute --cpus-per-task=2 --mem=8G --time=1-00:00:00
+export WHALE_RAW=/gscratch/scrubbed/$USER/whale/raw
+whale fetch-fastq --mark-staged
+```
+
+### Choosing a partition
+
+Use the checkpoint partition, `ckpt-all`, for as much as possible. It runs
+on idle nodes across Hyak, so it is the cheapest place to queue many tasks,
+but it can preempt a job at any time and has a **4.5 h window**: no task
+there may ask for more. The profile defaults every task to `ckpt-all` at
+4 h 30 min, retried six times.
+
+Anything that needs longer than 4.5 h goes to a non-preemptible partition,
+in this order:
+
+| Order | Account | Partition | Lab's share (max) |
+|---|---|---|---|
+| 1 | `coenv` | `compute` | 40 CPUs, 188 GB |
+| 2 | `srlab` | `cpu-g2-mem2x` | 32 CPUs, 503 GB |
+| 3 | `coenv` | `cpu-g2` | 32 CPUs, 200 GB |
+| 4 | `coenv` | `cpu-g2`, a second job of the same size | 32 CPUs, 200 GB |
+
+Take the first one with room (`hyakalloc` shows what each account has in use
+right now). Skip straight to `srlab cpu-g2-mem2x` when one task needs more
+memory than 200 GB. The maxima are for everything running under that
+account and partition at once, the head job included, so a study's overrides
+must fit inside them alongside other lab work.
+
+| Work | Where |
+|---|---|
+| FastQC, trimming, chunked alignment, extraction: every task that finishes in 4.5 h | `ckpt-all` (profile default) |
+| Nextflow head job (2 CPUs, 8 GB, days; a preempted head job stops the run) | first partition in the order above with room |
+| A task that cannot finish in 4.5 h | first partition with room, as a per-process override |
+| `fetch-fastq` downloads (hours to days; on `ckpt-all` they hit the window or are preempted mid-file) | first partition in the order above with room, via `sbatch`, never a login node |
+| Interactive tests | `ckpt-all` via `salloc`, never a login node |
+
+Before moving a task off `ckpt-all`, try splitting it (as alignment is
+chunked) so it fits the window. Signs that a task needs to move:
+`sacct -u $USER -S today --format=JobName,Partition,State,Elapsed` shows it
+failing at the time limit, or being preempted again and again.
+
+The default account and partition come from `WHALE_SLURM_ACCOUNT` and
+`WHALE_SLURM_QUEUE`. Per-process overrides go in a run-only config passed
+after the study config, never in the study config itself. Set the account
+with the partition, since the profile's `--account=srlab` applies to every
+task otherwise, and cap `maxForks` so the override fits the lab's share:
+
+```groovy
+// config/<STUDY_ID>.klone.config
+// nextflow run workflows/methylation -c config/<STUDY_ID>.config -c config/<STUDY_ID>.klone.config -profile klone
+process {
+    withName: 'BISMARK_ALIGN' {
+        queue          = 'compute'
+        clusterOptions = '--account=coenv'
+        time           = '24h'
+        maxForks       = 3    // 3 x (12 CPUs, 40 GB) + head job fits 40 CPUs, 188 GB
+    }
+}
+```
+
+If `coenv compute` is full, change `queue` and `clusterOptions` to the next
+row of the order (`cpu-g2-mem2x` with `--account=srlab`, then `cpu-g2` with
+`--account=coenv`) and lower `maxForks` to fit 32 CPUs.
+
 ## Smoke test, any machine
 
 ```bash
@@ -144,3 +221,14 @@ nextflow run workflows/methylation -profile test -stub
 ```
 
 runs the whole DAG on two tiny fixture samples without executing any tool.
+
+```bash
+make real-run      # nextflow run workflows/methylation -profile test,docker, then the check
+```
+
+runs every tool for real, in the pinned containers, on the same fixtures: a
+30 kb synthetic genome and 1,500 bisulfite read pairs (S1) and single reads
+(S2) simulated with known methylation by `tests/fixtures/make_fixtures.py`.
+`tests/check_real_run.py` then checks that nearly every read maps, that
+CpG methylation comes out near the simulated 83%, and that CHG/CHH stay near
+0%. It takes a few minutes and needs Docker; CI runs both on every PR.

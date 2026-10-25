@@ -14,10 +14,9 @@
 - [ ] `whale validate-study registry/studies/<STUDY_ID>.yaml --strict` passes (whole-study claims)
 - [ ] Sample sheet and FASTQ manifest generated from ENA/SRA metadata, not hand-written
 - [ ] FASTQ MD5s verified against the manifest before the run
-- [ ] `run_manifest.json` committed under `data/studies/<STUDY_ID>/`, with parameters, tool versions and input checksums
-- [ ] Per-sample QC table committed; no FASTQ, BAMs, `work/` or `results/`
-- [ ] Per-sample methylomes copied to the data host and listed with checksums in `methylome_manifest.tsv`
-- [ ] `status.yaml` is at `summarized` (or `excluded`, with the reason in `notes`)
+- [ ] The run recorded itself (`whale record-run`): `run_manifest.json`, `qc_summary.tsv`, `methylome_manifest.tsv` and `study_summary.yaml` committed under `data/studies/<STUDY_ID>/`; no FASTQ, BAMs, `work/` or `results/`
+- [ ] `status.yaml` is at `summarized` (methylomes on the data host), or `excluded` with the reason in `notes`
+- [ ] Libraries failing the QC gate (`qc_summary.tsv`, `qc_reasons`) checked against the deposit
 - [ ] Quality flags and limitations record pooling, confounding, missing spike-ins and excluded libraries
 - [ ] No edits to shared code, vocabularies or docs; those went in a separate PR
 

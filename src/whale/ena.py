@@ -30,14 +30,15 @@ Adapted from AREE's src/intake/ena_samplesheet.py (github.com/sr320/AREE).
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import re
 import urllib.parse
-import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import date
 from pathlib import Path
+
+from whale.checksums import sha256_file
+from whale.net import get_text
 
 ENA_PORTAL = "https://www.ebi.ac.uk/ena/portal/api/filereport"
 ENA_XML = "https://www.ebi.ac.uk/ena/browser/api/xml"
@@ -71,16 +72,7 @@ class ENAError(RuntimeError):
 
 
 def _get(url: str) -> str:
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as fh:  # noqa: S310 - fixed EBI host
-        return fh.read().decode("utf-8")
-
-
-def sha256_file(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+    return get_text(url, timeout=TIMEOUT)
 
 
 def _run_fields(extra: list[str] | None = None) -> list[str]:

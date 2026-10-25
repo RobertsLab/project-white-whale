@@ -36,6 +36,11 @@ BED files are 0-based, half-open, BED6, sorted in genome order.
 On 2026-10-23 the bundle had 29 sequences (564.0 Mb), 33,331 genes, 284,442
 exons, 249,701 introns and 27,908 intergenic intervals.
 
+The bundle itself is not committed. The one piece the dashboard needs
+without it, a table of gene names, is: `whale build-gene-info` writes
+`data/reference/gene_info/<ACCESSION>.tsv.gz` (GeneID, symbol, description,
+biotype, position) from `genomic.gtf`. Commit it again after a new annotation.
+
 ## Checks
 
 - Every download is compared with NCBI's published MD5 before use; a mismatch
@@ -46,5 +51,24 @@ exons, 249,701 introns and 27,908 intergenic intervals.
   before the bundle is used.
 - `--check` recomputes every file's SHA-256 against the provenance file.
 
-Not in the bundle yet: the Bismark index (the workflow builds it), the CpG
-index and the C/T SNP mask (later Phase 1, PLAN.md §6.1).
+## The Bismark index
+
+The workflow builds the Bismark index the first time it runs on a machine and
+keeps it in the bundle as `bismark_genome/` (with its own copy of the genome,
+as `genome.fa`, the name Bismark accepts); every later run, for any study,
+reuses it rather than spending hours rebuilding it. Set `WHALE_BISMARK_INDEX`
+to keep it somewhere else (it then lives in `$WHALE_BISMARK_INDEX/bismark_genome/`).
+On klone it must be on storage the compute nodes see, like the bundle itself.
+
+`bismark_genome/genome.sha256` records which genome was indexed. If the
+bundle's `genomic.fna` no longer matches it (the bundle was fetched again for
+a new release), the workflow stops and asks for `bismark_genome/` to be
+deleted, so nothing is aligned to an index of a different genome. Start the
+first study on a new machine alone: two runs building the index at the same
+moment would both write it.
+
+`bismark_genome/` is not listed in `reference_provenance.json`, so
+`whale fetch-reference --check` ignores it.
+
+Not in the bundle yet: the CpG index and the C/T SNP mask (later Phase 1,
+PLAN.md §6.1).

@@ -11,6 +11,7 @@ import gzip
 import hashlib
 import io
 import json
+import os
 import shutil
 import sys
 import urllib.error
@@ -29,6 +30,7 @@ from whale.mirror import (
     download,
     mirror,
     plan_mirror,
+    record_in_ledger,
     wanted_files,
 )
 
@@ -44,6 +46,7 @@ class FakeENA:
     def __init__(self):
         self.files = {f"{run}_{m}.fastq.gz": _fq(run, m) for run in ("SRR1", "SRR2") for m in (1, 2)}
         self.cut_once: set[str] = set()     # fail these mid-stream once
+        self.short_once: set[str] = set()   # end these early once, without an error
         self.corrupt: set[str] = set()      # serve wrong bytes every time
         self.ignore_range = False
         self.requests: list[tuple[str, str]] = []
@@ -80,6 +83,9 @@ class FakeENA:
         if name in self.cut_once:
             self.cut_once.discard(name)
             return _Resp(body[: len(body) // 3], status, fail=True)
+        if name in self.short_once:
+            self.short_once.discard(name)
+            return _Resp(body[: len(body) // 3], status)
         return _Resp(body, status)
 
 
@@ -179,6 +185,17 @@ def test_interrupted_download_resumes(repo, ena, tmp_path):
     assert (tmp_path / "host/raw" / ACC / "SRR1_1.fastq.gz").read_bytes() == ena.files["SRR1_1.fastq.gz"]
 
 
+def test_short_response_resumes(ena, tmp_path):
+    """A response that ends early without an error is resumed, not restarted from zero."""
+    name = "SRR1_1.fastq.gz"
+    ena.short_once = {name}
+    dest = tmp_path / name
+    md5 = download(f"https://{BASE}/SRR1/{name}", dest, expected_bytes=len(ena.files[name]))
+    assert md5 == ena.md5(name) and dest.read_bytes() == ena.files[name]
+    third = len(ena.files[name]) // 3
+    assert ena.requests == [(name, ""), (name, f"bytes={third}-")]
+
+
 def test_partial_file_from_earlier_run_resumes(ena, tmp_path):
     name = "SRR1_2.fastq.gz"
     dest = tmp_path / name
@@ -212,10 +229,84 @@ def test_max_gb_limits_a_run(repo, ena, tmp_path):
 
 
 def test_second_run_exits_while_locked(repo, ena, tmp_path):
-    with mirror_mod._Lock(tmp_path / "staging" / "mirror.lock") as got:
+    lock = tmp_path / "staging" / "mirror.lock"
+    lock.parent.mkdir(parents=True)
+    lock.write_text("12345\n")   # left by an earlier run; replaced, not appended to
+    with mirror_mod._Lock(lock) as got:
         assert got
+        holder = lock.read_text()
+        assert holder == f"{os.getpid()}\n"
         assert _run(repo, tmp_path)["locked"] is True
+        # The run that was turned away leaves the holder's PID in place.
+        assert lock.read_text() == holder
     assert _run(repo, tmp_path)["locked"] is False
+
+
+def _row(name):
+    return {"run_accession": name.split("_")[0], "file": name, "md5": "0" * 32, "bytes": "1"}
+
+
+def test_ledger_update_keeps_rows_written_by_others(tmp_path):
+    """Writers with no shared memory (two machines, two staging dirs) never drop each other's rows."""
+    import threading
+
+    root = tmp_path / "host"
+    names = [f"SRR{w}{i:02d}_1.fastq.gz" for w in (1, 2, 3) for i in range(15)]
+
+    def writer(prefix):
+        store = LocalStore(root)          # a store of its own, as another process would have
+        for name in names:
+            if name.startswith(prefix):
+                record_in_ledger(store, ACC, _row(name), tmp_path / f"staging-{prefix}")
+
+    threads = [threading.Thread(target=writer, args=(f"SRR{w}",)) for w in (1, 2, 3)]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join()
+    assert sorted(LocalStore(root).read_ledger(ACC)) == sorted(names)
+    assert not (root / "raw" / ACC / mirror_mod.LEDGER_LOCK).exists()
+
+
+def test_held_ledger_lock_times_out_with_its_path(tmp_path):
+    store = LocalStore(tmp_path / "host")
+    lock = tmp_path / "host" / "raw" / ACC / mirror_mod.LEDGER_LOCK
+    lock.mkdir(parents=True)
+    with pytest.raises(MirrorError, match="remove that directory"):
+        record_in_ledger(store, ACC, _row("SRR1_1.fastq.gz"), tmp_path / "staging", wait=0)
+    assert lock.is_dir()     # someone else's lock is left alone
+
+
+def test_ledger_lock_is_released_when_the_write_fails(tmp_path, monkeypatch):
+    store = LocalStore(tmp_path / "host")
+
+    def broken(*a, **k):
+        raise OSError("disk full")
+    monkeypatch.setattr(store, "write_ledger", broken)
+    with pytest.raises(OSError):
+        record_in_ledger(store, ACC, _row("SRR1_1.fastq.gz"), tmp_path / "staging")
+    assert not (tmp_path / "host" / "raw" / ACC / mirror_mod.LEDGER_LOCK).exists()
+
+
+def test_ssh_ledger_lock_runs_on_the_host(tmp_path, monkeypatch):
+    """The remote lock script, run by a local shell standing in for ssh."""
+    import subprocess
+
+    real_run = subprocess.run
+
+    def fake_run(args, **kw):
+        assert args[:3] == ["ssh", "-o", "BatchMode=yes"]
+        return real_run(["sh", "-c", args[-1]], **kw)
+    monkeypatch.setattr(mirror_mod.subprocess, "run", fake_run)
+
+    store = SSHStore(f"me@host:{tmp_path}/share")
+    lock = tmp_path / "share" / "raw" / ACC / mirror_mod.LEDGER_LOCK
+    store.lock_ledger(ACC, wait=5)
+    assert lock.is_dir()
+    with pytest.raises(MirrorError, match="was held for 1s"):
+        store.lock_ledger(ACC, wait=1)
+    store.unlock_ledger(ACC)
+    assert not lock.exists()
 
 
 def test_ssh_target_must_name_host_and_path():

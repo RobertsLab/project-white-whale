@@ -1,0 +1,51 @@
+{
+  "study_id": "ROBERTS2022_PH_PLOIDY_WGBS",
+  "bioproject": "PRJNA682817",
+  "date_generated": "2026-10-23",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA682817&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "ploidy",
+    "water_pH"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 24
+  },
+  "n_runs": 24,
+  "n_libraries": 24,
+  "n_biosamples": 24,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "Illumina NovaSeq 6000"
+  ],
+  "group_sizes_runs": {
+    "diploid_7_7": 6,
+    "diploid_8_2": 6,
+    "triploid_7_7": 6,
+    "triploid_8_2": 6
+  },
+  "group_sizes_libraries": {
+    "diploid_7_7": 6,
+    "diploid_8_2": 6,
+    "triploid_7_7": 6,
+    "triploid_8_2": 6
+  },
+  "min_group_libraries": 6,
+  "total_fastq_bytes": 145239369140,
+  "fastq_sources": {
+    "fastq_ftp": 24,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/ROBERTS2022_PH_PLOIDY_WGBS/samplesheet.tsv": "b0fb79be2bd4772dc013a1e2b54a3f43057823b6c5ef4066727700df6468b927",
+    "data/studies/ROBERTS2022_PH_PLOIDY_WGBS/fastq_manifest.tsv": "c2fcdc0a8eae5fc0d7f57fa6f15497935d48094c4bf62e1672843a4dfe5a6d0f"
+  }
+}

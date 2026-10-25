@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 .venv/
 .pytest_cache/
+.coverage
 .ruff_cache/
 
 # R / RStudio
@@ -17,6 +18,8 @@ __pycache__/
 .nextflow.log*
 work/
 results/
+# ...but an analysis's results are committed (analysis/<STUDY_ID>/results/).
+!analysis/*/results/
 
 # Machine-local data: symlinks to this machine's drives, never committed.
 # See docs/compute_profiles.md.
@@ -33,3 +36,10 @@ docs/_site/
 
 .DS_Store
 .claude/
+
+# Dashboard data, rebuilt by `whale build-dashboard` / the Pages workflow
+site/data.json
+
+# Built by `whale build-dashboard` (in CI for Pages); never committed.
+site/data.json
+site/genes/

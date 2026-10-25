@@ -66,6 +66,13 @@ run fetches it again. A second copy started while one is running exits at
 once, so overlapping cron runs are harmless. The exit code is 1 when any run
 failed.
 
+Each ledger update takes a lock on gannet (the directory
+`raw/<ACCESSION>/.ledger.lock`), re-reads the ledger, adds its row and writes
+it back, so mirrors running on two machines (or from two staging
+directories) never drop each other's rows. The lock is held only for those
+few seconds. If a mirror is killed in that moment the lock stays behind;
+after 5 minutes the next writer stops and names the directory to remove.
+
 ## How far along it is
 
 ```bash
@@ -83,6 +90,7 @@ Once, in a checkout on raven (`pip install -e .` into a venv):
 
 ```bash
 export WHALE_SRATOOLKIT=/home/shared/sratoolkit.3.0.2-ubuntu64
+export WHALE_PIGZ=/home/shared/pigz-2.8/bin/pigz
 export WHALE_MIRROR_STAGING=/home/shared/8TB_HDD_03/$USER/whale/mirror-staging
 whale mirror-fastq --plan
 ```
@@ -93,16 +101,21 @@ the `.sra`, so 100–200 GB for one of the deepest runs. Put `--tmp` on the
 NVMe RAID0 (`/home/shared/16TB_HDD_01/$USER/whale/mirror-tmp`) and check
 `df -h` there before raising `--jobs`, since the workflows use it too.
 
-CPU: gzip compression is the slow step: one core per mate without pigz.
-`pigz` is not installed on raven; with it on `PATH` (or `WHALE_PIGZ` set),
-`--threads` cores compress each run.
+CPU: compression is the slow step after conversion. pigz uses `--threads`
+cores per run (split between the mates); without it, gzip uses one core per
+mate. On raven pigz 2.8 is unpacked from Ubuntu's package into
+`/home/shared/pigz-2.8` (no root needed: `apt-get download pigz`,
+`dpkg-deb -x`). It compressed a 1.65 GB FASTQ in 22 s with 4 threads against
+123 s for gzip.
+
+Without `WHALE_PIGZ`, pigz is used only if it is on `PATH`.
 
 Nightly from cron (`crontab -e`), capped so one night cannot fill staging
 or take over the machine:
 
 ```cron
 # 20:00 every night: up to 500 GB, 3 runs at a time
-0 20 * * * cd $HOME/project-white-whale && WHALE_SRATOOLKIT=/home/shared/sratoolkit.3.0.2-ubuntu64 WHALE_MIRROR_STAGING=/home/shared/8TB_HDD_03/sr320/whale/mirror-staging .venv/bin/whale mirror-fastq --jobs 3 --threads 4 --tmp /home/shared/16TB_HDD_01/sr320/whale/mirror-tmp --max-gb 500 >> $HOME/whale-mirror.log 2>&1
+0 20 * * * cd $HOME/project-white-whale && WHALE_SRATOOLKIT=/home/shared/sratoolkit.3.0.2-ubuntu64 WHALE_PIGZ=/home/shared/pigz-2.8/bin/pigz WHALE_MIRROR_STAGING=/home/shared/8TB_HDD_03/sr320/whale/mirror-staging .venv/bin/whale mirror-fastq --jobs 3 --threads 4 --tmp /home/shared/16TB_HDD_01/sr320/whale/mirror-tmp --max-gb 500 >> $HOME/whale-mirror.log 2>&1
 ```
 
 Cron needs raven's SSH key for gannet to work without a passphrase, which it

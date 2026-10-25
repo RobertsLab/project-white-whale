@@ -25,17 +25,19 @@ Adapted from AREE's src/intake/reference_bundle.py (github.com/sr320/AREE).
 """
 from __future__ import annotations
 
+import csv
 import gzip
-import hashlib
 import json
 import os
 import re
 import shutil
-import urllib.request
 from datetime import date
 from pathlib import Path
 
 import yaml
+
+from whale.checksums import md5_file, sha256_file
+from whale.net import get_text
 
 NCBI_GENOMES_BASE = "https://ftp.ncbi.nlm.nih.gov/genomes/all"
 TIMEOUT = 300
@@ -122,31 +124,17 @@ def parse_md5_listing(text: str) -> dict[str, str]:
 
 
 def _http_get_text(url: str) -> str:
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as fh:  # noqa: S310 - fixed NCBI host
-        return fh.read().decode()
+    return get_text(url, timeout=TIMEOUT)
 
 
 def _http_download(url: str, dest: Path) -> None:
-    tmp = dest.with_name(dest.name + ".part")
-    with urllib.request.urlopen(url, timeout=TIMEOUT) as fh, open(tmp, "wb") as out:  # noqa: S310
-        shutil.copyfileobj(fh, out, length=1 << 20)
-    tmp.replace(dest)
+    """Download via <dest>.part, retrying and resuming a partial file (the genome is ~0.2 GB)."""
+    from whale.mirror import MirrorError, download
 
-
-def _hash(path: Path, algo: str) -> str:
-    h = hashlib.new(algo)
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def md5_file(path: Path) -> str:
-    return _hash(path, "md5")
-
-
-def sha256_file(path: Path) -> str:
-    return _hash(path, "sha256")
+    try:
+        download(url, dest)
+    except MirrorError as exc:
+        raise ReferenceError(f"download failed: {exc}") from None
 
 
 def _decompress(src: Path, dest: Path) -> None:
@@ -314,6 +302,50 @@ def build_tx2gene(gtf: Path) -> list[tuple[str, str]]:
 
 
 # --- plan, fetch, check ----------------------------------------------------------
+
+GENE_INFO_COLUMNS = ["gene_id", "symbol", "description", "biotype", "chrom", "start", "end", "strand"]
+
+
+def build_gene_info(gtf: Path) -> list[dict]:
+    """One row per GTF `gene`, keyed like features/genes.bed (NCBI GeneID): symbol,
+    description and biotype for people reading gene tables. Positions are 0-based."""
+    rows, seen = [], set()
+    with open(gtf) as fh:
+        for line in fh:
+            if line.startswith("#"):
+                continue
+            f = line.rstrip("\n").split("\t")
+            if len(f) < 9 or f[2] != "gene":
+                continue
+            a = _attrs(f[8])
+            gene = a.get("GeneID") or a.get("gene_id", "")
+            if gene in seen:
+                continue
+            seen.add(gene)
+            rows.append({"gene_id": gene, "symbol": a.get("gene") or a.get("gene_id", ""),
+                         "description": a.get("description", ""), "biotype": a.get("gene_biotype", ""),
+                         "chrom": f[0], "start": int(f[3]) - 1, "end": int(f[4]), "strand": f[6]})
+    return rows
+
+
+def gene_info_path(repo: Path, accession: str) -> Path:
+    """The committed gene name table for an assembly (the bundle itself is not committed)."""
+    return Path(repo) / "data" / "reference" / "gene_info" / f"{accession}.tsv.gz"
+
+
+def write_gene_info(rows: list[dict], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # No mtime or name in the gzip header: the same GTF gives the same bytes.
+    with open(path, "wb") as raw, gzip.GzipFile(filename="", fileobj=raw, mode="wb", mtime=0) as gz:
+        gz.write(("\t".join(GENE_INFO_COLUMNS) + "\n").encode())
+        for r in rows:
+            gz.write(("\t".join(str(r[c]).replace("\t", " ") for c in GENE_INFO_COLUMNS) + "\n").encode())
+
+
+def read_gene_info(path: Path) -> dict[str, dict]:
+    with gzip.open(path, "rt") as fh:
+        return {r["gene_id"]: r for r in csv.DictReader(fh, delimiter="\t")}
+
 
 def plan_bundle(repo: Path, assembly: str | None = None, *, rnaseq: bool = False,
                 get_text=_http_get_text) -> dict:

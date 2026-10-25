@@ -81,15 +81,34 @@
    the machine and the date (committed). `--jobs` sets parallel downloads
    (default 2), `--run` limits it to some runs, `--source ena|mirror` forces
    one source. It refuses to start if free space is short, and refuses a
-   second downloader into the same directory. On klone, run it as a job, not
-   on a login node.
+   second downloader into the same directory. On klone, run it as an
+   `sbatch` job on the first non-preemptible partition with room, not on
+   `ckpt-all` and not on a login node
+   ([choosing a partition](compute_profiles.md#choosing-a-partition)).
 
    If a study is not mirrored yet, mirror it from raven first
    (`whale mirror-fastq --accession <PRJ…>`): ENA is slow from most machines
    ([speeds](compute_profiles.md#where-fastq-comes-from-and-how-fast)).
 7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML and
-   run the workflow with the profile you claimed. Record each stage as it
-   finishes.
-8. **Commit the small outputs** (`run_manifest.json`, QC tables) under
-   `data/studies/<STUDY_ID>/`; copy per-sample methylomes to the data host.
-   Reach `summarized`, work through the PR checklist, and mark the PR ready.
+   run the workflow with the profile you claimed, from the study's worktree,
+   with `whale` on the head job's `PATH` (or `WHALE_CMD` set to it).
+   On a desktop or raven, `whale fetch-fastq --launch` does steps 6 and 7 in
+   one go: it stages and marks the FASTQ as in step 6, then starts
+   `nextflow run` for the claimed profile in the foreground (run it under
+   `tmux` or `screen`), and exits with the run's status. It checks that it
+   is in the study's worktree, that `nextflow` is on `PATH` and that every
+   file will be staged (no `--run`) before it downloads anything. Set
+   `chemistry` first. On klone, submit the run as an `sbatch` head job
+   instead ([compute profiles](compute_profiles.md)).
+8. **Nothing to record by hand.** When the run succeeds it calls `whale
+   record-run`, which commits `qc_summary.tsv`, `run_manifest.json`,
+   `methylome_manifest.tsv`, `study_summary.yaml` and the gene x sample
+   matrices (`genes/`, [gene-level methylation](gene_methylation.md)) under
+   `data/studies/<STUDY_ID>/`, uploads the per-sample methylomes to the data
+   host, moves `status.yaml` through `aligned`, `called`, `qc_passed` and
+   `summarized`, pushes, and marks the PR ready. The dashboard shows the
+   study's finding from `study_summary.yaml` within three hours. If the
+   upload failed (the machine has no key for gannet), the study stops at
+   `qc_passed`; run `whale record-run --results <WHALE_METHYLOMES>/<STUDY_ID>`
+   from a machine that can reach the host, or again once the key is in place.
+   Then work through the PR checklist.
