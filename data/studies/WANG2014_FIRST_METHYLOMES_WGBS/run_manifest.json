@@ -11,12 +11,16 @@
     "qc_min_mapping": 20.0,
     "qc_min_conversion": 98.0,
     "qc_min_cpgs_5x": 1000000,
-    "snp_mask": null,
+    "snp_mask": {
+      "mask_id": "GCF_963853765.1.snpmask.v1",
+      "sha256": "3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895",
+      "cpgs_masked": 628253
+    },
     "deduplicate": true,
     "profile": "raven",
     "nextflow_version": "26.04.6",
-    "run_name": "zen_jones",
-    "commit": "7729c058d3e508c297f81f2107c80987cffce5d2",
+    "run_name": "scruffy_colden",
+    "commit": "c9798ecd6dec7e91af5a0e47a27aaa0bef6d871f",
     "session": "6c140357-8cbc-4d21-9784-03ec19c3833f"
   },
   "tool_versions": {
