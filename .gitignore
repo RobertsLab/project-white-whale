@@ -18,6 +18,8 @@ __pycache__/
 .nextflow.log*
 work/
 results/
+# ...but an analysis's results are committed (analysis/<STUDY_ID>/results/).
+!analysis/*/results/
 
 # Machine-local data: symlinks to this machine's drives, never committed.
 # See docs/compute_profiles.md.
