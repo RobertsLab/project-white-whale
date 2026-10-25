@@ -1,0 +1,106 @@
+# WGBS of mantle from two Pacific oysters, one inbred and one wild: the first
+# single-base-resolution oyster methylomes (Wang et al. 2014, BMC Genomics).
+#
+# Design from the deposit, read 2026-10-23: GEO GSE40302 (series overall
+# design and samples GSM991064 / GSM991065) and the ENA BioSample attributes.
+# Two individuals, two independent libraries each: the four libraries are
+# technical replicates of two animals, not biological replicates of a group.
+#
+# Registered for Goal 1 (comparative methylome) and as the first end-to-end
+# test of the White Whale pipeline on real data (PLAN.md §9, Phase 2).
+
+study_id: WANG2014_FIRST_METHYLOMES_WGBS
+aree_study_id: null
+
+accessions:
+  bioproject: "PRJNA173440"
+  sra: "SRP015008"
+  ena: null
+  geo: "GSE40302"
+  doi: "10.1186/1471-2164-15-1119"
+  pmid: "25514978"
+  other: "GEO samples GSM991064 (inbred), GSM991065 (wild); BioSamples SAMN01125790, SAMN01125791"
+
+citation: "Wang X, Li Q, Lian J, Li L, Jin L, Cai H, et al. (2014). Genome-wide and single-base resolution DNA methylomes of the Pacific oyster Crassostrea gigas provide insight into the evolution of invertebrate CpG methylation. BMC Genomics 15:1119. https://doi.org/10.1186/1471-2164-15-1119"
+species: "Magallana gigas"
+population: "One inbred oyster (05x7-T-G4-1.051#20, four generations of sib mating, F = 0.59; the individual sequenced for the 2012 oyster genome) and one wild oyster from Weihai, Shandong, China; both about two years old (GSE40302 overall design)."
+original_assembly: "Inbred individual genome (GEO data processing: 'Used the inbred individual genome of Pacific oyster as reference'), i.e. the Zhang et al. 2012 assembly; reads aligned with SOAP 2.21"
+
+chemistry: wgbs
+library_layout: paired
+platform: "Illumina HiSeq 2000, paired-end; 68-79 M read pairs per run"
+
+samples:
+  n_runs: 4
+  n_libraries: 4
+  sample_unit: individual
+  pool_size: null
+  tissues: [mantle]
+  life_stages: [adult]
+  sexes_recorded: true
+  ploidy: [diploid]
+
+paired_rnaseq:
+  relationship: related
+  bioproject: "PRJNA146329"
+  notes: "PRJNA146329 is the genome project's RNA-seq (developmental stages, tissues, stresses), linked to the same publication in PubMed; not from these two animals, and its mantle sample has not been matched. Not usable for one-to-one Goal 2 analyses."
+
+factors:
+  - factor_id: origin
+    factor_original: "individual type: inbred (05x7-T-G4-1.051#20, F = 0.59) vs wild (Weihai)"
+    factor_standardized: genotype_or_population
+    levels: [wild, inbred]
+    reference_level: wild
+
+goals: [1]
+
+data_availability:
+  raw_data_available: true
+  fastq_size_gb: 36.4
+  published_dml_dmr_tables: false
+  access_notes: "Raw paired FASTQ for all 4 runs public in SRA/ENA (first public 2014-12-19). GEO GSE40302 carries per-cytosine depth files (Cdepth) against the authors' reference, not DML/DMR tables. Lambda DNA (cl857 Sam7) spiked into every library, so conversion can be measured directly."
+
+quality_flags:
+  - low_replication      # one animal per group; the two libraries per animal are technical replicates
+  - confounded_design    # inbred vs wild is one individual each: origin cannot be separated from individual variation
+  - sex_unknown          # the inbred animal is recorded as female; the wild animal's sex is not recorded
+
+limitations: >
+  (1) One animal per group: the inbred-vs-wild contrast compares two
+  individuals and cannot be generalized to inbreeding or origin; it is
+  registered as a factor so the libraries are labelled, not as a contrast to
+  test. (2) The two libraries per animal are technical replicates (same DNA,
+  independent library construction), recorded as separate libraries; they
+  should be merged per animal for any per-individual summary, which the
+  workflow does not yet do. (3) Sex is recorded for the inbred animal only
+  (female). (4) The inbred animal is the genome-assembly individual; the
+  current reference (xbMagGiga1.1) is from a different animal, so the inbred
+  sample's mapping is not favoured by the reference. (5) Single tissue
+  (mantle), single time point, no treatment. (6) The authors aligned with
+  SOAP to their own assembly; results here are from Bismark on
+  GCF_963853765.1 and are not expected to match theirs coordinate for
+  coordinate.
+
+provenance:
+  registered_by: "Steven Roberts"
+  date_registered: "2026-10-23"
+  curation_notes: >
+    Claimed with `whale start-study --accession PRJNA173440 --study-id
+    WANG2014_FIRST_METHYLOMES_WGBS --profile raven --machine raven` from a lab
+    Mac (raven has no GitHub push access; it fetches the branch and runs, and
+    commits are made from the Mac). Sample sheet generated with `whale
+    fetch-samplesheet --bioproject PRJNA173440 --condition-attribute
+    "individual type" --attribute tissue --attribute gender`: 4 runs, 4
+    libraries (one ENA experiment each), 2 BioSamples. Each BioSample carries
+    two libraries because each animal was sequenced from two libraries, not
+    because the design is hidden in run-level fields, so shared_biosample is
+    not flagged. Design, age, origin, the lambda spike-in and the authors'
+    pipeline taken from GEO GSE40302 (series and sample records). Sex: GEO
+    and the BioSample give "gender: female" for the inbred sample only.
+    The paired RNA-seq relationship comes from the publication's PubMed
+    links and has not been checked sample by sample. No exclusions.
+  source_links:
+    - "https://doi.org/10.1186/1471-2164-15-1119"
+    - "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40302"
+    - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA173440"
+    - "https://www.ebi.ac.uk/ena/browser/view/PRJNA173440"
