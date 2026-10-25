@@ -15,10 +15,14 @@ The design, analyses and phases are in [PLAN.md](PLAN.md). The structure
 follows [AREE](https://github.com/sr320/AREE), narrowed to one species and one
 assay family.
 
-> **Status: Phase 1 under way.** The registry, validation, the claim system
-> for running studies on several machines, the compute profiles, a
-> methylation workflow (run for real in CI on simulated reads), the ENA sample-sheet generator, the
-> reference-bundle fetcher and the FASTQ downloader are in place. No study has been registered or run yet. See [PLAN.md §9](PLAN.md#9-phases).
+> **Status: processing the backlog (Phase 4).** The registry, the claim
+> system, the compute profiles (desktop, raven, klone), the methylation
+> workflow, the reference bundle, the C/T SNP mask and gene-level tables are in
+> place. Studies are being run across machines; the first,
+> ROBERTS2022_PH_PLOIDY_WGBS, is merged with a gene-level analysis in
+> [`analysis/ROBERTS2022_PH_PLOIDY_WGBS/`](analysis/ROBERTS2022_PH_PLOIDY_WGBS/README.md).
+> Per-study progress is on the [dashboard](https://robertslab.github.io/project-white-whale/).
+> See [PLAN.md §9](PLAN.md#9-phases).
 
 ## Dashboard
 
