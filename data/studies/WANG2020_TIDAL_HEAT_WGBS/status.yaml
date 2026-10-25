@@ -1,0 +1,41 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: WANG2020_TIDAL_HEAT_WGBS
+accession: PRJNA562805
+part: null
+stage: summarized
+profile: klone
+machine: klone
+claimed_by: STEVEN
+claimed_on: '2026-10-24'
+nextflow_run: elegant_rubens
+notes: null
+history:
+- stage: claimed
+  date: '2026-10-24'
+  machine: klone
+  note: null
+- stage: registered
+  date: '2026-10-24'
+  machine: klone
+  note: YAML (imported from AREE), sample sheet and FASTQ manifest committed
+- stage: fastq_staged
+  date: '2026-10-24'
+  machine: klone
+  note: 24 files, 150.4 GB, MD5 verified
+- stage: aligned
+  date: '2026-10-25'
+  machine: klone
+  note: 12 libraries aligned; median mapping 56.95%
+- stage: called
+  date: '2026-10-25'
+  machine: klone
+  note: CpG calls for 12 libraries (run elegant_rubens)
+- stage: qc_passed
+  date: '2026-10-25'
+  machine: klone
+  note: 12 of 12 libraries pass the QC gate
+- stage: summarized
+  date: '2026-10-25'
+  machine: klone
+  note: summaries committed; 144 files on gannet
