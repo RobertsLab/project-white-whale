@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Methylation Concordance</title>
+<meta name="description" content="How well gene-body methylation ranks agree between Pacific oyster samples and studies reprocessed on one reference.">
+<link rel="stylesheet" href="atlas.css">
+<style>
+  .heat-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .studies-key { font-size: 13px; color: var(--text-secondary); margin: 0; padding: 0; list-style: none; }
+  .studies-key li { margin: 2px 0; }
+  .studies-key b { font-variant-numeric: tabular-nums; color: var(--text-primary); }
+  .pair svg { width: 100%; max-width: 300px; height: auto; display: block; margin-top: 8px; }
+  .stats { display: grid; grid-template-columns: auto auto; gap: 2px 12px; font-size: 13px; margin-top: 8px; }
+  .stats dt { color: var(--text-secondary); }
+  .stats dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main>
+  <nav><a href="../index.html">Dashboard</a><a href="landscape.html">Landscape</a><a href="concordance.html" aria-current="page">Concordance</a></nav>
+  <header>
+    <h1>Cross-study concordance</h1>
+    <p>Do studies agree on which genes are methylated? Gene-body methylation compared sample by sample and study by study.</p>
+    <div class="updated" id="updated"></div>
+  </header>
+
+  <section aria-labelledby="h-summary">
+    <h2 id="h-summary">Summary</h2>
+    <div class="card pad">
+      <ul class="headline" id="headline"></ul>
+      <ul class="caveats" id="caveats"></ul>
+      <p class="meta" id="excluded"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-blocks">
+    <h2 id="h-blocks">Within and between studies</h2>
+    <p class="lede" id="blocks-lede"></p>
+    <div class="card scroll"><table id="block-table"></table></div>
+  </section>
+
+  <section aria-labelledby="h-heat">
+    <h2 id="h-heat">Every pair of samples</h2>
+    <p class="lede" id="heat-lede"></p>
+    <div class="card pad heat-wrap">
+      <canvas id="heat" role="img"></canvas>
+      <div>
+        <ul class="legend" style="margin:0 0 8px"><li><span id="ramp-lo"></span><span class="ramp"></span><span id="ramp-hi"></span></li></ul>
+        <ol class="studies-key" id="studies-key"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-pairs">
+    <h2 id="h-pairs">Study against study</h2>
+    <p class="lede" id="pairs-lede"></p>
+    <div class="grid" id="pairs"></div>
+  </section>
+
+  <section aria-labelledby="h-dl">
+    <h2 id="h-dl">Pooled tables</h2>
+    <div class="card pad" id="downloads"></div>
+  </section>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script type="module">
+import { $, esc, fmt, pct, num, css, load, frame, seq, showTip, hideTip, fail } from "./atlas.js";
+
+function blocks(data) {
+  const c = data.concordance;
+  $("blocks-lede").textContent = `Spearman's rho of gene-body methylation between two samples, over the genes with at least ${data.min_cpgs} covered CpGs in both (at least ${fmt(c.min_genes)} genes in every pair). Averaged over every pair of samples within a study, or with one sample from each of two studies. Rho between single samples is held down by sampling noise, so shallow studies score lower within themselves; compare each between-study value with the within-study values of the two studies it joins.`;
+  const tis = Object.fromEntries(data.studies.map((s) => [s.study_id, s.tissues]));
+  const rows = [...c.blocks].sort((a, b) => (a.a === a.b ? 0 : 1) - (b.a === b.b ? 0 : 1));
+  $("block-table").innerHTML = `<thead><tr><th>Comparison</th><th>Tissue</th><th class="num">Sample pairs</th><th class="num">Mean rho</th><th class="num">Range</th></tr></thead><tbody>` +
+    rows.map((b) => {
+      const within = b.a === b.b;
+      const shared = tis[b.a].filter((t) => tis[b.b].includes(t));
+      const tissue = within ? tis[b.a].join(", ") : (shared.length ? `both ${shared.join(", ")}` : `${tis[b.a].join(", ")} vs ${tis[b.b].join(", ")}`);
+      return `<tr><td>${within ? `Within ${esc(b.a)}` : `${esc(b.a)} × ${esc(b.b)}`}</td><td>${esc(tissue)}</td>
+        <td class="num">${fmt(b.pairs)}</td><td class="num">${num(b.mean_rho, 3)}</td>
+        <td class="num">${b.pairs ? `${num(b.min_rho, 3)}–${num(b.max_rho, 3)}` : "–"}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+
+function heat(data) {
+  const c = data.concordance, n = c.units.length;
+  const off = c.rho.flatMap((r, i) => r.filter((v, j) => i !== j && v != null));
+  // Scale over the off-diagonal range; the diagonal (a sample with itself) is drawn as a gap.
+  const lo = Math.floor(Math.min(...off) * 100) / 100, hi = Math.ceil(Math.max(...off) * 100) / 100;
+  const cell = Math.max(3, Math.min(14, Math.floor(560 / n)));
+  const size = cell * n;
+  const cv = $("heat"), dpr = window.devicePixelRatio || 1;
+  cv.width = size * dpr; cv.height = size * dpr; cv.style.width = `${size}px`; cv.style.height = `${size}px`;
+  cv.setAttribute("aria-label", `Heatmap of Spearman rho between ${n} samples, ordered by study`);
+  const g = cv.getContext("2d");
+  g.scale(dpr, dpr);
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const v = c.rho[i][j];
+      g.fillStyle = i === j || v == null ? css("--grid") : seq((v - lo) / (hi - lo));
+      g.fillRect(j * cell, i * cell, cell, cell);
+    }
+  }
+  // 2px surface gap between studies
+  g.fillStyle = css("--surface-1");
+  const starts = [];
+  c.units.forEach((u, i) => { if (!i || u.study_id !== c.units[i - 1].study_id) starts.push(i); });
+  for (const s of starts.slice(1)) {
+    g.fillRect(s * cell - 1, 0, 2, size);
+    g.fillRect(0, s * cell - 1, size, 2);
+  }
+  $("ramp-lo").textContent = lo.toFixed(2);
+  $("ramp-hi").textContent = hi.toFixed(2);
+  $("studies-key").innerHTML = starts.map((s, k) => {
+    const end = (starts[k + 1] ?? n);
+    return `<li><b>${k + 1}.</b> ${esc(c.units[s].study_id)} <span class="muted">(${end - s} samples)</span></li>`;
+  }).join("");
+  $("heat-lede").textContent = `Rows and columns are samples, grouped by study in the order listed; darker is closer agreement. Hover a cell for the two samples.`;
+  cv.addEventListener("mousemove", (e) => {
+    const r = cv.getBoundingClientRect();
+    const j = Math.floor((e.clientX - r.left) / cell), i = Math.floor((e.clientY - r.top) / cell);
+    if (i < 0 || j < 0 || i >= n || j >= n || i === j) return hideTip();
+    const a = c.units[i], b = c.units[j];
+    showTip(e, `<b>rho ${num(c.rho[i][j], 3)}</b>${esc(a.unit_id)} · ${esc(a.study_id)} · ${esc(a.condition)}<br>${esc(b.unit_id)} · ${esc(b.study_id)} · ${esc(b.condition)}`);
+  });
+  cv.addEventListener("mouseleave", hideTip);
+}
+
+function pairs(data) {
+  const ps = data.concordance.study_pairs;
+  $("pairs-lede").textContent = `Each study's value per gene is the mean over its samples, kept where at least half its samples have ${data.min_cpgs}+ covered CpGs. The grid counts genes in each ${100 / ps[0]?.density.length || 4}% × ${100 / ps[0]?.density.length || 4}% cell (log shading); the line is equal methylation. Unmethylated: under ${data.low}%; methylated: ${data.high}% or more.`;
+  if (!ps.length) {
+    $("pairs").innerHTML = `<div class="card empty">Study pairs appear once two studies are pooled.</div>`;
+    return;
+  }
+  const S = 240, M = { l: 48, b: 30, t: 6, r: 10 };
+  $("pairs").innerHTML = ps.map((p, k) => {
+    const nb = p.density.length, cs = (S - M.l - M.r) / nb;
+    const max = Math.max(...p.density.flat());
+    let cells = "";
+    p.density.forEach((row, yi) => row.forEach((v, xi) => {
+      if (!v) return;
+      const t = Math.log10(v) / Math.log10(max || 10);
+      cells += `<rect x="${(M.l + xi * cs).toFixed(1)}" y="${(S - M.b - (yi + 1) * cs).toFixed(1)}" width="${cs.toFixed(1)}" height="${cs.toFixed(1)}" fill="${seq(0.08 + 0.92 * t)}" data-x="${xi}" data-y="${yi}" data-n="${v}"/>`;
+    }));
+    let axes = "";
+    for (const q of [0, 50, 100]) {
+      const px = M.l + (q / 100) * (S - M.l - M.r), py = S - M.b - (q / 100) * (S - M.t - M.b);
+      axes += `<text x="${px}" y="${S - M.b + 13}" text-anchor="middle">${q}%</text><text x="${M.l - 4}" y="${py + 4}" text-anchor="end">${q}%</text>`;
+    }
+    const sh = p.shared_tissue.length ? `same tissue (${esc(p.shared_tissue.join(", "))})` : "different tissues";
+    return `<article class="card pad pair" data-k="${k}">
+      <h3>${esc(p.a)} × ${esc(p.b)}</h3>
+      <div class="meta">${sh} · ${fmt(p.genes)} genes</div>
+      <svg viewBox="0 0 ${S} ${S}" role="img" aria-label="Density of gene-body methylation, ${esc(p.a)} against ${esc(p.b)}">
+        <line class="axis" x1="${M.l}" x2="${S - M.r}" y1="${S - M.b}" y2="${S - M.b}"/><line class="axis" x1="${M.l}" x2="${M.l}" y1="${M.t}" y2="${S - M.b}"/>
+        ${cells}
+        <line x1="${M.l}" y1="${S - M.b}" x2="${S - M.r}" y2="${M.t}" stroke="var(--ref)" stroke-width="1" stroke-dasharray="3 3"/>
+        ${axes}
+        <text x="${(M.l + S - M.r) / 2}" y="${S - 2}" text-anchor="middle">${esc(p.a)}</text>
+        <text transform="translate(9 ${(S - M.b + M.t) / 2}) rotate(-90)" text-anchor="middle">${esc(p.b)}</text>
+      </svg>
+      <dl class="stats">
+        <dt>Spearman rho</dt><dd>${num(p.rho, 3)}</dd>
+        <dt>Both unmethylated</dt><dd>${pct(p.both_low / p.genes, 1)}</dd>
+        <dt>Both methylated</dt><dd>${pct(p.both_high / p.genes, 1)}</dd>
+        <dt>Opposite (one &lt;${data.low}%, other ≥${data.high}%)</dt><dd>${fmt(p.opposite)} genes</dd>
+        <dt>In between</dt><dd>${pct(p.other / p.genes, 1)}</dd>
+        <dt>Mean |difference|</dt><dd>${num(p.mean_abs_diff, 1)} points</dd>
+      </dl></article>`;
+  }).join("");
+  for (const card of $("pairs").querySelectorAll(".pair")) {
+    const p = ps[+card.dataset.k], step = 100 / p.density.length;
+    card.querySelector("svg").addEventListener("mousemove", (e) => {
+      const r = e.target.closest("rect");
+      if (!r) return hideTip();
+      const xi = +r.dataset.x, yi = +r.dataset.y;
+      showTip(e, `<b>${fmt(+r.dataset.n)} genes</b>${esc(p.a)} ${xi * step}–${(xi + 1) * step}%<br>${esc(p.b)} ${yi * step}–${(yi + 1) * step}%`);
+    });
+    card.querySelector("svg").addEventListener("mouseleave", hideTip);
+  }
+}
+
+load().then((data) => {
+  frame(data);
+  $("headline").innerHTML = data.headline.map((h) => `<li>${esc(h)}</li>`).join("");
+  $("caveats").innerHTML = data.design.caveats.map((c) => `<li>${esc(c)}</li>`).join("");
+  if (!data.studies.length) return;
+  blocks(data);
+  heat(data);
+  pairs(data);
+}).catch(fail);
+</script>
+</body>
+</html>

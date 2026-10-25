@@ -21,6 +21,10 @@ assay family.
 > place. Studies are being run across machines; the first,
 > ROBERTS2022_PH_PLOIDY_WGBS, is merged with a gene-level analysis in
 > [`analysis/ROBERTS2022_PH_PLOIDY_WGBS/`](analysis/ROBERTS2022_PH_PLOIDY_WGBS/README.md).
+> Three studies are merged and pooled; the first cross-study views (Phase 5)
+> are the [methylation landscape](https://robertslab.github.io/project-white-whale/atlas/landscape.html)
+> and [cross-study concordance](https://robertslab.github.io/project-white-whale/atlas/concordance.html)
+> ([docs/atlas.md](docs/atlas.md)), rebuilt whenever a study merges.
 > Per-study progress is on the [dashboard](https://robertslab.github.io/project-white-whale/).
 > See [PLAN.md §9](PLAN.md#9-phases).
 
@@ -80,7 +84,8 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 [the reference bundle](docs/reference_bundle.md),
 [gene-level methylation](docs/gene_methylation.md),
 [the C/T SNP mask](docs/snp_mask.md),
-[mirroring FASTQ to gannet](docs/fastq_mirror.md).
+[mirroring FASTQ to gannet](docs/fastq_mirror.md),
+[the atlas: pooled tables, landscape and concordance](docs/atlas.md).
 
 ## Commands
 
@@ -96,6 +101,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale fetch-fastq [--dry-run] [--jobs N] [--run R] [--mark-staged \| --launch]` | Stage a study's FASTQ: from the gannet mirror where it has the files, ENA otherwise; resumable, MD5-verified, recorded in `fastq_staged.tsv`. `--launch` then starts the study's `nextflow run` (desktop, raven) |
 | `whale mirror-fastq [--accession <PRJ…>] [--plan] [--jobs N] [--max-gb G]` | Prefetch backlog FASTQ to gannet: NCBI `.sra` converted on raven (ENA as fallback), verified and resumable |
 | `whale build-dashboard [--no-claims] [--no-mirror]` | Write `site/data.json` for the progress dashboard (`site/index.html`, published to GitHub Pages) |
+| `whale build-atlas [--out DIR]` | Pool the merged, SNP-masked studies' gene tables and write the atlas pages' data (`site/atlas/data/`): pooled tables, landscape, concordance |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |
 | `whale build-registry` | Rebuild `registry/study_registry.csv` (not committed) |

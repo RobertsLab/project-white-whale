@@ -292,9 +292,9 @@ For every base-resolution sample that passed QC:
 |---|---|---|---|
 | `cpg_calls` | ~10–15 M CpGs × samples (count M, count U) | tens of GB | data host, Parquet partitioned by study |
 | `tiles_1kb` | ~550 k tiles × samples (% + coverage) | ~1–2 GB | data host, Parquet |
-| `gene_features` | ~30 k genes × feature class × samples | tens of MB | **committed** |
-| `sample_qc` | samples × QC metrics + flags | small | **committed** |
-| `sample_metadata` | samples × harmonized attributes (tissue, stage, sex, ploidy, population, treatment, chemistry, pool size, study) | small | **committed** |
+| `gene_features` | ~30 k genes × feature class × samples | tens of MB | built in CI from the committed per-study tables, published with the site |
+| `sample_qc` | samples × QC metrics + flags | small | built in CI, published |
+| `sample_metadata` | samples × harmonized attributes (tissue, stage, sex, ploidy, population, treatment, chemistry, pool size, study) | small | built in CI, published |
 
 Every row carries `study_id`, `chemistry`, and the manifest hash, so a table
 can always be filtered to "WGBS only" or "individual animals only".
@@ -416,10 +416,17 @@ Decided 2026-10-23:
    24 cores / 48 threads, 247 GB RAM, Singularity CE 3.10 as the container
    engine, NVMe RAID0 work directory. See docs/compute_profiles.md.
 
+Decided 2026-10-25:
+
+4. **Pooled atlas tables are derived, not committed.** `gene_features`,
+   `sample_qc` and `sample_metadata` are rebuilt by `whale build-atlas` in the
+   Pages workflow from the per-study tables on `main`, since a study PR may
+   only change its own files. See docs/atlas.md.
+
 Open:
 
-4. **Study granularity for PRJEB60400** (246 runs): one study claimed in
+5. **Study granularity for PRJEB60400** (246 runs): one study claimed in
    parts, or split by sub-experiment once its sample metadata is read.
-5. **Name.** The repository stays `project-white-whale`; the resource and CLI
+6. **Name.** The repository stays `project-white-whale`; the resource and CLI
    are called `whale` here. A public-facing name (e.g. "Pacific oyster
    methylome atlas") can be chosen when the site goes live.
