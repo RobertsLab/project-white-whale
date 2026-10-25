@@ -1,62 +1,114 @@
-# Study registration template. `whale start-study` copies this to
-# registry/studies/<STUDY_ID>.yaml on the study branch and fills study_id, the
-# accession and provenance. Fill the rest from the deposit (ENA/SRA metadata)
-# first and the paper second; leave a value null when neither states it.
-# Check with `whale validate-study registry/studies/<STUDY_ID>.yaml`.
-# See docs/adding_a_study.md.
+# WGBS of gill from F1 Pacific oysters whose parents came from the intertidal
+# or subtidal zone at Laoting (Bohai Sea, China), sampled before and after an
+# acute heat shock (35 C, 6 h). Wang et al. 2020, Heredity 126:10-22.
+#
+# Registration imported from AREE (study WANG2020_TIDAL_HEAT_WGBS, registered
+# 2026-10-18 from the paper, PMC7852555, and the deposit) and checked against
+# the deposit on 2026-10-24: 12 runs, one shared BioSample (SAMN12651045), the
+# design in each run's library_name (InC_1 ... SubH_3, the paper's codes).
+# 2 origins x 2 times, 3 pooled libraries per group.
 
 study_id: WANG2020_TIDAL_HEAT_WGBS
-aree_study_id: null
+aree_study_id: WANG2020_TIDAL_HEAT_WGBS
 
 accessions:
   bioproject: "PRJNA562805"
-  sra: null
-  ena: null
+  sra: "SRR10065364-SRR10065375"
+  ena: "PRJNA562805"
   geo: null
-  doi: null
-  pmid: null
-  other: null
+  doi: "10.1038/s41437-020-0351-7"
+  pmid: "32807851"
+  other: "One BioSample for all 12 libraries (SAMN12651045). PMC7852555."
 
-citation: null
+citation: "Wang X, Li A, Wang W, Que H, Zhang G, Li L (2020). DNA methylation mediates differentiation in thermal responses of Pacific oyster (Crassostrea gigas) derived from different tidal levels. Heredity 126(1):10-22. https://doi.org/10.1038/s41437-020-0351-7"
 species: "Magallana gigas"
-population: null
+population: "F1 of two wild populations from the intertidal (In) and subtidal (Sub) zones at Laoting (39°16'N, Tangshan, Hebei, Bohai Sea, China). Parents acclimated 1 month at Qingdao; eggs of 30 females split and each fertilized by one of 30 males; larvae combined into three culture replicates per group, reared in sea cages; 10-month-old oysters used. Same F1 cohort as the Laoting populations of Li et al. 2018 (RNA-seq PRJNA407831)."
 original_assembly: null
 
-chemistry: null          # assay_chemistry.yaml: wgbs | emseq | pbat | rrbs | medip | mbd
-library_layout: null     # paired | single | mixed
-platform: null
+chemistry: wgbs
+library_layout: paired
+platform: "Illumina HiSeq X Ten per SRA (the paper says HiSeq 2500/4000, 125/150 bp); every run is 2 x 150 bp; 66-91 M read pairs per library"
 
 samples:
-  n_runs: null
-  n_libraries: null
-  sample_unit: null      # sample_unit.yaml
-  pool_size: null
-  tissues: []            # tissue.yaml
-  life_stages: []        # life_stage.yaml
-  sexes_recorded: null
-  ploidy: []
+  n_runs: 12
+  n_libraries: 12
+  sample_unit: pool
+  pool_size: 5
+  tissues: [gill]
+  life_stages: [adult]
+  sexes_recorded: false
+  ploidy: [diploid]
 
 paired_rnaseq:
-  relationship: unknown  # rnaseq_relationship.yaml
-  bioproject: null
-  notes: null
+  relationship: same_animals
+  bioproject: "PRJNA407831"
+  notes: "Li et al. 2018 (Front Physiol 9:825; AREE LI2018_HEAT_TIDAL): same breeding, F1 cohort and heat-shock experiment; Wang et al. 2020 call the materials identical to the RNA-seq and use those data for their methylation-expression analysis. That each WGBS pool is the same five animals as an RNA-seq library is inferred, not stated. The RNA-seq also has a 24 h time point with no methylation counterpart."
 
-# One entry per design factor; factor_standardized is a stressor.yaml term.
-factors: []
+factors:
+  - factor_id: origin
+    factor_original: "Tidal origin of the parents: intertidal (In) vs subtidal (Sub) at Laoting; run library_name prefix"
+    factor_standardized: genotype_or_population
+    levels: ["Sub", "In"]
+    reference_level: "Sub"
+  - factor_id: temperature
+    factor_original: "Acute heat shock: before heating (C, 0 h; acclimation 14.2-18.2 C) vs 35 C seawater for 6 h (H), unchanged and unfed seawater; run library_name"
+    factor_standardized: temperature
+    levels: ["C", "H"]
+    reference_level: "C"
 
-goals: []
+goals: [1, 2]
 
 data_availability:
-  raw_data_available: null
-  fastq_size_gb: null
-  published_dml_dmr_tables: null
-  access_notes: null
+  raw_data_available: true
+  fastq_size_gb: 140.7
+  published_dml_dmr_tables: false
+  access_notes: "Raw paired FASTQ for all 12 runs public in ENA/SRA (first public 2020-05-29). No methylation calls or DMR tables deposited; the paper's supplementary tables were not checked for gene-level results. The paper used a lambda spike-in, but the reads are mapped to the oyster genome only, so conversion is estimated from non-CpG methylation."
 
-quality_flags: []        # quality_flags.yaml
-limitations: null
+quality_flags:
+  - pooled_libraries
+  - shared_biosample
+  - confounded_design
+  - sex_unknown
+
+limitations: >
+  (1) Tidal origin: one population per class, so origin is confounded with
+  everything else that differs between the two populations (genetic background,
+  founders, rearing replicate); the three pools per group replicate the
+  population, not tidal origin. The authors found the libraries cluster
+  genetically by origin, so C/T SNPs could mimic methylation differences;
+  gene tables use a SNP mask. (2) Heat: the control is the same stock before
+  heating (0 h), not a concurrent unheated group, so time, handling and the
+  unchanged, unfed seawater are confounded with heat; only 6 h was sequenced.
+  (3) Each library pools DNA of five oysters, averaging individual variation.
+  (4) Not independent of the RNA-seq study PRJNA407831 (same animals): its
+  methylation-expression link is same-animal linkage, not replication.
+  (5) The tolerance phenotype (survival after 42 C, 1 h) was measured by Li et
+  al. 2018 in 4-month-olds of the same cohorts, not here. (6) The authors report
+  two subtidal heat-shock libraries diverged in clustering; none is excluded
+  here, since no independent reason is given. (7) The authors mapped with
+  Bismark's default --score_min L,0,-0.2 (~30% mapping); this project uses
+  L,0,-0.6. (8) Sex and pool-to-tank assignment are not recorded.
 
 provenance:
-  registered_by: "STEVEN"
+  registered_by: "Steven Roberts"
   date_registered: "2026-10-24"
-  curation_notes: null
-  source_links: []
+  curation_notes: >
+    Claimed with `whale start-study --accession PRJNA562805 --study-id
+    WANG2020_TIDAL_HEAT_WGBS --profile klone --machine klone`. Registration
+    imported from AREE's (registered 2026-10-18 by sr320 from the paper's
+    methods, PMC7852555, and Li et al. 2018, PMC6120431). Sample sheet from
+    ENA with `whale fetch-samplesheet --bioproject PRJNA562805 --label-field
+    library_name --label-pattern '^(?P<origin>In|Sub)(?P<temperature>C|H)_(?P<replicate>[1-3])$'
+    --condition-attribute origin --condition-attribute temperature
+    --attribute replicate --attribute tissue`: 12 runs, 4 groups of 3
+    (In_C, In_H, Sub_C, Sub_H), one BioSample. Subtidal and 0 h are the
+    reference levels, as in AREE, so positive effects mean higher in
+    intertidal or after heat. Diploid is assumed (wild-derived F1; ploidy not
+    stated). No exclusions.
+  source_links:
+    - "https://doi.org/10.1038/s41437-020-0351-7"
+    - "https://pmc.ncbi.nlm.nih.gov/articles/PMC7852555/"
+    - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA562805"
+    - "https://www.ebi.ac.uk/ena/browser/view/PRJNA562805"
+    - "https://www.ncbi.nlm.nih.gov/biosample/SAMN12651045"
+    - "https://pmc.ncbi.nlm.nih.gov/articles/PMC6120431/"
