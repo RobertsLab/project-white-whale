@@ -132,7 +132,33 @@ def validate_study_file(path: Path, repo: Path) -> ValidationResult:
         res.errors.append("file is not a YAML mapping")
         return res
     res.errors, res.warnings = validate_study(study, repo, filename_stem=path.stem)
+    if not res.errors:
+        res.errors += config_chemistry_errors(study, repo)
     return res
+
+
+def config_chemistry_errors(study: dict, repo: Path) -> list[str]:
+    """The study's run configs (whole and parts) must set the YAML's chemistry.
+
+    `whale start-study` writes them with `chemistry = null`, and the workflow
+    refuses that only once launched, after FASTQ staging.
+    """
+    from whale.claims import config_chemistry
+
+    want = study["chemistry"]
+    if want is None:
+        return []
+    errors = []
+    sid = study["study_id"]
+    for cfg in sorted([Path(repo) / "config" / f"{sid}.config",
+                       *(Path(repo) / "config").glob(f"{sid}.part-*.config")]):
+        if not cfg.exists():
+            continue
+        got = config_chemistry(cfg.read_text())
+        if got != want:
+            errors.append(f"config/{cfg.name} sets chemistry = {got!r} but this YAML says {want!r}; "
+                          f"set chemistry = '{want}' there")
+    return errors
 
 
 def validate_status(status: dict, repo: Path) -> list[str]:

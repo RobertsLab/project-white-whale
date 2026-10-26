@@ -68,6 +68,24 @@ def test_study_id_pattern_and_filename(repo_root, filled_study, tmp_path):
     assert any("does not match the file name" in e for e in res.errors)
 
 
+def test_config_chemistry_must_match_the_yaml(filled_study, tmp_path):
+    from whale.claims import config_chemistry, render_config
+    from whale.validate import config_chemistry_errors
+
+    sid = filled_study["study_id"]
+    rendered = render_config(sid, "PRJNA562805", "raven")
+    assert config_chemistry(rendered) is None
+    assert config_chemistry("params {\n    chemistry = \"emseq\" // x\n}") == "emseq"
+
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / f"{sid}.config").write_text(rendered)
+    (tmp_path / "config" / f"{sid}.part-gill.config").write_text(rendered.replace("null", "'wgbs'", 1))
+    errs = config_chemistry_errors(filled_study, tmp_path)
+    assert len(errs) == 1 and f"config/{sid}.config sets chemistry = None" in errs[0]
+    # A YAML still without chemistry has nothing to compare against yet.
+    assert config_chemistry_errors({**filled_study, "chemistry": None}, tmp_path) == []
+
+
 def test_malformed_yaml(repo_root, tmp_path):
     path = tmp_path / "BAD2020_X.yaml"
     path.write_text("study_id: [unclosed\n")
