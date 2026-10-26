@@ -1,0 +1,17 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: WANG2023_TIDAL_TRANSGEN_WGBS
+accession: PRJNA807732
+part: null
+stage: claimed
+profile: raven
+machine: raven
+claimed_by: Steven Roberts
+claimed_on: '2026-10-25'
+nextflow_run: null
+notes: null
+history:
+- stage: claimed
+  date: '2026-10-25'
+  machine: raven
+  note: null
