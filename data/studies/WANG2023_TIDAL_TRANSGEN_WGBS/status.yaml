@@ -23,3 +23,7 @@ history:
   date: '2026-10-25'
   machine: raven
   note: 48 files, 289.4 GB, MD5 verified
+- stage: fastq_staged
+  date: '2026-10-25'
+  machine: raven
+  note: 48 files, 289.4 GB, MD5 verified
