@@ -1,0 +1,93 @@
+{
+  "study_id": "WANG2023_TIDAL_TRANSGEN_WGBS",
+  "bioproject": "PRJNA807732",
+  "date_generated": "2026-10-25",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA807732&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "tidal_level",
+    "generation",
+    "treatment"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 24
+  },
+  "n_runs": 24,
+  "n_libraries": 24,
+  "n_biosamples": 1,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "HiSeq X Ten"
+  ],
+  "group_sizes_runs": {
+    "In_F0_C": 3,
+    "In_F0_H": 3,
+    "In_F1_C": 3,
+    "In_F1_H": 3,
+    "In_F2_C": 3,
+    "In_F2_H": 3,
+    "Sub_F0_C": 3,
+    "Sub_F0_H": 3
+  },
+  "group_sizes_libraries": {
+    "In_F0_C": 3,
+    "In_F0_H": 3,
+    "In_F1_C": 3,
+    "In_F1_H": 3,
+    "In_F2_C": 3,
+    "In_F2_H": 3,
+    "Sub_F0_C": 3,
+    "Sub_F0_H": 3
+  },
+  "min_group_libraries": 3,
+  "total_fastq_bytes": 268484229396,
+  "fastq_sources": {
+    "fastq_ftp": 24,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/WANG2023_TIDAL_TRANSGEN_WGBS/samplesheet.tsv": "cd138efb39f5db73596f26692d790f7afad437b03e092b34919b460f8fbd3548",
+    "data/studies/WANG2023_TIDAL_TRANSGEN_WGBS/fastq_manifest.tsv": "4faad55342898162f3e36bc5b57635a6d297eaf0af57f6e0d8d65ae4a3e7ff42"
+  },
+  "biosamples_with_several_libraries": {
+    "SAMN26000378": 24
+  },
+  "run_labels": {
+    "field": "library_name",
+    "pattern": "^(?P<generation>F[0-2])-(?P<tidal_level>In|Sub)-(?P<treatment>[CH])(?P<replicate>[0-9]+)$",
+    "labels": {
+      "SRR18245583": "F0-In-H1",
+      "SRR18245584": "F0-In-C3",
+      "SRR18245585": "F0-In-C2",
+      "SRR18245586": "F0-In-C1",
+      "SRR18245587": "F0-Sub-H3",
+      "SRR18245588": "F0-Sub-H2",
+      "SRR18245589": "F0-Sub-H1",
+      "SRR18245590": "F2-In-H3",
+      "SRR18245591": "F2-In-H2",
+      "SRR18245592": "F2-In-H1",
+      "SRR18245593": "F2-In-C3",
+      "SRR18245594": "F0-Sub-C3",
+      "SRR18245595": "F2-In-C2",
+      "SRR18245596": "F2-In-C1",
+      "SRR18245597": "F1-In-H3",
+      "SRR18245598": "F1-In-H2",
+      "SRR18245599": "F1-In-H1",
+      "SRR18245600": "F1-In-C3",
+      "SRR18245601": "F1-In-C2",
+      "SRR18245602": "F1-In-C1",
+      "SRR18245603": "F0-In-H3",
+      "SRR18245604": "F0-In-H2",
+      "SRR18245605": "F0-Sub-C2",
+      "SRR18245606": "F0-Sub-C1"
+    }
+  }
+}
