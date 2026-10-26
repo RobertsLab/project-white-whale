@@ -396,6 +396,10 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
         if profile == "klone":
             raise click.UsageError("klone runs need an sbatch head job (docs/compute_profiles.md); "
                                    "stage with --mark-staged and submit the run from there.")
+        from whale.claims import config_chemistry_problem
+        problem = config_chemistry_problem(repo, study_id, parsed[2], require=True)
+        if problem:
+            raise click.ClickException(problem)
         if not shutil.which("nextflow"):
             raise click.ClickException("nextflow is not on PATH.")
 
