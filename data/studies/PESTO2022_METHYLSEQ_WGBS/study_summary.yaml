@@ -1,0 +1,221 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: PESTO2022_METHYLSEQ_WGBS
+part: null
+generated_on: '2026-10-29'
+nextflow_run: magical_hugle
+commit: e9d2832b7359d76e54c82e0b14809dfc7bf02980
+genome_assembly: GCF_963853765.1
+chemistry: wgbs
+snp_mask: null
+libraries: 48
+passed: 11
+failed:
+- sample_id: ERR10683997
+  reasons: mapping 0.4% < 20.0%; conversion 3.287% < 98.0%; 21975 CpGs at >=5x < 1000000
+- sample_id: ERR10683998
+  reasons: mapping 1.0% < 20.0%; conversion 2.917% < 98.0%; 51999 CpGs at >=5x < 1000000
+- sample_id: ERR10683999
+  reasons: conversion 97.164% < 98.0%
+- sample_id: ERR10684000
+  reasons: mapping 0.9% < 20.0%; conversion 2.948% < 98.0%; 61326 CpGs at >=5x < 1000000
+- sample_id: ERR10684001
+  reasons: mapping 1.0% < 20.0%; conversion 2.931% < 98.0%; 64860 CpGs at >=5x < 1000000
+- sample_id: ERR10684002
+  reasons: conversion 97.961% < 98.0%
+- sample_id: ERR10684003
+  reasons: conversion 94.831% < 98.0%
+- sample_id: ERR10684004
+  reasons: conversion 96.715% < 98.0%
+- sample_id: ERR10684005
+  reasons: mapping 0.9% < 20.0%; conversion 2.75% < 98.0%; 67433 CpGs at >=5x < 1000000
+- sample_id: ERR10684006
+  reasons: mapping 0.7% < 20.0%; conversion 2.665% < 98.0%; 31508 CpGs at >=5x < 1000000
+- sample_id: ERR10684007
+  reasons: mapping 1.2% < 20.0%; conversion 2.366% < 98.0%; 61198 CpGs at >=5x < 1000000
+- sample_id: ERR10684008
+  reasons: conversion 94.527% < 98.0%
+- sample_id: ERR10684011
+  reasons: conversion 90.806% < 98.0%
+- sample_id: ERR10684013
+  reasons: mapping 0.4% < 20.0%; conversion 2.757% < 98.0%; 20311 CpGs at >=5x < 1000000
+- sample_id: ERR10684016
+  reasons: mapping 0.4% < 20.0%; conversion 2.712% < 98.0%; 17359 CpGs at >=5x < 1000000
+- sample_id: ERR10684017
+  reasons: mapping 0.4% < 20.0%; conversion 2.758% < 98.0%; 19884 CpGs at >=5x < 1000000
+- sample_id: ERR10684018
+  reasons: mapping 0.6% < 20.0%; conversion 2.162% < 98.0%; 34596 CpGs at >=5x < 1000000
+- sample_id: ERR10684019
+  reasons: conversion 97.788% < 98.0%
+- sample_id: ERR12308505
+  reasons: mapping 1.7% < 20.0%; conversion 1.854% < 98.0%; 170839 CpGs at >=5x <
+    1000000
+- sample_id: ERR12308506
+  reasons: mapping 3.5% < 20.0%; conversion 1.436% < 98.0%; 400929 CpGs at >=5x <
+    1000000
+- sample_id: ERR12308507
+  reasons: mapping 0.7% < 20.0%; conversion 2.33% < 98.0%; 96642 CpGs at >=5x < 1000000
+- sample_id: ERR12308508
+  reasons: mapping 1.2% < 20.0%; conversion 2.388% < 98.0%; 137137 CpGs at >=5x <
+    1000000
+- sample_id: ERR12308509
+  reasons: mapping 0.6% < 20.0%; conversion 2.94% < 98.0%; 86199 CpGs at >=5x < 1000000
+- sample_id: ERR12308510
+  reasons: conversion 96.871% < 98.0%
+- sample_id: ERR12308511
+  reasons: conversion 94.184% < 98.0%
+- sample_id: ERR12308512
+  reasons: conversion 94.165% < 98.0%
+- sample_id: ERR12308514
+  reasons: conversion 95.67% < 98.0%
+- sample_id: ERR12308515
+  reasons: mapping 1.0% < 20.0%; conversion 2.829% < 98.0%; 89737 CpGs at >=5x < 1000000
+- sample_id: ERR12308517
+  reasons: conversion 95.059% < 98.0%
+- sample_id: ERR12308518
+  reasons: mapping 0.3% < 20.0%; conversion 3.432% < 98.0%; 34665 CpGs at >=5x < 1000000
+- sample_id: ERR12308520
+  reasons: mapping 0.8% < 20.0%; conversion 3.481% < 98.0%; 74179 CpGs at >=5x < 1000000
+- sample_id: ERR12308522
+  reasons: mapping 0.4% < 20.0%; conversion 3.13% < 98.0%; 55159 CpGs at >=5x < 1000000
+- sample_id: ERR12308523
+  reasons: mapping 0.5% < 20.0%; conversion 3.492% < 98.0%; 49041 CpGs at >=5x < 1000000
+- sample_id: ERR12308524
+  reasons: conversion 97.338% < 98.0%
+- sample_id: ERR12308525
+  reasons: conversion 97.379% < 98.0%
+- sample_id: ERR12308527
+  reasons: conversion 94.548% < 98.0%
+- sample_id: ERR12308528
+  reasons: conversion 92.543% < 98.0%
+qc:
+  mapping_pct:
+    n: 48
+    median: 28.4
+    mean: 25.52
+    min: 0.3
+    max: 61.2
+    sd: 23.88
+  duplication_pct:
+    n: 48
+    median: 17.76
+    mean: 18.44
+    min: 12.88
+    max: 27.49
+    sd: 3.21
+  conversion_pct:
+    n: 48
+    median: 94.17
+    mean: 55.71
+    min: 1.44
+    max: 99.61
+    sd: 47.24
+  cpgs_5x:
+    n: 48
+    median: 3734815.5
+    mean: 3944857.08
+    min: 17359.0
+    max: 9612204.0
+    sd: 3824875.46
+  mean_depth:
+    n: 48
+    median: 10.53
+    mean: 11.94
+    min: 1.52
+    max: 28.52
+    sd: 8.05
+cpg_methylation_pct:
+  n: 11
+  median: 15.92
+  mean: 16.11
+  min: 12.97
+  max: 20.4
+  sd: 2.33
+by_factor: []
+by_condition:
+- condition: Gastrula_DNA_F0_E
+  n: 3
+  median: 15.69
+  mean: 15.58
+  min: 15.14
+  max: 15.92
+  sd: 0.4
+- condition: Gastrula_DNA_F0_T
+  n: 3
+  median: 17.11
+  mean: 17.2
+  min: 16.11
+  max: 18.39
+  sd: 1.14
+- condition: Gastrula_DNA_F1_EE
+  n: 0
+- condition: Gastrula_DNA_F1_ET
+  n: 0
+- condition: Gastrula_DNA_F1_TE
+  n: 1
+  median: 20.4
+  mean: 20.4
+  min: 20.4
+  max: 20.4
+  sd: null
+- condition: Gastrula_DNA_F1_TT
+  n: 1
+  median: 12.97
+  mean: 12.97
+  min: 12.97
+  max: 12.97
+  sd: null
+- condition: Metamorphosis_DNA_F0_E
+  n: 0
+- condition: Metamorphosis_DNA_F0_T
+  n: 0
+- condition: Metamorphosis_DNA_F1_EE
+  n: 1
+  median: 18.43
+  mean: 18.43
+  min: 18.43
+  max: 18.43
+  sd: null
+- condition: Metamorphosis_DNA_F1_ET
+  n: 1
+  median: 13.94
+  mean: 13.94
+  min: 13.94
+  max: 13.94
+  sd: null
+- condition: Metamorphosis_DNA_F1_TE
+  n: 0
+- condition: Metamorphosis_DNA_F1_TT
+  n: 1
+  median: 13.15
+  mean: 13.15
+  min: 13.15
+  max: 13.15
+  sd: null
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 31705
+    meth_pct:
+      n: 31705
+      median: 4.12
+      mean: 20.52
+      min: 0.0
+      max: 91.11
+      sd: 26.16
+    methylated_ge_50pct: 6972
+  promoter:
+    covered_in_all: 30423
+    meth_pct:
+      n: 30423
+      median: 0.92
+      mean: 6.55
+      min: 0.0
+      max: 92.56
+      sd: 13.8
+    methylated_ge_50pct: 935
+methylomes:
+  files: 576
+  bytes: 2505509600
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/PESTO2022_METHYLSEQ_WGBS/
