@@ -11,7 +11,8 @@ In the reads:
 
 * every CpG is methylated with probability CPG_METHYLATION, on both strands;
 * every other C is unmethylated, so bisulfite converts it to T;
-* S1 is paired-end, S2 single-end, matching tests/fixtures/samplesheet.tsv.
+* S1 is paired-end, S2 single-end, matching tests/fixtures/samplesheet.tsv
+  (S3 there is S1 listed read 2 first, to test params.swap_mates).
 """
 from __future__ import annotations
 

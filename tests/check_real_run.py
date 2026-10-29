@@ -17,7 +17,7 @@ import re
 import sys
 from pathlib import Path
 
-SAMPLES = {"S1": "PE", "S2": "SE"}
+SAMPLES = {"S1": "PE", "S2": "SE", "S3": "PE"}   # S3: S1 deposited with mates swapped (swap_mates)
 MIN_MAPPING = 95.0          # % of reads with a unique best hit
 CPG_RANGE = (75.0, 90.0)    # % methylated at CpGs; the truth is 83.4%
 MAX_NON_CPG = 1.0           # % methylated in CHG and CHH contexts
