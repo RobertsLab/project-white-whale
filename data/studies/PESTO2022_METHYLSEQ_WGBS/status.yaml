@@ -1,0 +1,39 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: PESTO2022_METHYLSEQ_WGBS
+accession: PRJEB58545
+part: null
+stage: summarized
+profile: klone
+machine: klone
+claimed_by: STEVEN
+claimed_on: '2026-10-23'
+nextflow_run: magical_hugle
+notes: null
+history:
+- stage: claimed
+  date: '2026-10-23'
+  machine: klone
+  note: null
+- stage: aligned
+  date: '2026-10-29'
+  machine: klone
+  note: 48 libraries aligned; median mapping 28.4%
+- stage: called
+  date: '2026-10-29'
+  machine: klone
+  note: CpG calls for 48 libraries (run magical_hugle)
+- stage: qc_passed
+  date: '2026-10-29'
+  machine: klone
+  note: '11 of 48 libraries pass the QC gate; failed: ERR10683997, ERR10683998, ERR10683999,
+    ERR10684000, ERR10684001, ERR10684002, ERR10684003, ERR10684004, ERR10684005,
+    ERR10684006, ERR10684007, ERR10684008, ERR10684011, ERR10684013, ERR10684016,
+    ERR10684017, ERR10684018, ERR10684019, ERR12308505, ERR12308506, ERR12308507,
+    ERR12308508, ERR12308509, ERR12308510, ERR12308511, ERR12308512, ERR12308514,
+    ERR12308515, ERR12308517, ERR12308518, ERR12308520, ERR12308522, ERR12308523,
+    ERR12308524, ERR12308525, ERR12308527, ERR12308528'
+- stage: summarized
+  date: '2026-10-29'
+  machine: klone
+  note: summaries committed; 576 files on gannet
