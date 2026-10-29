@@ -19,6 +19,9 @@
  * The sample sheet (data/studies/<STUDY_ID>/samplesheet.tsv) has columns
  * sample_id, run_accession, fastq_1, fastq_2 (empty for single-end). FASTQ
  * paths are relative to ${params.raw_dir}/<STUDY_ID>/ unless absolute.
+ * Libraries in params.swap_mates were deposited with read 1 and read 2
+ * exchanged; their fastq_2 is used as read 1 (the samplesheet stays as ENA
+ * has it).
  *
  *   nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile raven,docker
  *   nextflow run workflows/methylation -profile test -stub        # smoke test
@@ -128,12 +131,20 @@ workflow {
         snp_mask = [mask_id: mm.params.mask_id, sha256: mm.outputs['cpg_mask.bed.gz'], cpgs_masked: mm.counts.cpgs_masked]
     }
 
+    def sample_ids = samplesheet.splitCsv(header: true, sep: '\t')*.sample_id
+    def unknown = params.swap_mates.findAll { !(it in sample_ids) }
+    if (unknown) error "swap_mates lists samples not in the sample sheet: ${unknown}"
+
     reads_ch = Channel
         .fromPath(samplesheet)
         .splitCsv(header: true, sep: '\t')
         .map { row ->
             def reads = [resolveFastq(row.fastq_1), resolveFastq(row.fastq_2)].findAll { it != null }
             if (!reads) error "no FASTQ for sample ${row.sample_id}"
+            if (row.sample_id in params.swap_mates) {
+                if (reads.size() != 2) error "swap_mates lists ${row.sample_id}, which is not paired-end"
+                reads = reads.reverse()
+            }
             tuple(row.sample_id, reads)
         }
 
@@ -174,6 +185,7 @@ workflow {
         genome_assembly: params.genome_assembly, bismark_align_args: params.bismark_align_args,
         chemistry_align_args: chem.align,
         extractor_args: params.extractor_args, trim_args: params.trim_args,
+        swap_mates: params.swap_mates,
         qc_min_mapping: params.qc_min_mapping, qc_min_conversion: params.qc_min_conversion,
         qc_min_cpgs_5x: params.qc_min_cpgs_5x, snp_mask: snp_mask,
         deduplicate: chem.deduplicate, profile: workflow.profile,
