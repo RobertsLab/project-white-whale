@@ -1,0 +1,9 @@
+run_accession	mate	file	url	md5	bytes	source
+SRR546471	1	SRR546471_1.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR546/SRR546471/SRR546471_1.fastq.gz	68e7d9e3107e2c1ae28659ecb1a502f9	4578277847	fastq_ftp
+SRR546471	2	SRR546471_2.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR546/SRR546471/SRR546471_2.fastq.gz	0b6ef32a40933afbe2a77ba4cd128595	4135378157	fastq_ftp
+SRR546472	1	SRR546472_1.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR546/SRR546472/SRR546472_1.fastq.gz	966c24db95ad1b5af04122e93b00667d	4272991900	fastq_ftp
+SRR546472	2	SRR546472_2.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR546/SRR546472/SRR546472_2.fastq.gz	d4b7b7d72b4c413f92fcb83316277141	3996639338	fastq_ftp
+SRR546473	1	SRR546473_1.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR546/SRR546473/SRR546473_1.fastq.gz	8469e2ee200a28f01a711b8668250672	5129479109	fastq_ftp
+SRR546473	2	SRR546473_2.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR546/SRR546473/SRR546473_2.fastq.gz	e82bcf41b12765b797c67112f35999d1	4662668724	fastq_ftp
+SRR546474	1	SRR546474_1.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR546/SRR546474/SRR546474_1.fastq.gz	bbbf8dfeca163a5cea5da791ed5ddcc6	4922849486	fastq_ftp
+SRR546474	2	SRR546474_2.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR546/SRR546474/SRR546474_2.fastq.gz	2a0a4f2e056dc7ad161c53ceee24d091	4694351147	fastq_ftp

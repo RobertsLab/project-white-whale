@@ -8,6 +8,7 @@ from whale.claims import (
     branch_name,
     find_conflicts,
     list_claims,
+    machine_name,
     new_status,
     parse_branch,
     release_study,
@@ -102,6 +103,21 @@ def test_scope_fails_while_a_rival_claim_exists(filled_study):
     errors, _ = check_scope(branch, [], filled_study, {}, [branch, rival])
     assert any(rival in e and "release-study" in e for e in errors)
     assert check_scope(branch, [], filled_study, {}, [branch]) == ([], [])
+
+
+@pytest.mark.parametrize("host, env, expected", [
+    ("raven.fish.washington.edu", {}, "raven"),
+    ("klone-login03.hyak.local", {}, "klone"),                    # login node
+    ("n3441", {"SLURM_CLUSTER_NAME": "klone"}, "klone"),          # compute node, in a job
+    ("n3441", {"SLURM_CLUSTER_NAME": "klone", "WHALE_MACHINE": "desk-7"}, "desk-7"),
+])
+def test_machine_name(monkeypatch, host, env, expected):
+    monkeypatch.delenv("SLURM_CLUSTER_NAME", raising=False)
+    monkeypatch.delenv("WHALE_MACHINE", raising=False)
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.setattr("whale.claims.socket.gethostname", lambda: host)
+    assert machine_name() == expected
 
 
 # --- against a real (local) remote -------------------------------------------

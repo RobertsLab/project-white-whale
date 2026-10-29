@@ -36,6 +36,11 @@ BED files are 0-based, half-open, BED6, sorted in genome order.
 On 2026-10-23 the bundle had 29 sequences (564.0 Mb), 33,331 genes, 284,442
 exons, 249,701 introns and 27,908 intergenic intervals.
 
+The bundle itself is not committed. The one piece the dashboard needs
+without it, a table of gene names, is: `whale build-gene-info` writes
+`data/reference/gene_info/<ACCESSION>.tsv.gz` (GeneID, symbol, description,
+biotype, position) from `genomic.gtf`. Commit it again after a new annotation.
+
 ## Checks
 
 - Every download is compared with NCBI's published MD5 before use; a mismatch

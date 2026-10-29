@@ -1,6 +1,7 @@
 """Tests for `whale build-dashboard` (src/whale/dashboard.py). No network access."""
 from __future__ import annotations
 
+import gzip
 import json
 import shutil
 import subprocess
@@ -10,7 +11,8 @@ import yaml
 from click.testing import CliRunner
 
 from whale.cli import main
-from whale.dashboard import build, load_findings, mirror_summary, write
+from whale.dashboard import build, gene_view, mirror_summary, write
+from whale.reference import gene_info_path, write_gene_info
 
 URL = "https://github.com/RobertsLab/project-white-whale"
 
@@ -95,20 +97,107 @@ def test_unavailable_sources_are_flagged(repo):
     assert all(s["mirror"] is None for s in data["studies"])
 
 
-def test_findings(repo):
-    (repo / "site").mkdir()
-    (repo / "site" / "findings.yaml").write_text(yaml.safe_dump({"findings": [
-        {"date": "2026-11-01", "title": "A", "summary": "x ", "goal": 1, "studies": ["S1"]},
-        {"date": "2026-12-01", "title": "B", "summary": "y"}]}))
-    f = load_findings(repo)
-    assert [x["title"] for x in f] == ["B", "A"] and f[1]["summary"] == "x" and f[0]["studies"] == []
-    (repo / "site" / "findings.yaml").write_text(yaml.safe_dump({"findings": [{"date": "2026-11-01", "title": "A"}]}))
-    with pytest.raises(ValueError, match="lacks"):
-        load_findings(repo)
+def _summary(sid, date, part=None):
+    return {"study_id": sid, "part": part, "generated_on": date, "libraries": 2, "passed": 2, "failed": [],
+            "qc": {"mapping_pct": {"median": 50.0}, "conversion_pct": {"median": 99.1}, "cpgs_5x": {"median": 3e6}},
+            "cpg_methylation_pct": {"n": 2, "median": 12.5, "min": 12.0, "max": 13.0},
+            "by_factor": [{"factor_id": "heat", "column": "heat", "reference_level": "C",
+                           "levels": [{"level": "C", "n": 1, "mean": 12.0, "sd": None},
+                                      {"level": "H", "n": 1, "mean": 13.0, "sd": None}]}]}
 
 
-def test_committed_findings_file_is_valid(repo_root):
-    load_findings(repo_root)
+def test_findings_come_from_study_summaries(repo):
+    d = repo / "data" / "studies" / "WANG2020_TIDAL_HEAT_WGBS"
+    d.mkdir(parents=True)
+    (d / "study_summary.yaml").write_text(yaml.safe_dump(_summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01")))
+    branch = [{"summary": _summary("WANG2014_FIRST_METHYLOMES_WGBS", "2026-11-05"),
+               "ref": "study/PRJNA173440/WANG2014_FIRST_METHYLOMES_WGBS",
+               "path": "data/studies/WANG2014_FIRST_METHYLOMES_WGBS/study_summary.yaml"}]
+    f = build(repo, claims=[], mirrors={}, repo_url=URL, branch_summaries=branch)["findings"]
+    assert [x["studies"] for x in f] == [["WANG2014_FIRST_METHYLOMES_WGBS"], ["WANG2020_TIDAL_HEAT_WGBS"]]
+    newest, merged = f
+    assert newest["status"].startswith("provisional") and "/blob/study/PRJNA173440/" in newest["link"]
+    assert merged["status"] == "merged" and merged["goal"] == "1, 2"
+    assert merged["title"] == "WANG2020_TIDAL_HEAT_WGBS: median CpG methylation 12.5% across 2 libraries"
+    assert "3.0 M CpGs at ≥5×" in merged["summary"] and "By heat: C 12% (n=1), H 13% (n=1)." in merged["summary"]
+    assert merged["link"] == f"{URL}/blob/main/data/studies/WANG2020_TIDAL_HEAT_WGBS/study_summary.yaml"
+
+
+def test_finding_names_the_snp_mask(repo):
+    from whale.dashboard import finding
+    s = _summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01")
+    s["snp_mask"] = {"mask_id": "GCF_X.snpmask.v1", "cpgs_masked": 628253, "sha256": "x"}
+    f = finding({"summary": s, "ref": None, "path": "p"}, None, URL)
+    assert "leave out 628,253 CpGs on C/T SNPs (mask GCF_X.snpmask.v1)" in f["summary"]
+
+
+def test_branch_summary_supersedes_main(repo):
+    d = repo / "data" / "studies" / "WANG2020_TIDAL_HEAT_WGBS"
+    d.mkdir(parents=True)
+    (d / "study_summary.yaml").write_text(yaml.safe_dump(_summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01")))
+    branch = [{"summary": _summary("WANG2020_TIDAL_HEAT_WGBS", "2026-12-01"), "ref": "study/x/y", "path": "p"}]
+    f = build(repo, claims=[], mirrors={}, repo_url=URL, branch_summaries=branch)["findings"]
+    assert len(f) == 1 and f[0]["date"] == "2026-12-01"
+
+
+def _gz(path, rows):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(path, "wt") as fh:
+        fh.writelines("\t".join(map(str, r)) + "\n" for r in rows)
+
+
+def _gene_study(repo, sid="WANG2020_TIDAL_HEAT_WGBS"):
+    """A merged study with gene matrices: 3 libraries (C, C, H), 3 genes."""
+    d = repo / "data" / "studies" / sid
+    summary = _summary(sid, "2026-11-01")
+    summary["genome_assembly"] = "GCF_X"
+    summary["methylomes"] = {"url": "https://gannet.example/methylomes/X/"}
+    d.mkdir(parents=True)
+    (d / "study_summary.yaml").write_text(yaml.safe_dump(summary))
+    (d / "samplesheet.tsv").write_text("sample_id\theat\nA\tC\nB\tC\nC\tH\n")
+    for cls in ("gene_body", "promoter"):
+        # g1: covered everywhere; g2: one library under 5 CpGs; g3: never.
+        _gz(d / "genes" / f"{cls}.meth_pct.tsv.gz",
+            [["gene_id", "A", "B", "C"], ["g1", "10.000", "20.000", "60.000"], ["g2", "50.000", "", "70.000"], ["g3", "", "", ""]])
+        _gz(d / "genes" / f"{cls}.cpgs.tsv.gz",
+            [["gene_id", "A", "B", "C"], ["g1", 9, 9, 9], ["g2", 9, 0, 3], ["g3", 0, 0, 0]])
+    write_gene_info([{"gene_id": "g1", "symbol": "HSP70", "description": "heat shock protein 70", "biotype": "protein_coding",
+                      "chrom": "c", "start": 0, "end": 9, "strand": "+"}], gene_info_path(repo, "GCF_X"))
+    return {"summary": summary, "ref": None, "path": f"data/studies/{sid}/study_summary.yaml"}
+
+
+def test_gene_view(repo):
+    v = gene_view(repo, _gene_study(repo), URL)
+    assert (v["libraries"], v["genes"], v["named"], v["status"]) == (3, 3, True, "merged")
+    cols = v["columns"]
+    rows = {r[0]: dict(zip(cols, r, strict=True)) for r in v["rows"]}
+    g1, g2, g3 = rows["g1"], rows["g2"], rows["g3"]
+    assert (g1["symbol"], g1["gene_body"], g1["gene_body_n"]) == ("HSP70", 30.0, 3)
+    assert (g1["gene_body:heat=C"], g1["gene_body:heat=H"]) == (15.0, 60.0)
+    assert (g2["symbol"], g2["gene_body"], g2["gene_body_n"]) == ("", 50.0, 1)   # B and C under 5 CpGs
+    assert (g3["gene_body"], g3["gene_body_n"]) == (None, 0)
+    body = v["hist"][0]
+    assert body["genes"] == 1 and body["bins"][15] == 1 and sum(body["bins"]) == 1   # only g1, at 30%
+    assert v["tables"][0]["url"] == f"{URL}/raw/main/data/studies/WANG2020_TIDAL_HEAT_WGBS/genes/gene_body.meth_pct.tsv.gz"
+    assert v["per_sample_url"] == "https://gannet.example/methylomes/X/"
+
+
+def test_gene_tables_are_written_beside_data_json(repo, tmp_path):
+    _gene_study(repo)
+    data = build(repo, claims=[], mirrors={}, repo_url=URL)
+    assert len(data["genes"]) == 1 and "rows" in data["genes"][0]
+    out = write(data, tmp_path / "site" / "data.json")
+    written = json.loads(out.read_text())["genes"][0]
+    assert "rows" not in written and written["file"] == "genes/WANG2020_TIDAL_HEAT_WGBS.json"
+    table = json.loads((tmp_path / "site" / written["file"]).read_text())
+    assert table["columns"][:4] == ["gene_id", "symbol", "description", "biotype"] and len(table["rows"]) == 3
+
+
+def test_study_without_gene_matrices_has_no_gene_view(repo):
+    d = repo / "data" / "studies" / "WANG2020_TIDAL_HEAT_WGBS"
+    d.mkdir(parents=True)
+    (d / "study_summary.yaml").write_text(yaml.safe_dump(_summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01")))
+    assert build(repo, claims=[], mirrors={}, repo_url=URL)["genes"] == []
 
 
 def test_mirror_summary_empty():
@@ -135,8 +224,13 @@ def test_page_reads_every_key_it_uses(repo_root):
     """The page and the builder agree on field names."""
     html = (repo_root / "site" / "index.html").read_text()
     data = build(repo_root, claims=[], mirrors={}, repo_url=URL)
+    for key in ("date", "title", "summary", "goal", "studies", "status", "link"):
+        assert f"f.{key}" in html, key
+    for key in ("study_id", "part", "libraries", "genes", "status", "hist", "tables", "per_sample_url", "file",
+                "min_cpgs", "bin", "snp_mask"):
+        assert f"v.{key}" in html, key
     for key in ("generated_at", "commit", "repo_url", "claims_available", "mirror_available", "stages",
-                "totals", "studies", "findings"):
+                "totals", "studies", "findings", "genes"):
         assert key in data and f"data.{key}" in html, key
     for key in data["totals"]:
         assert f"t.{key}" in html, key

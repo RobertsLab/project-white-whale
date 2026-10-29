@@ -1,0 +1,43 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: ROBERTS2022_PH_PLOIDY_WGBS
+accession: PRJNA682817
+part: null
+stage: summarized
+profile: klone
+machine: klone
+claimed_by: Steven Roberts
+claimed_on: '2026-10-23'
+nextflow_run: determined_khorana
+notes: 'Corrected 2026-10-24: machine was recorded as klone compute nodes n3441 (aligned,
+  called, qc_passed) and n3193 (summarized); set to klone (PR 36).'
+history:
+- stage: claimed
+  date: '2026-10-23'
+  machine: klone
+  note: null
+- stage: registered
+  date: '2026-10-23'
+  machine: klone
+  note: YAML, sample sheet and manifest committed (from the Mac)
+- stage: fastq_staged
+  date: '2026-10-23'
+  machine: klone
+  note: 48 files, 145.2 GB from ENA, MD5 verified; 3 ckpt jobs (2 corrupt downloads
+    caught and re-fetched)
+- stage: aligned
+  date: '2026-10-24'
+  machine: klone
+  note: 24 libraries aligned; median mapping 29.9%
+- stage: called
+  date: '2026-10-24'
+  machine: klone
+  note: CpG calls for 24 libraries (run determined_khorana)
+- stage: qc_passed
+  date: '2026-10-24'
+  machine: klone
+  note: 24 of 24 libraries pass the QC gate
+- stage: summarized
+  date: '2026-10-24'
+  machine: klone
+  note: summaries committed; 264 files on gannet

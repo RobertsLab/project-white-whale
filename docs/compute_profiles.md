@@ -116,13 +116,19 @@ Apptainer is enabled by the profile. Lessons carried from AREE
 - Run the Nextflow **head job** on a non-preemptible partition (`coenv`
   `compute` first; see [Choosing a partition](#choosing-a-partition)),
   2 CPUs, 8 GB, a few days. Never on a login node.
+- The head job records the run when it ends (`whale record-run`), so it needs
+  `whale` on its `PATH` (`sbatch` passes on the submitting shell's
+  environment) or `WHALE_CMD` set, and must be launched from the study's
+  worktree, which pushes to GitHub. Uploading the methylomes needs an SSH key
+  for gannet on the machine; without one the study stops at `qc_passed`.
 - **Do not export `TMPDIR`** in the head job; Slurm forwards it to every task
   and into containers. Use `NXF_TEMP` for Nextflow's own temporary files.
 - `/gscratch/scrubbed` deletes files untouched for 21 days and is often >97%
   full. Check `hyakstorage /gscratch/scrubbed` first; copy what you keep.
 - Read-sized intermediates go to the node's `/scr`.
 - ENA downloads through the cluster proxy ran at ~12 MB/s aggregate in
-  October 2026: plan ~15 h per 600 GB, as a job.
+  October 2026: plan ~15 h per 600 GB, as a job on a non-preemptible
+  partition (the first with room, as for the head job), not `ckpt-all`.
 - Select a subset of libraries with a directory of links, not a brace pattern
   in a glob.
 - Put Klone-only settings (e.g. chunk size, once chunked alignment lands) in a
@@ -137,6 +143,15 @@ export WHALE_RAW=/gscratch/scrubbed/$USER/whale/raw
 export WHALE_REFERENCE=/gscratch/scrubbed/$USER/whale/reference
 export WHALE_METHYLOMES=/gscratch/scrubbed/$USER/whale/methylomes
 nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile klone
+```
+
+Stage the FASTQ beforehand the same way, as its own job on the first
+partition with room, with `--time` sized from the rate above:
+
+```bash
+#SBATCH --account=coenv --partition=compute --cpus-per-task=2 --mem=8G --time=1-00:00:00
+export WHALE_RAW=/gscratch/scrubbed/$USER/whale/raw
+whale fetch-fastq --mark-staged
 ```
 
 ### Choosing a partition
@@ -168,7 +183,8 @@ must fit inside them alongside other lab work.
 | FastQC, trimming, chunked alignment, extraction: every task that finishes in 4.5 h | `ckpt-all` (profile default) |
 | Nextflow head job (2 CPUs, 8 GB, days; a preempted head job stops the run) | first partition in the order above with room |
 | A task that cannot finish in 4.5 h | first partition with room, as a per-process override |
-| `fetch-fastq` downloads, interactive tests | `ckpt-all` via `sbatch` / `salloc`, never a login node |
+| `fetch-fastq` downloads (hours to days; on `ckpt-all` they hit the window or are preempted mid-file) | first partition in the order above with room, via `sbatch`, never a login node |
+| Interactive tests | `ckpt-all` via `salloc`, never a login node |
 
 Before moving a task off `ckpt-all`, try splitting it (as alignment is
 chunked) so it fits the window. Signs that a task needs to move:

@@ -18,12 +18,15 @@ __pycache__/
 .nextflow.log*
 work/
 results/
+# ...but an analysis's results are committed (analysis/<STUDY_ID>/results/).
+!analysis/*/results/
 
 # Machine-local data: symlinks to this machine's drives, never committed.
 # See docs/compute_profiles.md.
 data/raw
 data/methylomes
-data/reference/GCF_*/
+# No trailing slash: the bundle is a symlink on most machines, a folder on some.
+data/reference/GCF_*
 
 # Generated indexes (rebuild with `whale build-registry`)
 registry/study_registry.csv
@@ -37,3 +40,9 @@ docs/_site/
 
 # Dashboard data, rebuilt by `whale build-dashboard` / the Pages workflow
 site/data.json
+
+# Built by `whale build-dashboard` (in CI for Pages); never committed.
+site/data.json
+site/genes/
+# Built by `whale build-atlas` (in CI for Pages); never committed.
+site/atlas/data/

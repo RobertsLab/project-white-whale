@@ -2,14 +2,19 @@
 /*
  * White Whale :: methylation workflow — FASTQ in, per-sample methylome out.
  *
- * STATUS (Phase 0 scaffold): the DAG below runs end to end with -stub on the
- * test fixtures (CI). The real commands are written but have not yet been run
- * on a study. Still to come (PLAN.md §5): conversion efficiency, the C/T SNP
- * mask, chunked alignment for klone, per-sample feature summaries, the QC
- * gate, and the study report.
+ * Still to come (PLAN.md §5): the C/T SNP mask, chunked alignment for klone,
+ * 1 kb tiles and the study report.
  *
  *   FASTQC -> TRIM_GALORE -> BISMARK_ALIGN -> BISMARK_DEDUPLICATE (not RRBS)
- *     -> BISMARK_METHYLATION_EXTRACTOR -> MANIFEST
+ *     -> BISMARK_METHYLATION_EXTRACTOR -> CPG_SUMMARY -> QC_GATE
+ *                                      -> FEATURE_SUMMARY (genes) -> MANIFEST
+ *
+ * When a run on a study branch succeeds, it records itself: `whale
+ * record-run` commits qc_summary.tsv, run_manifest.json, the methylome
+ * manifest and the study summary, uploads the methylomes to the data host,
+ * moves status.yaml on (aligned, called, qc_passed, summarized) and pushes.
+ * The dashboard then shows the stage and the study's findings. Turn it off
+ * with --record_status false.
  *
  * The sample sheet (data/studies/<STUDY_ID>/samplesheet.tsv) has columns
  * sample_id, run_accession, fastq_1, fastq_2 (empty for single-end). FASTQ
@@ -28,6 +33,9 @@ include { BISMARK_GENOME_PREPARATION }    from '../../modules/methylation/bismar
 include { BISMARK_ALIGN }                 from '../../modules/methylation/bismark.nf'
 include { BISMARK_DEDUPLICATE }           from '../../modules/methylation/bismark.nf'
 include { BISMARK_METHYLATION_EXTRACTOR } from '../../modules/methylation/bismark.nf'
+include { CPG_SUMMARY }                   from '../../modules/methylation/qc.nf'
+include { QC_GATE }                       from '../../modules/methylation/qc.nf'
+include { FEATURE_SUMMARY }               from '../../modules/methylation/features.nf'
 include { MANIFEST }                      from '../../modules/methylation/manifest.nf'
 
 // Mirrors registry/controlled_vocabularies/assay_chemistry.yaml (base-resolution terms).
@@ -62,7 +70,40 @@ def checkCachedIndex() {
     }
 }
 
+// The commit the pipeline code came from. workflow.commitId is only set for
+// runs of a remote repository (nextflow run <github repo>), never for a run
+// from a checkout, which is how every study runs.
+def gitCommit() {
+    try {
+        def proc = ['git', '-C', projectDir.toString(), 'rev-parse', 'HEAD'].execute()
+        proc.waitFor()
+        return proc.exitValue() == 0 ? proc.text.trim() : null
+    } catch (Exception ignored) {
+        return null
+    }
+}
+
+// Run `whale record-run` in the checkout the run was launched from. A failure
+// here is reported but does not fail the run: its outputs are complete, and
+// record-run can be repeated by hand.
+def recordRun() {
+    def results = "${params.outdir}/${params.study_id}${params.part ? '/parts/' + params.part : ''}"
+    def cmd = [params.whale_cmd, 'record-run', '--results', results.toString(), '--run-name', workflow.runName]
+    log.info "Recording the run: ${cmd.join(' ')}"
+    try {
+        def pb = new ProcessBuilder(cmd).directory(workflow.launchDir.toFile()).redirectErrorStream(true)
+        def proc = pb.start()
+        proc.inputStream.eachLine { log.info "  ${it}" }
+        if (proc.waitFor() != 0) {
+            log.warn "whale record-run failed (exit ${proc.exitValue()}); fix the cause and run: ${cmd.join(' ')}"
+        }
+    } catch (Exception e) {
+        log.warn "Could not run ${params.whale_cmd} (${e.message}); is it on PATH in the head job? Then run: ${cmd.join(' ')}"
+    }
+}
+
 workflow {
+    main:
     if (!params.study_id)    error "params.study_id is not set (study config)"
     if (!params.samplesheet) error "params.samplesheet is not set (study config)"
     def known = chemistries()
@@ -74,6 +115,18 @@ workflow {
     def genome_fasta = file("${params.reference_dir}/${params.genome_assembly}/genomic.fna", checkIfExists: true)
     checkCachedIndex()
     def samplesheet  = file(params.samplesheet, checkIfExists: true)
+    def features     = file("${params.reference_dir}/${params.genome_assembly}/features", checkIfExists: true)
+    // C/T SNP mask (docs/snp_mask.md): a mask folder with cpg_mask.bed.gz and mask_manifest.json.
+    def snp_mask = null
+    def mask_bed = []
+    if (params.snp_mask) {
+        mask_bed = file("${params.snp_mask}/cpg_mask.bed.gz", checkIfExists: true)
+        def mm = new groovy.json.JsonSlurper().parse(file("${params.snp_mask}/mask_manifest.json", checkIfExists: true).toFile())
+        if (mm.params.genome_assembly != params.genome_assembly) {
+            error "SNP mask ${mm.params.mask_id} is for ${mm.params.genome_assembly}, not ${params.genome_assembly}"
+        }
+        snp_mask = [mask_id: mm.params.mask_id, sha256: mm.outputs['cpg_mask.bed.gz'], cpgs_masked: mm.counts.cpgs_masked]
+    }
 
     reads_ch = Channel
         .fromPath(samplesheet)
@@ -90,11 +143,27 @@ workflow {
     BISMARK_ALIGN(TRIM_GALORE.out.reads, BISMARK_GENOME_PREPARATION.out.genome_dir.first(),
                   [chem.align, params.bismark_align_args].findAll { it }.join(' '))
 
-    bam_ch = chem.deduplicate
-        ? BISMARK_DEDUPLICATE(BISMARK_ALIGN.out.bam).bam
-        : BISMARK_ALIGN.out.bam
+    def bam_ch
+    def dedup_reports
+    if (chem.deduplicate) {
+        BISMARK_DEDUPLICATE(BISMARK_ALIGN.out.bam)
+        bam_ch = BISMARK_DEDUPLICATE.out.bam
+        dedup_reports = BISMARK_DEDUPLICATE.out.report
+    } else {
+        bam_ch = BISMARK_ALIGN.out.bam
+        dedup_reports = Channel.empty()
+    }
 
     BISMARK_METHYLATION_EXTRACTOR(bam_ch, BISMARK_GENOME_PREPARATION.out.genome_dir.first())
+
+    CPG_SUMMARY(BISMARK_METHYLATION_EXTRACTOR.out.cpg)
+    qc_inputs = BISMARK_ALIGN.out.report
+        .mix(dedup_reports,
+             BISMARK_METHYLATION_EXTRACTOR.out.qc.map { sid, mbias, splitting -> splitting },
+             CPG_SUMMARY.out.summary)
+        .collect()
+    QC_GATE(qc_inputs, samplesheet)
+    FEATURE_SUMMARY(BISMARK_METHYLATION_EXTRACTOR.out.cpg, features, mask_bed)
 
     versions_ch = FASTQC.out.versions
         .mix(TRIM_GALORE.out.versions, BISMARK_ALIGN.out.versions, BISMARK_METHYLATION_EXTRACTOR.out.versions)
@@ -105,9 +174,16 @@ workflow {
         genome_assembly: params.genome_assembly, bismark_align_args: params.bismark_align_args,
         chemistry_align_args: chem.align,
         extractor_args: params.extractor_args, trim_args: params.trim_args,
+        qc_min_mapping: params.qc_min_mapping, qc_min_conversion: params.qc_min_conversion,
+        qc_min_cpgs_5x: params.qc_min_cpgs_5x, snp_mask: snp_mask,
         deduplicate: chem.deduplicate, profile: workflow.profile,
         nextflow_version: nextflow.version.toString(), run_name: workflow.runName,
-        commit: workflow.commitId ?: null, session: workflow.sessionId.toString(),
+        commit: workflow.commitId ?: gitCommit(), session: workflow.sessionId.toString(),
     ])
-    MANIFEST(versions_ch, samplesheet, genome_fasta, run_params)
+    MANIFEST(versions_ch, samplesheet, genome_fasta, features, run_params)
+
+    onComplete:
+    if (workflow.success && params.record_status && !workflow.stubRun) {
+        recordRun()
+    }
 }

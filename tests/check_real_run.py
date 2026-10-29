@@ -10,6 +10,7 @@ almost no methylation outside CpGs. Exits non-zero, listing every failure.
 """
 from __future__ import annotations
 
+import csv
 import gzip
 import json
 import re
@@ -21,6 +22,7 @@ MIN_MAPPING = 95.0          # % of reads with a unique best hit
 CPG_RANGE = (75.0, 90.0)    # % methylated at CpGs; the truth is 83.4%
 MAX_NON_CPG = 1.0           # % methylated in CHG and CHH contexts
 MIN_CPG_SITES = 900         # of 980 CpGs, covered by at least one read
+GENE_RANGE = (70.0, 95.0)   # % methylated in each fixture gene body (features/genes.bed)
 
 
 def report_value(text: str, label: str) -> float:
@@ -67,6 +69,33 @@ def check(run: Path) -> list[str]:
         if total and not CPG_RANGE[0] <= 100 * meth / total <= CPG_RANGE[1]:
             problems.append(f"{sample}: {cov.name} gives {100 * meth / total:.1f}% CpG methylation")
         print(f"{sample}: mapping {mapping}%, CpG {cpg}%, {len(rows)} CpG sites")
+
+    qc = run / "qc_summary.tsv"
+    if not qc.exists():
+        problems.append(f"{qc} is missing")
+    else:
+        with open(qc, newline="") as fh:
+            gate = {r["sample_id"]: r for r in csv.DictReader(fh, delimiter="\t")}
+        for sample in SAMPLES:
+            row = gate.get(sample)
+            if row is None:
+                problems.append(f"{sample}: not in qc_summary.tsv")
+            elif row["qc_pass"] != "true":
+                problems.append(f"{sample}: fails the QC gate ({row['qc_reasons']})")
+
+    for sample in SAMPLES:
+        table = run / "features" / f"{sample}.features.tsv.gz"
+        if not table.exists():
+            problems.append(f"{sample}: {table} is missing")
+            continue
+        with gzip.open(table, "rt") as fh:
+            bodies = [r for r in csv.DictReader(fh, delimiter="\t") if r["feature"] == "gene_body"]
+        if [r["gene_id"] for r in bodies] != ["G1", "G2", "G3", "G4"]:
+            problems.append(f"{sample}: {table.name} lists gene bodies {[r['gene_id'] for r in bodies]}")
+        for r in bodies:
+            # Each gene holds 20-180 CpGs, so allow more spread than the whole-genome range.
+            if not r["meth_pct"] or not GENE_RANGE[0] <= float(r["meth_pct"]) <= GENE_RANGE[1]:
+                problems.append(f"{sample}: gene {r['gene_id']} body methylation {r['meth_pct'] or 'missing'}%")
 
     manifest = run / "run_manifest.json"
     if not manifest.exists():
