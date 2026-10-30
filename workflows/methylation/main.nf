@@ -58,6 +58,18 @@ def resolveFastq(String p) {
     return f
 }
 
+// A library in params.swap_mates, read 1 and read 2 exchanged. Nextflow's task
+// hash does not see the order of a task's input files, so the pair is linked
+// under its own names (work/swap_mates/<id>/<id>_swapped_{1,2}.fastq.gz): its
+// tasks then miss the -resume cache of a run that read it unswapped.
+def swapMates(String sample_id, List reads) {
+    def dir = file("${workflow.workDir}/swap_mates/${sample_id}")
+    dir.mkdirs()
+    return [reads[1], reads[0]].withIndex().collect { f, i ->
+        f.mklink(dir.resolve("${sample_id}_swapped_${i + 1}.fastq.gz"), overwrite: true)
+    }
+}
+
 // A cached Bismark index must have been built from the bundle's current
 // genomic.fna (fetch-reference may have replaced it since).
 def checkCachedIndex() {
@@ -143,7 +155,7 @@ workflow {
             if (!reads) error "no FASTQ for sample ${row.sample_id}"
             if (row.sample_id in params.swap_mates) {
                 if (reads.size() != 2) error "swap_mates lists ${row.sample_id}, which is not paired-end"
-                reads = reads.reverse()
+                reads = swapMates(row.sample_id, reads)
             }
             tuple(row.sample_id, reads)
         }
