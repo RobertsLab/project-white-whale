@@ -1,25 +1,26 @@
 # Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
 study_id: PESTO2022_METHYLSEQ_WGBS
 part: null
-generated_on: '2026-10-29'
-nextflow_run: magical_hugle
-commit: e9d2832b7359d76e54c82e0b14809dfc7bf02980
+generated_on: '2026-10-31'
+nextflow_run: serene_ritchie
+commit: 87e31cf286922decccd67ef49b30198d5591ae81
 genome_assembly: GCF_963853765.1
 chemistry: wgbs
-snp_mask: null
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
 libraries: 48
-passed: 11
+passed: 13
 failed:
-- sample_id: ERR10683997
-  reasons: mapping 0.4% < 20.0%; conversion 3.287% < 98.0%; 21975 CpGs at >=5x < 1000000
 - sample_id: ERR10683998
-  reasons: mapping 1.0% < 20.0%; conversion 2.917% < 98.0%; 51999 CpGs at >=5x < 1000000
+  reasons: conversion 93.964% < 98.0%
 - sample_id: ERR10683999
   reasons: conversion 97.164% < 98.0%
 - sample_id: ERR10684000
-  reasons: mapping 0.9% < 20.0%; conversion 2.948% < 98.0%; 61326 CpGs at >=5x < 1000000
+  reasons: conversion 92.224% < 98.0%
 - sample_id: ERR10684001
-  reasons: mapping 1.0% < 20.0%; conversion 2.931% < 98.0%; 64860 CpGs at >=5x < 1000000
+  reasons: conversion 90.83% < 98.0%
 - sample_id: ERR10684002
   reasons: conversion 97.961% < 98.0%
 - sample_id: ERR10684003
@@ -27,38 +28,33 @@ failed:
 - sample_id: ERR10684004
   reasons: conversion 96.715% < 98.0%
 - sample_id: ERR10684005
-  reasons: mapping 0.9% < 20.0%; conversion 2.75% < 98.0%; 67433 CpGs at >=5x < 1000000
+  reasons: conversion 91.984% < 98.0%
 - sample_id: ERR10684006
-  reasons: mapping 0.7% < 20.0%; conversion 2.665% < 98.0%; 31508 CpGs at >=5x < 1000000
+  reasons: conversion 97.218% < 98.0%
 - sample_id: ERR10684007
-  reasons: mapping 1.2% < 20.0%; conversion 2.366% < 98.0%; 61198 CpGs at >=5x < 1000000
+  reasons: conversion 91.713% < 98.0%
 - sample_id: ERR10684008
   reasons: conversion 94.527% < 98.0%
 - sample_id: ERR10684011
   reasons: conversion 90.806% < 98.0%
-- sample_id: ERR10684013
-  reasons: mapping 0.4% < 20.0%; conversion 2.757% < 98.0%; 20311 CpGs at >=5x < 1000000
 - sample_id: ERR10684016
-  reasons: mapping 0.4% < 20.0%; conversion 2.712% < 98.0%; 17359 CpGs at >=5x < 1000000
+  reasons: conversion 97.235% < 98.0%
 - sample_id: ERR10684017
-  reasons: mapping 0.4% < 20.0%; conversion 2.758% < 98.0%; 19884 CpGs at >=5x < 1000000
+  reasons: conversion 95.534% < 98.0%
 - sample_id: ERR10684018
-  reasons: mapping 0.6% < 20.0%; conversion 2.162% < 98.0%; 34596 CpGs at >=5x < 1000000
+  reasons: conversion 96.112% < 98.0%
 - sample_id: ERR10684019
   reasons: conversion 97.788% < 98.0%
 - sample_id: ERR12308505
-  reasons: mapping 1.7% < 20.0%; conversion 1.854% < 98.0%; 170839 CpGs at >=5x <
-    1000000
+  reasons: conversion 92.322% < 98.0%
 - sample_id: ERR12308506
-  reasons: mapping 3.5% < 20.0%; conversion 1.436% < 98.0%; 400929 CpGs at >=5x <
-    1000000
+  reasons: conversion 90.899% < 98.0%
 - sample_id: ERR12308507
-  reasons: mapping 0.7% < 20.0%; conversion 2.33% < 98.0%; 96642 CpGs at >=5x < 1000000
+  reasons: conversion 96.06% < 98.0%
 - sample_id: ERR12308508
-  reasons: mapping 1.2% < 20.0%; conversion 2.388% < 98.0%; 137137 CpGs at >=5x <
-    1000000
+  reasons: conversion 94.804% < 98.0%
 - sample_id: ERR12308509
-  reasons: mapping 0.6% < 20.0%; conversion 2.94% < 98.0%; 86199 CpGs at >=5x < 1000000
+  reasons: conversion 96.981% < 98.0%
 - sample_id: ERR12308510
   reasons: conversion 96.871% < 98.0%
 - sample_id: ERR12308511
@@ -68,17 +64,17 @@ failed:
 - sample_id: ERR12308514
   reasons: conversion 95.67% < 98.0%
 - sample_id: ERR12308515
-  reasons: mapping 1.0% < 20.0%; conversion 2.829% < 98.0%; 89737 CpGs at >=5x < 1000000
+  reasons: conversion 95.274% < 98.0%
 - sample_id: ERR12308517
   reasons: conversion 95.059% < 98.0%
 - sample_id: ERR12308518
-  reasons: mapping 0.3% < 20.0%; conversion 3.432% < 98.0%; 34665 CpGs at >=5x < 1000000
+  reasons: mapping 18.6% < 20.0%
 - sample_id: ERR12308520
-  reasons: mapping 0.8% < 20.0%; conversion 3.481% < 98.0%; 74179 CpGs at >=5x < 1000000
+  reasons: conversion 97.444% < 98.0%
 - sample_id: ERR12308522
-  reasons: mapping 0.4% < 20.0%; conversion 3.13% < 98.0%; 55159 CpGs at >=5x < 1000000
+  reasons: conversion 97.034% < 98.0%
 - sample_id: ERR12308523
-  reasons: mapping 0.5% < 20.0%; conversion 3.492% < 98.0%; 49041 CpGs at >=5x < 1000000
+  reasons: conversion 97.134% < 98.0%
 - sample_id: ERR12308524
   reasons: conversion 97.338% < 98.0%
 - sample_id: ERR12308525
@@ -90,55 +86,55 @@ failed:
 qc:
   mapping_pct:
     n: 48
-    median: 28.4
-    mean: 25.52
-    min: 0.3
+    median: 46.0
+    mean: 43.71
+    min: 18.6
     max: 61.2
-    sd: 23.88
+    sd: 13.27
   duplication_pct:
     n: 48
-    median: 17.76
-    mean: 18.44
-    min: 12.88
+    median: 18.06
+    mean: 19.23
+    min: 15.78
     max: 27.49
-    sd: 3.21
+    sd: 2.84
   conversion_pct:
     n: 48
-    median: 94.17
-    mean: 55.71
-    min: 1.44
-    max: 99.61
-    sd: 47.24
+    median: 97.01
+    mean: 96.21
+    min: 90.81
+    max: 99.65
+    sd: 2.62
   cpgs_5x:
     n: 48
-    median: 3734815.5
-    mean: 3944857.08
-    min: 17359.0
+    median: 7118595.0
+    mean: 6724150.85
+    min: 2999215.0
     max: 9612204.0
-    sd: 3824875.46
+    sd: 2150882.89
   mean_depth:
     n: 48
-    median: 10.53
-    mean: 11.94
-    min: 1.52
+    median: 16.2
+    mean: 15.7
+    min: 7.12
     max: 28.52
-    sd: 8.05
+    sd: 6.05
 cpg_methylation_pct:
-  n: 11
+  n: 13
   median: 15.92
-  mean: 16.11
+  mean: 16.07
   min: 12.97
   max: 20.4
-  sd: 2.33
+  sd: 2.15
 by_factor: []
 by_condition:
 - condition: Gastrula_DNA_F0_E
-  n: 3
-  median: 15.69
-  mean: 15.58
+  n: 4
+  median: 15.8
+  mean: 15.8
   min: 15.14
-  max: 15.92
-  sd: 0.4
+  max: 16.45
+  sd: 0.54
 - condition: Gastrula_DNA_F0_T
   n: 3
   median: 17.11
@@ -167,7 +163,12 @@ by_condition:
 - condition: Metamorphosis_DNA_F0_E
   n: 0
 - condition: Metamorphosis_DNA_F0_T
-  n: 0
+  n: 1
+  median: 15.2
+  mean: 15.2
+  min: 15.2
+  max: 15.2
+  sd: null
 - condition: Metamorphosis_DNA_F1_EE
   n: 1
   median: 18.43
@@ -195,27 +196,27 @@ genes:
   universe: 33331
   min_cpgs: 5
   gene_body:
-    covered_in_all: 31705
+    covered_in_all: 31670
     meth_pct:
-      n: 31705
-      median: 4.12
-      mean: 20.52
+      n: 31670
+      median: 4.05
+      mean: 20.88
       min: 0.0
-      max: 91.11
-      sd: 26.16
-    methylated_ge_50pct: 6972
+      max: 91.7
+      sd: 26.93
+    methylated_ge_50pct: 7034
   promoter:
-    covered_in_all: 30423
+    covered_in_all: 30271
     meth_pct:
-      n: 30423
-      median: 0.92
-      mean: 6.55
+      n: 30271
+      median: 0.87
+      mean: 6.35
       min: 0.0
-      max: 92.56
-      sd: 13.8
-    methylated_ge_50pct: 935
+      max: 93.44
+      sd: 13.81
+    methylated_ge_50pct: 870
 methylomes:
   files: 576
-  bytes: 2505509600
+  bytes: 4096204669
   on_data_host: true
   url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/PESTO2022_METHYLSEQ_WGBS/

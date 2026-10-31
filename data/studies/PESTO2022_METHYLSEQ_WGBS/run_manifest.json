@@ -8,29 +8,56 @@
     "chemistry_align_args": "",
     "extractor_args": "",
     "trim_args": "",
+    "swap_mates": [
+      "ERR10683997",
+      "ERR10683998",
+      "ERR10684000",
+      "ERR10684001",
+      "ERR10684005",
+      "ERR10684006",
+      "ERR10684007",
+      "ERR10684013",
+      "ERR10684016",
+      "ERR10684017",
+      "ERR10684018",
+      "ERR12308505",
+      "ERR12308506",
+      "ERR12308507",
+      "ERR12308508",
+      "ERR12308509",
+      "ERR12308515",
+      "ERR12308518",
+      "ERR12308520",
+      "ERR12308522",
+      "ERR12308523"
+    ],
     "qc_min_mapping": 20.0,
     "qc_min_conversion": 98.0,
     "qc_min_cpgs_5x": 1000000,
-    "snp_mask": null,
+    "snp_mask": {
+      "mask_id": "GCF_963853765.1.snpmask.v1",
+      "sha256": "3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895",
+      "cpgs_masked": 628253
+    },
     "deduplicate": true,
     "profile": "klone",
     "nextflow_version": "26.04.7",
-    "run_name": "magical_hugle",
-    "commit": "e9d2832b7359d76e54c82e0b14809dfc7bf02980",
+    "run_name": "serene_ritchie",
+    "commit": "87e31cf286922decccd67ef49b30198d5591ae81",
     "session": "666ab4c9-ac64-427b-9617-3dbf67c7020a"
   },
   "tool_versions": {
     "FASTQC": {
       "fastqc": "0.12.1"
     },
-    "BISMARK_ALIGN": {
-      "bismark": "v0.24.2"
+    "TRIM_GALORE": {
+      "trim_galore": "0.6.10"
     },
     "BISMARK_METHYLATION_EXTRACTOR": {
       "bismark": "v0.24.2"
     },
-    "TRIM_GALORE": {
-      "trim_galore": "0.6.10"
+    "BISMARK_ALIGN": {
+      "bismark": "v0.24.2"
     }
   },
   "inputs": {
