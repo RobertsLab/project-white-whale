@@ -68,6 +68,14 @@ jobs:
           test -s results/test/TEST2026_FIXTURE_WGBS/qc_summary.tsv
           test -s results/test/TEST2026_FIXTURE_WGBS/features/S1.features.tsv.gz
           ls results/test/TEST2026_FIXTURE_WGBS/cpg/S1.CpG_report.merged_CpG_evidence.cov.gz
+      - name: Dropping a library from swap_mates re-runs it on -resume
+        # Before the SNP mask run: -resume picks up the last session, whatever its workflow.
+        run: |
+          echo "params.swap_mates = []" > no_swap.config
+          nextflow run workflows/methylation -profile test -stub -resume -c no_swap.config
+          nextflow log last -f name,status | tee resume.tsv
+          grep -qxP "TRIM_GALORE \(S3\)\tCOMPLETED" resume.tsv
+          grep -qxP "TRIM_GALORE \(S1\)\tCACHED" resume.tsv
       - name: Run the SNP mask DAG on the stub BAMs
         run: nextflow run workflows/snp_mask -profile test -stub
       - name: Check the mask outputs
