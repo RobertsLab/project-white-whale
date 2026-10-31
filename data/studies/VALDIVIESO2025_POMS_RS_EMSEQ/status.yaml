@@ -3,7 +3,7 @@
 study_id: VALDIVIESO2025_POMS_RS_EMSEQ
 accession: PRJEB81880
 part: null
-stage: claimed
+stage: registered
 profile: klone
 machine: klone
 claimed_by: STEVEN
@@ -15,3 +15,8 @@ history:
   date: '2026-10-31'
   machine: klone
   note: null
+- stage: registered
+  date: '2026-10-31'
+  machine: klone
+  note: 40 libraries registered from ENA; AREE registration imported; 624.9 GB to
+    stage
