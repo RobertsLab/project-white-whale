@@ -8,7 +8,7 @@ profile: klone
 machine: klone
 claimed_by: STEVEN
 claimed_on: '2026-10-23'
-nextflow_run: magical_hugle
+nextflow_run: serene_ritchie
 notes: null
 history:
 - stage: claimed
@@ -37,3 +37,8 @@ history:
   date: '2026-10-29'
   machine: klone
   note: summaries committed; 576 files on gannet
+- stage: summarized
+  date: '2026-10-31'
+  machine: klone
+  note: 're-run serene_ritchie after swapping read 1 and read 2 for 21 libraries;
+    13 of 48 libraries pass the QC gate (35 fail: 34 on conversion < 98%, 1 on mapping)'
