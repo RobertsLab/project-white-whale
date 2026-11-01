@@ -1,0 +1,26 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: VALDIVIESO2025_POMS_RS_EMSEQ
+accession: PRJEB81880
+part: null
+stage: fastq_staged
+profile: klone
+machine: klone
+claimed_by: STEVEN
+claimed_on: '2026-10-31'
+nextflow_run: null
+notes: null
+history:
+- stage: claimed
+  date: '2026-10-31'
+  machine: klone
+  note: null
+- stage: registered
+  date: '2026-10-31'
+  machine: klone
+  note: 40 libraries registered from ENA; AREE registration imported; 624.9 GB to
+    stage
+- stage: fastq_staged
+  date: '2026-10-31'
+  machine: klone
+  note: 80 files, 624.9 GB, MD5 verified

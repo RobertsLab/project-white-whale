@@ -1,0 +1,106 @@
+{
+  "study_id": "VALDIVIESO2025_POMS_RS_EMSEQ",
+  "bioproject": "PRJEB81880",
+  "date_generated": "2026-10-31",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB81880&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "tissue_code",
+    "phenotype_class",
+    "time"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 40
+  },
+  "n_runs": 40,
+  "n_libraries": 40,
+  "n_biosamples": 40,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "Illumina NovaSeq 6000"
+  ],
+  "group_sizes_runs": {
+    "G_R_T0": 5,
+    "G_R_T1": 5,
+    "G_S_T0": 5,
+    "G_S_T1": 5,
+    "M_R_T0": 5,
+    "M_R_T1": 5,
+    "M_S_T0": 5,
+    "M_S_T1": 5
+  },
+  "group_sizes_libraries": {
+    "G_R_T0": 5,
+    "G_R_T1": 5,
+    "G_S_T0": 5,
+    "G_S_T1": 5,
+    "M_R_T0": 5,
+    "M_R_T1": 5,
+    "M_S_T0": 5,
+    "M_S_T1": 5
+  },
+  "min_group_libraries": 5,
+  "total_fastq_bytes": 624864284369,
+  "fastq_sources": {
+    "fastq_ftp": 40,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/VALDIVIESO2025_POMS_RS_EMSEQ/samplesheet.tsv": "e200988abf359491dfc490928c5800f23f1a7fec6b51800e9111e899c2f33948",
+    "data/studies/VALDIVIESO2025_POMS_RS_EMSEQ/fastq_manifest.tsv": "6570c63d576614148658f34809231a093c74870c774aed07400af57f2744ef98"
+  },
+  "run_labels": {
+    "field": "library_name",
+    "pattern": "^(?P<population>GT[1-5])_(?P<code>\\d{2})_(?P<time>T[01])_(?P<tissue_code>[GM])_(?P<phenotype_class>[RS])$",
+    "labels": {
+      "ERR13913462": "GT1_09_T0_G_R",
+      "ERR13913463": "GT1_09_T1_G_R",
+      "ERR13913464": "GT2_18_T0_G_R",
+      "ERR13913465": "GT2_18_T1_G_R",
+      "ERR13913466": "GT3_16_T0_G_R",
+      "ERR13913467": "GT3_16_T1_G_R",
+      "ERR13913468": "GT4_21_T0_G_R",
+      "ERR13913469": "GT4_21_T1_G_R",
+      "ERR13913470": "GT5_06_T0_G_R",
+      "ERR13913471": "GT5_06_T1_G_R",
+      "ERR13913472": "GT1_16_T0_G_S",
+      "ERR13913473": "GT1_16_T1_G_S",
+      "ERR13913474": "GT2_15_T0_G_S",
+      "ERR13913475": "GT2_15_T1_G_S",
+      "ERR13913476": "GT3_14_T0_G_S",
+      "ERR13913477": "GT3_14_T1_G_S",
+      "ERR13913478": "GT4_21_T0_G_S",
+      "ERR13913479": "GT4_21_T1_G_S",
+      "ERR13913480": "GT5_17_T0_G_S",
+      "ERR13913481": "GT5_17_T1_G_S",
+      "ERR13913482": "GT1_09_T0_M_R",
+      "ERR13913483": "GT1_09_T1_M_R",
+      "ERR13913484": "GT2_18_T0_M_R",
+      "ERR13913485": "GT2_18_T1_M_R",
+      "ERR13913486": "GT3_16_T0_M_R",
+      "ERR13913487": "GT3_16_T1_M_R",
+      "ERR13913488": "GT4_21_T0_M_R",
+      "ERR13913489": "GT4_21_T1_M_R",
+      "ERR13913490": "GT5_06_T0_M_R",
+      "ERR13913491": "GT5_06_T1_M_R",
+      "ERR13913492": "GT1_16_T0_M_S",
+      "ERR13913493": "GT1_16_T1_M_S",
+      "ERR13913494": "GT2_15_T0_M_S",
+      "ERR13913495": "GT2_15_T1_M_S",
+      "ERR13913496": "GT3_14_T0_M_S",
+      "ERR13913497": "GT3_14_T1_M_S",
+      "ERR13913498": "GT4_21_T0_M_S",
+      "ERR13913499": "GT4_21_T1_M_S",
+      "ERR13913500": "GT5_17_T0_M_S",
+      "ERR13913501": "GT5_17_T1_M_S"
+    }
+  }
+}
