@@ -7,7 +7,7 @@ PRJNA213124	(name on claim)	wgbs	14	32	same project	desktop	SRA sweep 2026-08	"M
 PRJEB58545	PESTO2022_METHYLSEQ_WGBS	wgbs	48	375	check	klone	SRA sweep 2026-08	PESTO project.
 PRJNA609264	(name on claim)	wgbs	47	625	check	klone	SRA sweep 2026-08	Transgenerational infection resistance after early microbial exposure.
 PRJEB105019	DECICOMP2025_POMS_AGE_EMSEQ	wgbs	60	475	same project	klone	SRA sweep 2026-08; AREE	Three ages, DECICOMP. AREE registration to import; check chemistry (AREE id says EM-seq).
-PRJEB81880	VALDIVIESO2025_POMS_RS_EMSEQ	emseq	40	425	check	klone	SRA sweep 2026-08; AREE	GESTINOV gill/mantle before/after POMS; ~224 M pairs per library. AREE registration to import.
+PRJEB81880	VALDIVIESO2025_POMS_RS_EMSEQ	emseq	40	624.9	check	klone	SRA sweep 2026-08; AREE	GESTINOV gill/mantle before/after POMS; ~224 M pairs per library. AREE registration to import.
 PRJEB60400	POMS2023_ADAPTATION_WGBS	wgbs	246	475	check	klone	SRA sweep 2026-08	Largest set; claim in parts once sample metadata is read.
 PRJNA690951	CIBNOR2021_HEAT_RRSS	rrbs			none	desktop	AREE	RRBS tier. AREE has processed this study; import its registration.
 PRJNA324546	RIVIERE2017_DEVELOPMENT_MEDIP	medip	21	8	published	desktop	SRA sweep 2026-08	Enrichment tier.
