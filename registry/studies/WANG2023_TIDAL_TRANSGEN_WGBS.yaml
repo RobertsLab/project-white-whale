@@ -1,0 +1,100 @@
+# WGBS of gill from Pacific oysters of intertidal origin (F0, F1, F2) and a
+# subtidal F0, each sampled as control and after heat shock. Wang et al. 2023,
+# Sci Total Environ 871:162112 (transgenerational plasticity). Wild intertidal
+# oysters from Laoting (Bohai Sea, China) bred for two generations in a
+# subtidal area. Deposit checked 2026-10-25: 24 runs, one shared BioSample
+# (SAMN26000378), design in each run's library_name (F0-In-C1 ... F2-In-H3,
+# F0-Sub-C1 ... F0-Sub-H3).
+
+study_id: WANG2023_TIDAL_TRANSGEN_WGBS
+aree_study_id: null
+
+accessions:
+  bioproject: "PRJNA807732"
+  sra: null
+  ena: "PRJNA807732"
+  geo: null
+  doi: "10.1016/j.scitotenv.2023.162112"
+  pmid: "36764539"
+  other: "One BioSample for all 24 libraries (SAMN26000378)."
+
+citation: "Wang X, Cong R, Li A, Wang W, Zhang G, Li L (2023). Transgenerational effects of intertidal environment on physiological phenotypes and DNA methylation in Pacific oysters. Sci Total Environ 871:162112. https://doi.org/10.1016/j.scitotenv.2023.162112"
+species: "Magallana gigas"
+population: "Wild intertidal (In) and subtidal (Sub) oysters from Laoting (Bohai Sea, China; collected 2018-03 per BioSample); intertidal line bred for two generations (F1, F2) in a subtidal area. Only F0 is sequenced for the subtidal line."
+original_assembly: null
+
+chemistry: wgbs
+library_layout: paired
+platform: "Illumina HiSeq X Ten"
+
+samples:
+  n_runs: 24
+  n_libraries: 24
+  sample_unit: null
+  pool_size: null
+  tissues: [gill]
+  life_stages: [adult]
+  sexes_recorded: false
+  ploidy: [diploid]
+
+paired_rnaseq:
+  relationship: unknown
+  bioproject: null
+  notes: null
+
+factors:
+  - factor_id: tidal_level
+    factor_original: "Tidal origin: intertidal (In) vs subtidal (Sub); run library_name"
+    factor_standardized: genotype_or_population
+    levels: ["Sub", "In"]
+    reference_level: "Sub"
+  - factor_id: generation
+    factor_original: "Generation of the intertidal line bred in the subtidal area: F0 (wild), F1, F2; run library_name"
+    factor_standardized: transgenerational
+    levels: ["F0", "F1", "F2"]
+    reference_level: "F0"
+  - factor_id: treatment
+    factor_original: "Laboratory heat shock: control (C) vs heat (H); run library_name"
+    factor_standardized: temperature
+    levels: ["C", "H"]
+    reference_level: "C"
+
+goals: [1]
+
+data_availability:
+  raw_data_available: true
+  fastq_size_gb: 268.5
+  published_dml_dmr_tables: null
+  access_notes: "Raw paired FASTQ for all 24 runs public in ENA/SRA (first public 2022-03-24). Paper methods not yet read: pooling, heat-shock dose and spike-in to be checked."
+
+quality_flags:
+  - shared_biosample
+  - confounded_design
+  - sex_unknown
+
+limitations: >
+  (1) Unbalanced design: the subtidal line is sequenced only at F0, so
+  generation and tidal origin cannot be crossed; F1/F2 compare only against
+  intertidal F0. (2) One population per tidal class, so origin is confounded
+  with population background. (3) All libraries share one BioSample; the design
+  comes from run library_name. (4) Pooling, heat-shock dose and sex not yet
+  confirmed from the paper's methods.
+
+provenance:
+  registered_by: "Steven Roberts"
+  date_registered: "2026-10-25"
+  curation_notes: >
+    Claimed on raven with `whale start-study --accession PRJNA807732 --study-id
+    WANG2023_TIDAL_TRANSGEN_WGBS --profile raven`. Sample sheet from ENA with
+    `whale fetch-samplesheet --bioproject PRJNA807732 --label-field
+    library_name --label-pattern
+    '^(?P<generation>F[0-2])-(?P<tidal_level>In|Sub)-(?P<treatment>[CH])(?P<replicate>[0-9]+)$'
+    --condition-attribute tidal_level --condition-attribute generation
+    --condition-attribute treatment --attribute replicate --attribute tissue`:
+    24 runs, 8 groups of 3. Registered from the deposit and the abstract;
+    the paper's methods still to be read. Same lab and Laoting populations as
+    WANG2020_TIDAL_HEAT_WGBS. Diploid assumed (wild-derived).
+  source_links:
+    - "https://doi.org/10.1016/j.scitotenv.2023.162112"
+    - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA807732"
+    - "https://www.ebi.ac.uk/ena/browser/view/PRJNA807732"

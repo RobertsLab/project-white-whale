@@ -1,0 +1,146 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: WANG2023_TIDAL_TRANSGEN_WGBS
+part: null
+generated_on: '2026-10-31'
+nextflow_run: sick_jang
+commit: ea404a808fd4ea151a5fde398e31781812040d9b
+genome_assembly: GCF_963853765.1
+chemistry: wgbs
+snp_mask: null
+libraries: 24
+passed: 0
+failed:
+- sample_id: SRR18245583
+  reasons: conversion 96.843% < 98.0%
+- sample_id: SRR18245584
+  reasons: conversion 96.303% < 98.0%
+- sample_id: SRR18245585
+  reasons: conversion 97.034% < 98.0%
+- sample_id: SRR18245586
+  reasons: conversion 96.915% < 98.0%
+- sample_id: SRR18245587
+  reasons: conversion 97.201% < 98.0%
+- sample_id: SRR18245588
+  reasons: conversion 97.237% < 98.0%
+- sample_id: SRR18245589
+  reasons: conversion 97.058% < 98.0%
+- sample_id: SRR18245590
+  reasons: conversion 96.64% < 98.0%
+- sample_id: SRR18245591
+  reasons: conversion 97.412% < 98.0%
+- sample_id: SRR18245592
+  reasons: conversion 97.156% < 98.0%
+- sample_id: SRR18245593
+  reasons: conversion 96.725% < 98.0%
+- sample_id: SRR18245594
+  reasons: conversion 97.214% < 98.0%
+- sample_id: SRR18245595
+  reasons: conversion 97.095% < 98.0%
+- sample_id: SRR18245596
+  reasons: conversion 97.586% < 98.0%
+- sample_id: SRR18245597
+  reasons: conversion 96.739% < 98.0%
+- sample_id: SRR18245598
+  reasons: conversion 96.732% < 98.0%
+- sample_id: SRR18245599
+  reasons: conversion 97.151% < 98.0%
+- sample_id: SRR18245600
+  reasons: conversion 96.922% < 98.0%
+- sample_id: SRR18245601
+  reasons: conversion 97.064% < 98.0%
+- sample_id: SRR18245602
+  reasons: conversion 97.128% < 98.0%
+- sample_id: SRR18245603
+  reasons: conversion 97.147% < 98.0%
+- sample_id: SRR18245604
+  reasons: conversion 97.029% < 98.0%
+- sample_id: SRR18245605
+  reasons: conversion 97.203% < 98.0%
+- sample_id: SRR18245606
+  reasons: conversion 97.236% < 98.0%
+qc:
+  mapping_pct:
+    n: 24
+    median: 58.15
+    mean: 57.94
+    min: 54.0
+    max: 60.3
+    sd: 1.58
+  duplication_pct:
+    n: 24
+    median: 14.25
+    mean: 14.52
+    min: 10.6
+    max: 18.44
+    sd: 2.01
+  conversion_pct:
+    n: 24
+    median: 97.08
+    mean: 97.03
+    min: 96.3
+    max: 97.59
+    sd: 0.27
+  cpgs_5x:
+    n: 24
+    median: 8776622.5
+    mean: 8784299.75
+    min: 8477492.0
+    max: 9148733.0
+    sd: 202664.2
+  mean_depth:
+    n: 24
+    median: 19.73
+    mean: 19.73
+    min: 17.74
+    max: 22.65
+    sd: 1.21
+cpg_methylation_pct: null
+by_factor:
+- factor_id: tidal_level
+  column: tidal_level
+  reference_level: Sub
+  levels:
+  - level: Sub
+    n: 0
+  - level: In
+    n: 0
+- factor_id: generation
+  column: generation
+  reference_level: F0
+  levels:
+  - level: F0
+    n: 0
+  - level: F1
+    n: 0
+  - level: F2
+    n: 0
+- factor_id: treatment
+  column: treatment
+  reference_level: C
+  levels:
+  - level: C
+    n: 0
+  - level: H
+    n: 0
+by_condition:
+- condition: In_F0_C
+  n: 0
+- condition: In_F0_H
+  n: 0
+- condition: In_F1_C
+  n: 0
+- condition: In_F1_H
+  n: 0
+- condition: In_F2_C
+  n: 0
+- condition: In_F2_H
+  n: 0
+- condition: Sub_F0_C
+  n: 0
+- condition: Sub_F0_H
+  n: 0
+methylomes:
+  files: 288
+  bytes: 2211010186
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/WANG2023_TIDAL_TRANSGEN_WGBS/
