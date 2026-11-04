@@ -90,14 +90,23 @@ def _stats(values: list[float]) -> dict | None:
 
 def _factor_column(factor: dict, columns: list[str], sheet: list[dict]) -> str | None:
     """The sample sheet column holding a design factor: the one named after it, else
-    the one whose values are exactly the factor's levels (water_ph for factor ph)."""
-    if factor["factor_id"] in columns:
-        return factor["factor_id"]
+    the one whose values are exactly the factor's levels (water_ph for factor ph).
+
+    A column named after the factor only wins if it actually holds the factor's
+    levels. VALDIVIESO2025 has both a tissue_type column (the BioSample attribute,
+    "gills"/"mantle") and a tissue_code column (the paper's "G"/"M", which is what
+    the factor declares); taking the name match on sight scored every level 0.
+    """
+    named = factor["factor_id"] if factor["factor_id"] in columns else None
     levels = {str(v) for v in factor.get("levels") or []}
+    if not levels:
+        return named
+    if named and levels <= {str(r.get(named, "")) for r in sheet}:
+        return named
     for col in columns:
-        if levels and {r.get(col, "") for r in sheet} == levels:
+        if {str(r.get(col, "")) for r in sheet} == levels:
             return col
-    return None
+    return named
 
 
 def summarize(study: dict, sheet: list[dict], qc: list[dict], manifest: dict, *,
