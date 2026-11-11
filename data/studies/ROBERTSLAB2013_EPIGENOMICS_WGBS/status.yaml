@@ -1,0 +1,25 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: ROBERTSLAB2013_EPIGENOMICS_WGBS
+accession: PRJNA213124
+part: null
+stage: fastq_staged
+profile: desktop
+machine: Hete
+claimed_by: Steven Roberts
+claimed_on: '2026-10-23'
+nextflow_run: null
+notes: null
+history:
+- stage: claimed
+  date: '2026-10-23'
+  machine: Hete
+  note: null
+- stage: registered
+  date: '2026-10-23'
+  machine: Hete
+  note: YAML, sample sheet and manifest committed; 14 runs, 8 libraries, 32.4 GB
+- stage: fastq_staged
+  date: '2026-10-24'
+  machine: Hete
+  note: 27 files, 35.7 GB, MD5 verified
