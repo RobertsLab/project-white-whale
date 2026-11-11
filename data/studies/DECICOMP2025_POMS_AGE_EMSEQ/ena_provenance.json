@@ -1,0 +1,119 @@
+{
+  "study_id": "DECICOMP2025_POMS_AGE_EMSEQ",
+  "bioproject": "PRJEB105019",
+  "date_generated": "2026-11-09",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB105019&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "cohort",
+    "group"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 60
+  },
+  "n_runs": 60,
+  "n_libraries": 60,
+  "n_biosamples": 60,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "Illumina NovaSeq 6000"
+  ],
+  "group_sizes_runs": {
+    "C3_T0": 12,
+    "C7_T0": 12,
+    "C8_R": 12,
+    "C8_S": 12,
+    "C8_T0": 12
+  },
+  "group_sizes_libraries": {
+    "C3_T0": 12,
+    "C7_T0": 12,
+    "C8_R": 12,
+    "C8_S": 12,
+    "C8_T0": 12
+  },
+  "min_group_libraries": 12,
+  "total_fastq_bytes": 710527951849,
+  "fastq_sources": {
+    "fastq_ftp": 59,
+    "submitted_ftp": 1
+  },
+  "outputs": {
+    "data/studies/DECICOMP2025_POMS_AGE_EMSEQ/samplesheet.tsv": "e6d5512210109645698a379a330906dafe11317b2e3f1ed7584d52a798efd948",
+    "data/studies/DECICOMP2025_POMS_AGE_EMSEQ/fastq_manifest.tsv": "e1d4f17baf6dab7c21d7c25e515a1b5213d3907a73837dfb9a1b9bcaa62ce963"
+  },
+  "run_labels": {
+    "field": "experiment_title",
+    "pattern": "(?P<family>F14R|H2D)_(?P<cohort>C[378])_(?P<group>T0|R|S)_S(?P<replicate>[1-6])$",
+    "labels": {
+      "ERR15996532": "F14R_C3_T0_S4",
+      "ERR15996533": "F14R_C8_T0_S5",
+      "ERR15996534": "F14R_C8_S_S2",
+      "ERR15996535": "F14R_C8_S_S1",
+      "ERR15996536": "H2D_C8_R_S6",
+      "ERR15996537": "F14R_C8_T0_S6",
+      "ERR15996538": "F14R_C7_T0_S5",
+      "ERR15996539": "F14R_C8_S_S6",
+      "ERR15996540": "F14R_C8_R_S4",
+      "ERR15996541": "H2D_C7_T0_S5",
+      "ERR15996542": "H2D_C8_S_S5",
+      "ERR15996543": "F14R_C8_S_S3",
+      "ERR15996544": "F14R_C8_R_S2",
+      "ERR15996545": "F14R_C8_R_S6",
+      "ERR15996546": "H2D_C8_T0_S2",
+      "ERR15996547": "H2D_C8_T0_S6",
+      "ERR15996548": "F14R_C3_T0_S3",
+      "ERR15996549": "H2D_C7_T0_S1",
+      "ERR15996550": "F14R_C8_R_S1",
+      "ERR15996551": "H2D_C8_R_S5",
+      "ERR15996552": "H2D_C3_T0_S5",
+      "ERR15996553": "H2D_C8_T0_S1",
+      "ERR15996554": "F14R_C8_S_S4",
+      "ERR15996555": "F14R_C3_T0_S1",
+      "ERR15996556": "H2D_C8_R_S3",
+      "ERR15996557": "H2D_C8_R_S1",
+      "ERR15996558": "H2D_C8_S_S1",
+      "ERR15996559": "F14R_C7_T0_S4",
+      "ERR15996560": "F14R_C3_T0_S2",
+      "ERR15996561": "F14R_C3_T0_S5",
+      "ERR15996562": "H2D_C3_T0_S6",
+      "ERR15996563": "H2D_C8_T0_S4",
+      "ERR15996564": "H2D_C8_T0_S3",
+      "ERR15996565": "F14R_C8_T0_S4",
+      "ERR15996566": "F14R_C8_T0_S1",
+      "ERR15996567": "H2D_C8_R_S2",
+      "ERR15996568": "F14R_C8_T0_S3",
+      "ERR15996569": "F14R_C7_T0_S1",
+      "ERR15996570": "H2D_C3_T0_S2",
+      "ERR15996571": "H2D_C3_T0_S4",
+      "ERR15996572": "H2D_C8_S_S2",
+      "ERR15996573": "F14R_C7_T0_S3",
+      "ERR15996574": "F14R_C7_T0_S2",
+      "ERR15996575": "F14R_C8_R_S5",
+      "ERR15996576": "F14R_C7_T0_S6",
+      "ERR15996577": "H2D_C3_T0_S3",
+      "ERR15996578": "H2D_C7_T0_S3",
+      "ERR15996579": "H2D_C7_T0_S2",
+      "ERR15996580": "H2D_C8_T0_S5",
+      "ERR15996581": "F14R_C8_S_S5",
+      "ERR15996582": "H2D_C8_S_S3",
+      "ERR15996583": "H2D_C7_T0_S6",
+      "ERR15996584": "H2D_C3_T0_S1",
+      "ERR15996585": "F14R_C8_T0_S2",
+      "ERR15996586": "H2D_C8_S_S6",
+      "ERR15996587": "F14R_C3_T0_S6",
+      "ERR15996588": "H2D_C8_R_S4",
+      "ERR15996589": "H2D_C8_S_S4",
+      "ERR15996590": "F14R_C8_R_S3",
+      "ERR15996591": "H2D_C7_T0_S4"
+    }
+  }
+}
