@@ -1,0 +1,205 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: WANG2023_TIDAL_TRANSGEN_WGBS
+part: null
+generated_on: '2026-11-18'
+nextflow_run: elated_pesquet
+commit: 45eacf524cd19daea9c45eb8c0d3aa507d68828f
+genome_assembly: GCF_963853765.1
+chemistry: wgbs
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
+libraries: 24
+passed: 24
+failed: []
+qc:
+  mapping_pct:
+    n: 24
+    median: 58.15
+    mean: 57.94
+    min: 54.0
+    max: 60.3
+    sd: 1.58
+  duplication_pct:
+    n: 24
+    median: 14.25
+    mean: 14.52
+    min: 10.6
+    max: 18.44
+    sd: 2.01
+  conversion_pct:
+    n: 24
+    median: 97.08
+    mean: 97.03
+    min: 96.3
+    max: 97.59
+    sd: 0.27
+  cpgs_5x:
+    n: 24
+    median: 8776622.5
+    mean: 8784299.75
+    min: 8477492.0
+    max: 9148733.0
+    sd: 202664.2
+  mean_depth:
+    n: 24
+    median: 19.73
+    mean: 19.73
+    min: 17.74
+    max: 22.65
+    sd: 1.21
+cpg_methylation_pct:
+  n: 24
+  median: 11.47
+  mean: 11.44
+  min: 9.95
+  max: 12.76
+  sd: 0.89
+by_factor:
+- factor_id: tidal_level
+  column: tidal_level
+  reference_level: Sub
+  levels:
+  - level: Sub
+    n: 6
+    median: 12.72
+    mean: 12.69
+    min: 12.57
+    max: 12.76
+    sd: 0.07
+  - level: In
+    n: 18
+    median: 11.31
+    mean: 11.03
+    min: 9.95
+    max: 11.71
+    sd: 0.58
+- factor_id: generation
+  column: generation
+  reference_level: F0
+  levels:
+  - level: F0
+    n: 12
+    median: 12.11
+    mean: 11.88
+    min: 9.95
+    max: 12.76
+    sd: 0.96
+  - level: F1
+    n: 6
+    median: 10.81
+    mean: 10.86
+    min: 10.36
+    max: 11.4
+    sd: 0.45
+  - level: F2
+    n: 6
+    median: 11.51
+    mean: 11.15
+    min: 10.26
+    max: 11.71
+    sd: 0.65
+- factor_id: treatment
+  column: treatment
+  reference_level: C
+  levels:
+  - level: C
+    n: 12
+    median: 11.4
+    mean: 11.35
+    min: 9.95
+    max: 12.73
+    sd: 0.97
+  - level: H
+    n: 12
+    median: 11.54
+    mean: 11.54
+    min: 10.39
+    max: 12.76
+    sd: 0.82
+by_condition:
+- condition: In_F0_C
+  n: 3
+  median: 11.25
+  mean: 10.88
+  min: 9.95
+  max: 11.43
+  sd: 0.81
+- condition: In_F0_H
+  n: 3
+  median: 11.56
+  mean: 11.25
+  min: 10.56
+  max: 11.65
+  sd: 0.61
+- condition: In_F1_C
+  n: 3
+  median: 10.44
+  mean: 10.72
+  min: 10.36
+  max: 11.37
+  sd: 0.56
+- condition: In_F1_H
+  n: 3
+  median: 10.96
+  mean: 11.0
+  min: 10.66
+  max: 11.4
+  sd: 0.37
+- condition: In_F2_C
+  n: 3
+  median: 11.5
+  mean: 11.1
+  min: 10.26
+  max: 11.54
+  sd: 0.73
+- condition: In_F2_H
+  n: 3
+  median: 11.53
+  mean: 11.21
+  min: 10.39
+  max: 11.71
+  sd: 0.71
+- condition: Sub_F0_C
+  n: 3
+  median: 12.71
+  mean: 12.69
+  min: 12.63
+  max: 12.73
+  sd: 0.05
+- condition: Sub_F0_H
+  n: 3
+  median: 12.72
+  mean: 12.68
+  min: 12.57
+  max: 12.76
+  sd: 0.1
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 31938
+    meth_pct:
+      n: 31938
+      median: 4.34
+      mean: 18.06
+      min: 0.32
+      max: 90.82
+      sd: 22.05
+    methylated_ge_50pct: 4675
+  promoter:
+    covered_in_all: 30664
+    meth_pct:
+      n: 30664
+      median: 2.73
+      mean: 6.25
+      min: 0.46
+      max: 91.81
+      sd: 10.33
+    methylated_ge_50pct: 500
+methylomes:
+  files: 288
+  bytes: 2210747807
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/WANG2023_TIDAL_TRANSGEN_WGBS/
