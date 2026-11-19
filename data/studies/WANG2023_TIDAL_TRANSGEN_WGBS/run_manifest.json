@@ -9,14 +9,18 @@
     "extractor_args": "",
     "trim_args": "",
     "qc_min_mapping": 20.0,
-    "qc_min_conversion": 98.0,
+    "qc_min_conversion": 96.0,
     "qc_min_cpgs_5x": 1000000,
-    "snp_mask": null,
+    "snp_mask": {
+      "mask_id": "GCF_963853765.1.snpmask.v1",
+      "sha256": "3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895",
+      "cpgs_masked": 628253
+    },
     "deduplicate": true,
     "profile": "raven",
     "nextflow_version": "26.04.6",
-    "run_name": "sick_jang",
-    "commit": "ea404a808fd4ea151a5fde398e31781812040d9b",
+    "run_name": "elated_pesquet",
+    "commit": "45eacf524cd19daea9c45eb8c0d3aa507d68828f",
     "session": "a6b43a28-acc5-4421-abdb-c444d5e9946d"
   },
   "tool_versions": {

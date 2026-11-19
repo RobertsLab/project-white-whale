@@ -3,12 +3,12 @@
 study_id: WANG2023_TIDAL_TRANSGEN_WGBS
 accession: PRJNA807732
 part: null
-stage: called
+stage: summarized
 profile: raven
 machine: raven
 claimed_by: Steven Roberts
 claimed_on: '2026-10-25'
-nextflow_run: sick_jang
+nextflow_run: elated_pesquet
 notes: null
 history:
 - stage: claimed
@@ -35,3 +35,11 @@ history:
   date: '2026-10-31'
   machine: raven
   note: CpG calls for 24 libraries (run sick_jang)
+- stage: qc_passed
+  date: '2026-11-18'
+  machine: raven
+  note: 24 of 24 libraries pass the QC gate
+- stage: summarized
+  date: '2026-11-18'
+  machine: raven
+  note: summaries committed; 288 files on gannet
