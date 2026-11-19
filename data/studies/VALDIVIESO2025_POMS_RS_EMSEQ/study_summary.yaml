@@ -1,0 +1,227 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: VALDIVIESO2025_POMS_RS_EMSEQ
+part: null
+generated_on: '2026-11-04'
+nextflow_run: lethal_goodall
+commit: 5809bb3404484282efdb8b8eac9e26ed6fefd125
+genome_assembly: GCF_963853765.1
+chemistry: emseq
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
+libraries: 40
+passed: 40
+failed: []
+qc:
+  mapping_pct:
+    n: 40
+    median: 50.85
+    mean: 50.29
+    min: 44.8
+    max: 53.9
+    sd: 2.18
+  duplication_pct:
+    n: 40
+    median: 9.02
+    mean: 9.05
+    min: 7.54
+    max: 10.42
+    sd: 0.7
+  conversion_pct:
+    n: 40
+    median: 99.78
+    mean: 99.75
+    min: 99.14
+    max: 99.81
+    sd: 0.1
+  cpgs_5x:
+    n: 40
+    median: 8846329.0
+    mean: 8832135.28
+    min: 8268211.0
+    max: 9232095.0
+    sd: 197425.0
+  mean_depth:
+    n: 40
+    median: 26.71
+    mean: 27.08
+    min: 17.64
+    max: 39.33
+    sd: 4.63
+cpg_methylation_pct:
+  n: 40
+  median: 11.31
+  mean: 11.31
+  min: 10.34
+  max: 12.1
+  sd: 0.33
+by_factor:
+- factor_id: tissue_type
+  column: tissue_type
+  reference_level: G
+  levels:
+  - level: G
+    n: 0
+  - level: M
+    n: 0
+- factor_id: phenotype_class
+  column: phenotype_class
+  reference_level: S
+  levels:
+  - level: S
+    n: 20
+    median: 11.41
+    mean: 11.42
+    min: 10.9
+    max: 12.1
+    sd: 0.31
+  - level: R
+    n: 20
+    median: 11.29
+    mean: 11.2
+    min: 10.34
+    max: 11.64
+    sd: 0.31
+- factor_id: time
+  column: time
+  reference_level: T0
+  levels:
+  - level: T0
+    n: 20
+    median: 11.2
+    mean: 11.12
+    min: 10.34
+    max: 11.51
+    sd: 0.29
+  - level: T1
+    n: 20
+    median: 11.41
+    mean: 11.5
+    min: 11.17
+    max: 12.1
+    sd: 0.24
+- factor_id: population
+  column: population
+  reference_level: None
+  levels:
+  - level: GT1
+    n: 8
+    median: 11.34
+    mean: 11.42
+    min: 11.18
+    max: 11.82
+    sd: 0.22
+  - level: GT2
+    n: 8
+    median: 11.2
+    mean: 11.17
+    min: 10.85
+    max: 11.41
+    sd: 0.21
+  - level: GT3
+    n: 8
+    median: 11.31
+    mean: 11.22
+    min: 10.34
+    max: 11.74
+    sd: 0.43
+  - level: GT4
+    n: 8
+    median: 11.35
+    mean: 11.31
+    min: 10.53
+    max: 11.83
+    sd: 0.37
+  - level: GT5
+    n: 8
+    median: 11.31
+    mean: 11.45
+    min: 11.08
+    max: 12.1
+    sd: 0.33
+by_condition:
+- condition: G_R_T0
+  n: 5
+  median: 11.14
+  mean: 10.89
+  min: 10.34
+  max: 11.24
+  sd: 0.42
+- condition: G_R_T1
+  n: 5
+  median: 11.31
+  mean: 11.31
+  min: 11.17
+  max: 11.38
+  sd: 0.09
+- condition: G_S_T0
+  n: 5
+  median: 11.27
+  mean: 11.21
+  min: 10.9
+  max: 11.51
+  sd: 0.26
+- condition: G_S_T1
+  n: 5
+  median: 11.66
+  mean: 11.61
+  min: 11.31
+  max: 11.83
+  sd: 0.24
+- condition: M_R_T0
+  n: 5
+  median: 11.29
+  mean: 11.17
+  min: 10.85
+  max: 11.33
+  sd: 0.2
+- condition: M_R_T1
+  n: 5
+  median: 11.49
+  mean: 11.45
+  min: 11.26
+  max: 11.64
+  sd: 0.16
+- condition: M_S_T0
+  n: 5
+  median: 11.22
+  mean: 11.22
+  min: 11.08
+  max: 11.45
+  sd: 0.16
+- condition: M_S_T1
+  n: 5
+  median: 11.63
+  mean: 11.64
+  min: 11.32
+  max: 12.1
+  sd: 0.31
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 31035
+    meth_pct:
+      n: 31035
+      median: 2.87
+      mean: 17.67
+      min: 0.0
+      max: 86.8
+      sd: 23.41
+    methylated_ge_50pct: 5142
+  promoter:
+    covered_in_all: 28487
+    meth_pct:
+      n: 28487
+      median: 0.31
+      mean: 4.77
+      min: 0.0
+      max: 88.14
+      sd: 11.2
+    methylated_ge_50pct: 505
+methylomes:
+  files: 480
+  bytes: 3551644323
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/VALDIVIESO2025_POMS_RS_EMSEQ/

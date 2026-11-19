@@ -1,0 +1,158 @@
+# EM-seq of gill and mantle biopsies from the SAME individual oysters before
+# (T0) and after (T1) an experimental POMS (OsHV-1 microVar) cohabitation
+# challenge, with each oyster's own outcome (resistant = survived, susceptible
+# = moribund) recorded afterwards. Valdivieso et al. 2025, Sci Total Environ
+# 962:178385 (IHPE / Ifremer).
+#
+# Registration imported from AREE (study VALDIVIESO2025_POMS_RS_EMSEQ,
+# registered 2026-10-18 from the deposit and the accepted manuscript on HAL)
+# and checked against the deposit on 2026-10-31: 40 runs, 40 BioSamples, the
+# design in each run's library_name (GT1_09_T0_G_R ... ), 5 libraries in each
+# of the 8 tissue x phenotype x time cells.
+
+study_id: VALDIVIESO2025_POMS_RS_EMSEQ
+aree_study_id: VALDIVIESO2025_POMS_RS_EMSEQ
+
+accessions:
+  bioproject: "PRJEB81880"
+  sra: "ERR13913462-ERR13913501"
+  ena: "PRJEB81880"
+  geo: null
+  doi: "10.1016/j.scitotenv.2025.178385"
+  pmid: "39799647"
+  other: "BioSamples SAMEA116339642-SAMEA116339681. HAL hal-04901984 (accepted manuscript, CC BY 4.0); SSRN preprint 4971857."
+
+citation: "Valdivieso A, Morga B, Degremont L, Mege M, Courtay G, Dorant Y, Escoubas JM, Gawra J, de Lorgeril J, Mitta G, Cosseau C, Vidal-Dupiol J (2025). DNA methylation landscapes before and after Pacific Oyster Mortality Syndrome are different within and between resistant and susceptible Magallana gigas. Science of the Total Environment 962:178385. https://doi.org/10.1016/j.scitotenv.2025.178385"
+species: "Magallana gigas"
+population: "Five hatchery-produced F1 populations (20 females x 10 males each; mass crosses, not full-sib families): #1 Thau Lagoon, #2 Arcachon Bay, #3 La Floride, #4 Logonna Daoulas (wild progenitors from POMS-affected basins), and #5 SC18 (Ifremer La Tremblade line kept biosecured since 2007, never POMS-exposed). Reared biosecured, never exposed to POMS before the challenge. BioSample calls these 'Family 1-5' (library_name prefix GT1-GT5); that they are the paper's populations #1-5 in the same order is inferred from the matching count and numbering, not stated."
+original_assembly: "GCA_902806645.1"
+
+chemistry: emseq
+library_layout: paired
+platform: "Illumina NovaSeq 6000, paired-end 150 bp NEBNext Enzymatic Methyl-seq (EM-seq), libraries and sequencing by IntegraGen; unmethylated lambda spike-in (paper: conversion 99.90 +/- 0.09%). ENA read_count 148-336 M per run; the paper reports 111.9 +/- 19.8 M raw PE reads per sample, not reconciled. ENA library_strategy Bisulfite-Seq."
+
+samples:
+  n_runs: 40
+  n_libraries: 40
+  sample_unit: individual
+  pool_size: null
+  tissues: [gill, mantle]
+  life_stages: [juvenile]
+  sexes_recorded: false
+  ploidy: [diploid]
+
+paired_rnaseq:
+  relationship: none
+  bioproject: null
+  notes: "No RNA-seq in PRJEB81880; fetch-samplesheet reported no non-methylation runs in the project. The group's other POMS studies are separate deposits with different animals."
+
+# 10 oysters (one resistant and one susceptible per population) x 2 tissues x 2
+# times = 40 libraries; each oyster contributes 4. R/S is an INDIVIDUAL outcome
+# of the challenge, not a family or line property, and T0/T1 are repeated
+# biopsies of the same animal, so tissue, phenotype and time are crossed and
+# both population and animal are blocking variables the workflow does not model.
+factors:
+  - factor_id: tissue_type
+    factor_original: "Biopsy tissue: gill (G) or mantle (M); run library_name, and the BioSample tissue_type attribute"
+    factor_standardized: other
+    levels: ["G", "M"]
+    reference_level: "G"
+  - factor_id: phenotype_class
+    factor_original: "Each oyster's own outcome of the cohabitation challenge: resistant (R, survived) vs susceptible (S, found moribund, valves not closed within 30 s of emersion); run library_name, and the BioSample phenotype attribute"
+    factor_standardized: pathogen
+    levels: ["S", "R"]
+    reference_level: "S"
+  - factor_id: time
+    factor_original: "Biopsy time: T0 before infection (30 d before cohabitation) vs T1 after, taken at moribundity for susceptible animals and at the end of the challenge for resistant ones; run library_name"
+    factor_standardized: pathogen
+    levels: ["T0", "T1"]
+    reference_level: "T0"
+  - factor_id: population
+    factor_original: "Source population GT1-GT5 (paper's populations #1-5); one resistant and one susceptible animal per population, so population is matched across the phenotype contrast"
+    factor_standardized: genotype_or_population
+    levels: ["GT1", "GT2", "GT3", "GT4", "GT5"]
+    reference_level: null
+
+goals: [1]
+
+data_availability:
+  raw_data_available: true
+  fastq_size_gb: 624.9
+  published_dml_dmr_tables: true
+  access_notes: "Raw paired-end FASTQ for all 40 runs are public in ENA under PRJEB81880 (first public 2024-11-06), all with ENA-generated FASTQ and MD5s. The paper's supplementary tables (S5-S18) list DSS DMRs and genes per comparison; they were not retrieved or inspected for this registration, and are significance-filtered calls on cgigas_uk_roslin_v1 coordinates, so this study is registered for raw reanalysis."
+
+quality_flags:
+  - confounded_design
+  - sex_unknown
+
+limitations: >
+  (1) Pairing not modeled. Resistant and susceptible animals are matched one
+  to one by population, and T1 is a repeat biopsy of the same animal as T0.
+  The workflow's per-sample calls carry no blocking term, so a population-
+  blocked or animal-paired contrast needs a workflow change before any
+  re-derived result is treated as final. For R vs S this leaves population
+  (which dominates the paper's PCA) as unmodeled variance; for T1 vs T0 it
+  discards the within-animal pairing. (2) Small n: 5 animals per phenotype
+  class, one per population. Effective n is 5 individuals, not 5 families:
+  R/S is an individual outcome and the populations are mass crosses. How the
+  10 animals were chosen from each population's survivors and moribund
+  animals is not stated. (3) Individual phenotype from one challenge. With
+  population survival from 15% (#5 SC18) to 85% (#1 Thau), an individual's
+  outcome has a stochastic component (exposure dose, tank) that one challenge
+  cannot separate from predisposition. (4) The T1 contrast is not
+  like-for-like in time: susceptible animals were biopsied when moribund
+  (from 52 hpc onward), resistant animals at the end of the experiment, so a
+  T1 R-vs-S difference mixes outcome with sampling time and disease state
+  (dying tissue). (5) T1 vs T0 is confounded with everything else that changed
+  over about five weeks: growth, the 30 d recovery, possible regeneration at
+  the T0 biopsy site (whether T1 was taken from the same site is not stated),
+  and the move to the challenge tanks. There is no uninfected control kept
+  through the same period. (6) Identifier anomaly: oyster code 21 appears for
+  both the resistant (GT4_21_*_R) and the susceptible (GT4_21_*_S)
+  population-4 oyster. Codes are otherwise distinct within a population, so
+  either codes are not unique tags or a label is wrong; the four libraries per
+  animal should be checked for genotype concordance (C/T-neutral SNPs) before
+  the results are used, which also confirms T0/T1 and gill/mantle pairing for
+  all ten animals. BioSample sample_description says 'susceptible (R)' for the
+  ten susceptible mantle libraries; the phenotype attribute and library_name
+  say susceptible, and are used. (7) Sources conflict on details: recovery
+  after biopsy is 30 days in the methods but three weeks in the results;
+  acclimation reached 21 C but tanks are reported at 20 C; every BioSample
+  gives collection date 2022-03-01 and age 10 months though progenitors were
+  collected in 2022 and the F1 grown a year; ENA read counts exceed the
+  paper's. life_stage is juvenile by inference from age; sex and maturity are
+  not reported. (8) EM-seq, like bisulfite data, cannot separate C/T SNPs from
+  methylation, and five genetically distinct populations make the SNP mask
+  important here. (9) The paper's own coordinates are on cgigas_uk_roslin_v1
+  (GCA_902806645.1); this project aligns to GCF_963853765.1, so published
+  regions must be lifted over, not relabeled.
+
+provenance:
+  registered_by: "STEVEN"
+  date_registered: "2026-10-31"
+  curation_notes: >
+    Claimed with `whale start-study --accession PRJEB81880 --study-id
+    VALDIVIESO2025_POMS_RS_EMSEQ --profile klone --machine klone`.
+    Registration imported from AREE's (registered 2026-10-18 by Steven
+    Roberts from the deposited ENA metadata and the accepted manuscript on
+    HAL, hal-04901984 CC BY 4.0, which names PRJEB81880; the SSRN preprint
+    describes the same design). Sample sheet and FASTQ manifest generated
+    from live ENA metadata (2026-10-31) with `whale fetch-samplesheet
+    --bioproject PRJEB81880 --label-field library_name --label-pattern
+    '^(?P<population>GT[1-5])_(?P<code>\d{2})_(?P<time>T[01])_(?P<tissue_code>[GM])_(?P<phenotype_class>[RS])$'
+    --condition-attribute tissue_code --condition-attribute phenotype_class
+    --condition-attribute time --attribute population --attribute code
+    --attribute phenotype --attribute tissue_type --attribute ploidy`:
+    40 runs, 40 libraries, 40 BioSamples, 5 libraries in each of the 8
+    tissue x phenotype x time cells, all with ENA FASTQ (no submitted_ftp
+    fallback). Reference levels follow AREE: susceptible, T0 and gill, so a
+    positive difference means higher methylation in later-resistant animals,
+    after POMS, or in gill. Ploidy, tissue and phenotype are taken from the
+    BioSample attributes; the paper supplied the meaning of T0/T1 and the R/S
+    definition. NOTE: `registry/backlog.tsv` records 425 GB for this study;
+    ENA reports 624.9 GB, which is the figure used here.
+  source_links:
+    - "https://www.ebi.ac.uk/ena/browser/view/PRJEB81880"
+    - "https://doi.org/10.1016/j.scitotenv.2025.178385"
+    - "https://hal.science/hal-04901984"
+    - "https://pubmed.ncbi.nlm.nih.gov/39799647"
