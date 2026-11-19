@@ -213,3 +213,34 @@ def test_summarize_without_factors():
     qc = [{"sample_id": "A", "qc_pass": "true", "cpg_meth_pct": "10", "mapping_pct": "50"}]
     s = summarize({}, [], qc, {"params": {"study_id": "X2026_Y"}}, part=None, run_name=None, today="2026-01-01")
     assert s["study_id"] == "X2026_Y" and s["by_factor"] == [] and s["cpg_methylation_pct"]["sd"] is None
+
+
+def test_factor_prefers_the_column_that_holds_its_levels():
+    """A column named after the factor wins only if it holds the factor's levels.
+
+    VALDIVIESO2025 ships both tissue_type ("gills"/"mantle", the BioSample
+    attribute) and tissue_code ("G"/"M", what the factor declares); the name
+    match alone put every library in neither level.
+    """
+    sheet = [{"sample_id": "A", "tissue_type": "gills", "tissue_code": "G"},
+             {"sample_id": "B", "tissue_type": "mantle", "tissue_code": "M"}]
+    qc = [{"sample_id": "A", "qc_pass": "true", "cpg_meth_pct": "10"},
+          {"sample_id": "B", "qc_pass": "true", "cpg_meth_pct": "12"}]
+    study = {"factors": [{"factor_id": "tissue_type", "levels": ["G", "M"], "reference_level": "G"}]}
+
+    tissue, = summarize(study, sheet, qc, {"params": {}}, part=None, run_name=None,
+                        today="2026-11-04")["by_factor"]
+    assert tissue["column"] == "tissue_code"
+    assert [(lv["level"], lv["n"]) for lv in tissue["levels"]] == [("G", 1), ("M", 1)]
+
+
+def test_factor_keeps_its_own_column_when_the_levels_match():
+    sheet = [{"sample_id": "A", "ploidy": "diploid"}, {"sample_id": "B", "ploidy": "triploid"}]
+    qc = [{"sample_id": "A", "qc_pass": "true", "cpg_meth_pct": "10"},
+          {"sample_id": "B", "qc_pass": "true", "cpg_meth_pct": "12"}]
+    study = {"factors": [{"factor_id": "ploidy", "levels": ["diploid", "triploid"]}]}
+
+    ploidy, = summarize(study, sheet, qc, {"params": {}}, part=None, run_name=None,
+                        today="2026-11-04")["by_factor"]
+    assert ploidy["column"] == "ploidy"
+    assert [(lv["level"], lv["n"]) for lv in ploidy["levels"]] == [("diploid", 1), ("triploid", 1)]
