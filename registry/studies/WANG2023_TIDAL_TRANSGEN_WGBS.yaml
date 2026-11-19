@@ -78,7 +78,12 @@ limitations: >
   intertidal F0. (2) One population per tidal class, so origin is confounded
   with population background. (3) All libraries share one BioSample; the design
   comes from run library_name. (4) Pooling, heat-shock dose and sex not yet
-  confirmed from the paper's methods.
+  confirmed from the paper's methods. (5) Bisulfite conversion, estimated
+  from non-CpG methylation, is 96.3-97.6% in every library, below the 98%
+  QC gate; the study runs with a 96% gate. Incomplete conversion inflates
+  methylation levels by up to ~3.7 points uniformly, so between-group
+  contrasts are usable but absolute levels are not comparable to studies
+  at >= 98%.
 
 provenance:
   registered_by: "Steven Roberts"
@@ -93,7 +98,9 @@ provenance:
     --condition-attribute treatment --attribute replicate --attribute tissue`:
     24 runs, 8 groups of 3. Registered from the deposit and the abstract;
     the paper's methods still to be read. Same lab and Laoting populations as
-    WANG2020_TIDAL_HEAT_WGBS. Diploid assumed (wild-derived).
+    WANG2020_TIDAL_HEAT_WGBS. Diploid assumed (wild-derived). Run sick_jang
+    failed all 24 libraries on conversion (96.3-97.6% < 98%); accepted
+    2026-11-18 by lowering qc_min_conversion to 96 in the study config.
   source_links:
     - "https://doi.org/10.1016/j.scitotenv.2023.162112"
     - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA807732"
