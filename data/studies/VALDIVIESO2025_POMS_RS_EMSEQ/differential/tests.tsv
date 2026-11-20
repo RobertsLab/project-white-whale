@@ -1,0 +1,17 @@
+job_id	analysis	units	outliers	region	genes_tested	coef	n_sig	up	down	large	lambda	note
+phenotype.G.T0	all_units	10		gene_body	31272	phenotype_classR	381	133	248	73	1.137	
+phenotype.G.T0	all_units	10		promoter	29100	phenotype_classR	215	86	129	47	0.856	
+phenotype.G.T1	all_units	10		gene_body	31182	phenotype_classR	504	146	358	99	1.182	
+phenotype.G.T1	all_units	10		promoter	28943	phenotype_classR	189	81	108	40	0.805	
+phenotype.M.T0	all_units	10		gene_body	31285	phenotype_classR	287	142	145	57	1.027	
+phenotype.M.T0	all_units	10		promoter	29136	phenotype_classR	153	72	81	38	0.862	
+phenotype.M.T1	all_units	10		gene_body	31249	phenotype_classR	340	117	223	55	1.173	
+phenotype.M.T1	all_units	10		promoter	29071	phenotype_classR	243	75	168	47	0.943	
+time.G	all_units	20		gene_body	31022	timeT1	1468	1449	19	2	1.442	
+time.G	all_units	20		promoter	28571	timeT1	24	20	4	0	0.737	
+time.M	all_units	20		gene_body	31027	timeT1	217	213	4	0	1.326	
+time.M	all_units	20		promoter	28603	timeT1	27	19	8	0	0.79	
+tissue.T0	all_units	20		gene_body	31064	tissue_typeM	1988	1493	495	79	1.328	
+tissue.T0	all_units	20		promoter	28662	tissue_typeM	481	350	131	125	0.855	
+tissue.T1	all_units	20		gene_body	31017	tissue_typeM	1763	1397	366	44	1.198	
+tissue.T1	all_units	20		promoter	28592	tissue_typeM	385	289	96	100	0.784	

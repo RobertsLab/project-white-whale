@@ -13,6 +13,7 @@ from pathlib import Path
 import jsonschema
 import yaml
 
+from whale.differential import _terms
 from whale.paths import schemas_dir
 from whale.vocab import load_vocab
 
@@ -73,6 +74,16 @@ def validate_study(study: dict, repo: Path, *, filename_stem: str | None = None)
     ids = [f["factor_id"] for f in study["factors"]]
     if len(ids) != len(set(ids)):
         errors.append("factors: factor_id values must be unique")
+    diff = study.get("differential") or {}
+    names = set(ids) | ({"individual"} if diff.get("individual") else set())
+    model_ids = [m["id"] for m in diff.get("models") or []]
+    if len(model_ids) != len(set(model_ids)):
+        errors.append("differential/models: id values must be unique")
+    for m in diff.get("models") or []:
+        for t in _terms(m["formula"]) + list(m.get("within") or []):
+            if t not in names:
+                errors.append(f"differential/models/{m['id']}: {t!r} is not a factor_id"
+                              + ("" if diff.get("individual") else " (or set differential.individual)"))
 
     if samples["sample_unit"] == "pool" and samples.get("pool_size") is None:
         warnings.append("samples/sample_unit is pool but pool_size is not recorded")
