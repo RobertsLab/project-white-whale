@@ -1,0 +1,137 @@
+# Written by `whale differential` (src/whale/differential.py, workflows/differential/dss.R).
+study_id: ROBERTS2022_PH_PLOIDY_WGBS
+generated_on: '2026-11-20'
+genome_assembly: GCF_963853765.1
+snp_mask: GCF_963853765.1.snpmask.v1
+gene_tables_from_run: curious_mestorf
+method:
+  test: DSS beta-binomial regression (DMLfit.multiFactor, Wald test per coefficient)
+  dss_version: 2.58.0
+  container: quay.io/biocontainers/bioconductor-dss:2.58.0--r45h01b2380_0
+  site: 'one gene: its summed methylated and total calls in the region'
+  filter:
+    min_cpgs: 5
+    min_calls: 10
+    every_unit: true
+  fdr: Benjamini-Hochberg within each job, region and coefficient; significant at
+    < 0.05
+  units: libraries of one BioSample summed into one unit
+  sensitivity: repeated without units more than 3 SD from the mean on gene-body PC1
+    or PC2
+quality_flags:
+- sex_unknown
+units: 24
+skipped: []
+jobs:
+- job_id: main
+  model: main
+  formula: ~ ploidy + ph
+  stratum: null
+  units: 24
+  all_units:
+    units: 24
+    regions:
+      gene_body:
+        genes_tested: 29525
+        tests:
+          ploidytriploid:
+            fdr_lt_0.05: 7
+            lambda: 1.03
+            up: 6
+            down: 1
+            and_abs_diff_ge_10: 3
+          ph7.7:
+            fdr_lt_0.05: 0
+            lambda: 1.006
+            up: 0
+            down: 0
+            and_abs_diff_ge_10: 0
+      promoter:
+        genes_tested: 25537
+        tests:
+          ploidytriploid:
+            fdr_lt_0.05: 1
+            lambda: 0.862
+            up: 1
+            down: 0
+            and_abs_diff_ge_10: 0
+          ph7.7:
+            fdr_lt_0.05: 3
+            lambda: 0.883
+            up: 3
+            down: 0
+            and_abs_diff_ge_10: 1
+  without_pca_outliers:
+    units: 22
+    regions:
+      gene_body:
+        genes_tested: 29796
+        tests:
+          ploidytriploid:
+            fdr_lt_0.05: 5
+            lambda: 0.961
+            up: 4
+            down: 1
+            and_abs_diff_ge_10: 2
+          ph7.7:
+            fdr_lt_0.05: 0
+            lambda: 0.936
+            up: 0
+            down: 0
+            and_abs_diff_ge_10: 0
+      promoter:
+        genes_tested: 26168
+        tests:
+          ploidytriploid:
+            fdr_lt_0.05: 3
+            lambda: 0.854
+            up: 0
+            down: 3
+            and_abs_diff_ge_10: 1
+          ph7.7:
+            fdr_lt_0.05: 2
+            lambda: 0.856
+            up: 2
+            down: 0
+            and_abs_diff_ge_10: 1
+    outliers:
+    - SAMN17011243
+    - SAMN17011249
+- job_id: interaction
+  model: interaction
+  formula: ~ ploidy * ph
+  stratum: null
+  units: 24
+  all_units:
+    units: 24
+    regions:
+      gene_body:
+        genes_tested: 29525
+        tests:
+          ploidytriploid:ph7.7:
+            fdr_lt_0.05: 7
+            lambda: 1.163
+      promoter:
+        genes_tested: 25537
+        tests:
+          ploidytriploid:ph7.7:
+            fdr_lt_0.05: 2
+            lambda: 0.879
+  without_pca_outliers:
+    units: 22
+    regions:
+      gene_body:
+        genes_tested: 29796
+        tests:
+          ploidytriploid:ph7.7:
+            fdr_lt_0.05: 6
+            lambda: 1.038
+      promoter:
+        genes_tested: 26168
+        tests:
+          ploidytriploid:ph7.7:
+            fdr_lt_0.05: 1
+            lambda: 0.866
+    outliers:
+    - SAMN17011243
+    - SAMN17011249

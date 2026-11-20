@@ -1,0 +1,7 @@
+job_id	analysis	units	outliers	region	genes_tested	coef	n_sig	up	down	large	lambda	note
+main	all_units	12		gene_body	31800	originIn	1622	473	1149	306	1.669	
+main	all_units	12		gene_body	31800	temperatureH	53	21	32	7	0.906	
+main	all_units	12		promoter	30762	originIn	540	247	293	143	1.13	
+main	all_units	12		promoter	30762	temperatureH	40	14	26	9	0.865	
+interaction	all_units	12		gene_body	31800	originIn:temperatureH	1449				1.452	
+interaction	all_units	12		promoter	30762	originIn:temperatureH	252				0.96	
