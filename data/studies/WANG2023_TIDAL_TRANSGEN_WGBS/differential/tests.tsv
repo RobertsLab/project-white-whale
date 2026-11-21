@@ -1,0 +1,9 @@
+job_id	analysis	units	outliers	region	genes_tested	coef	n_sig	up	down	large	lambda	note
+main	all_units	24		gene_body	31808	tidal_levelIn	3645	213	3432	556	1.937	
+main	all_units	24		gene_body	31808	generationF1	403	290	113	41	1.138	
+main	all_units	24		gene_body	31808	generationF2	280	183	97	43	1.475	
+main	all_units	24		gene_body	31808	treatmentH	8	6	2	2	0.723	
+main	all_units	24		promoter	30404	tidal_levelIn	451	108	343	93	1.266	
+main	all_units	24		promoter	30404	generationF1	51	27	24	19	0.975	
+main	all_units	24		promoter	30404	generationF2	53	24	29	10	1.123	
+main	all_units	24		promoter	30404	treatmentH	2	2	0	0	0.841	

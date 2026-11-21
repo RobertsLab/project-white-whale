@@ -1,0 +1,234 @@
+# Written by `whale differential` (src/whale/differential.py, workflows/differential/dss.R).
+study_id: VALDIVIESO2025_POMS_RS_EMSEQ
+generated_on: '2026-11-20'
+genome_assembly: GCF_963853765.1
+snp_mask: GCF_963853765.1.snpmask.v1
+gene_tables_from_run: lethal_goodall
+method:
+  test: DSS beta-binomial regression (DMLfit.multiFactor, Wald test per coefficient)
+  dss_version: 2.58.0
+  container: quay.io/biocontainers/bioconductor-dss:2.58.0--r45h01b2380_0
+  site: 'one gene: its summed methylated and total calls in the region'
+  filter:
+    min_cpgs: 5
+    min_calls: 10
+    every_unit: true
+  fdr: Benjamini-Hochberg within each job, region and coefficient; significant at
+    < 0.05
+  units: libraries of one BioSample summed into one unit
+  sensitivity: repeated without units more than 3 SD from the mean on gene-body PC1
+    or PC2
+quality_flags:
+- confounded_design
+- sex_unknown
+units: 40
+skipped: []
+jobs:
+- job_id: phenotype.G.T0
+  model: phenotype
+  formula: ~ population + phenotype_class
+  stratum: tissue_type=G,time=T0
+  units: 10
+  all_units:
+    units: 10
+    regions:
+      gene_body:
+        genes_tested: 31272
+        tests:
+          phenotype_classR:
+            fdr_lt_0.05: 381
+            lambda: 1.137
+            up: 133
+            down: 248
+            and_abs_diff_ge_10: 73
+      promoter:
+        genes_tested: 29100
+        tests:
+          phenotype_classR:
+            fdr_lt_0.05: 215
+            lambda: 0.856
+            up: 86
+            down: 129
+            and_abs_diff_ge_10: 47
+- job_id: phenotype.G.T1
+  model: phenotype
+  formula: ~ population + phenotype_class
+  stratum: tissue_type=G,time=T1
+  units: 10
+  all_units:
+    units: 10
+    regions:
+      gene_body:
+        genes_tested: 31182
+        tests:
+          phenotype_classR:
+            fdr_lt_0.05: 504
+            lambda: 1.182
+            up: 146
+            down: 358
+            and_abs_diff_ge_10: 99
+      promoter:
+        genes_tested: 28943
+        tests:
+          phenotype_classR:
+            fdr_lt_0.05: 189
+            lambda: 0.805
+            up: 81
+            down: 108
+            and_abs_diff_ge_10: 40
+- job_id: phenotype.M.T0
+  model: phenotype
+  formula: ~ population + phenotype_class
+  stratum: tissue_type=M,time=T0
+  units: 10
+  all_units:
+    units: 10
+    regions:
+      gene_body:
+        genes_tested: 31285
+        tests:
+          phenotype_classR:
+            fdr_lt_0.05: 287
+            lambda: 1.027
+            up: 142
+            down: 145
+            and_abs_diff_ge_10: 57
+      promoter:
+        genes_tested: 29136
+        tests:
+          phenotype_classR:
+            fdr_lt_0.05: 153
+            lambda: 0.862
+            up: 72
+            down: 81
+            and_abs_diff_ge_10: 38
+- job_id: phenotype.M.T1
+  model: phenotype
+  formula: ~ population + phenotype_class
+  stratum: tissue_type=M,time=T1
+  units: 10
+  all_units:
+    units: 10
+    regions:
+      gene_body:
+        genes_tested: 31249
+        tests:
+          phenotype_classR:
+            fdr_lt_0.05: 340
+            lambda: 1.173
+            up: 117
+            down: 223
+            and_abs_diff_ge_10: 55
+      promoter:
+        genes_tested: 29071
+        tests:
+          phenotype_classR:
+            fdr_lt_0.05: 243
+            lambda: 0.943
+            up: 75
+            down: 168
+            and_abs_diff_ge_10: 47
+- job_id: time.G
+  model: time
+  formula: ~ individual + time
+  stratum: tissue_type=G
+  units: 20
+  all_units:
+    units: 20
+    regions:
+      gene_body:
+        genes_tested: 31022
+        tests:
+          timeT1:
+            fdr_lt_0.05: 1468
+            lambda: 1.442
+            up: 1449
+            down: 19
+            and_abs_diff_ge_10: 2
+      promoter:
+        genes_tested: 28571
+        tests:
+          timeT1:
+            fdr_lt_0.05: 24
+            lambda: 0.737
+            up: 20
+            down: 4
+            and_abs_diff_ge_10: 0
+- job_id: time.M
+  model: time
+  formula: ~ individual + time
+  stratum: tissue_type=M
+  units: 20
+  all_units:
+    units: 20
+    regions:
+      gene_body:
+        genes_tested: 31027
+        tests:
+          timeT1:
+            fdr_lt_0.05: 217
+            lambda: 1.326
+            up: 213
+            down: 4
+            and_abs_diff_ge_10: 0
+      promoter:
+        genes_tested: 28603
+        tests:
+          timeT1:
+            fdr_lt_0.05: 27
+            lambda: 0.79
+            up: 19
+            down: 8
+            and_abs_diff_ge_10: 0
+- job_id: tissue.T0
+  model: tissue
+  formula: ~ individual + tissue_type
+  stratum: time=T0
+  units: 20
+  all_units:
+    units: 20
+    regions:
+      gene_body:
+        genes_tested: 31064
+        tests:
+          tissue_typeM:
+            fdr_lt_0.05: 1988
+            lambda: 1.328
+            up: 1493
+            down: 495
+            and_abs_diff_ge_10: 79
+      promoter:
+        genes_tested: 28662
+        tests:
+          tissue_typeM:
+            fdr_lt_0.05: 481
+            lambda: 0.855
+            up: 350
+            down: 131
+            and_abs_diff_ge_10: 125
+- job_id: tissue.T1
+  model: tissue
+  formula: ~ individual + tissue_type
+  stratum: time=T1
+  units: 20
+  all_units:
+    units: 20
+    regions:
+      gene_body:
+        genes_tested: 31017
+        tests:
+          tissue_typeM:
+            fdr_lt_0.05: 1763
+            lambda: 1.198
+            up: 1397
+            down: 366
+            and_abs_diff_ge_10: 44
+      promoter:
+        genes_tested: 28592
+        tests:
+          tissue_typeM:
+            fdr_lt_0.05: 385
+            lambda: 0.784
+            up: 289
+            down: 96
+            and_abs_diff_ge_10: 100

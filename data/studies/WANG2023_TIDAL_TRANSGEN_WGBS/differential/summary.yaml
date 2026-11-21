@@ -1,0 +1,89 @@
+# Written by `whale differential` (src/whale/differential.py, workflows/differential/dss.R).
+study_id: WANG2023_TIDAL_TRANSGEN_WGBS
+generated_on: '2026-11-20'
+genome_assembly: GCF_963853765.1
+snp_mask: GCF_963853765.1.snpmask.v1
+gene_tables_from_run: elated_pesquet
+method:
+  test: DSS beta-binomial regression (DMLfit.multiFactor, Wald test per coefficient)
+  dss_version: 2.58.0
+  container: quay.io/biocontainers/bioconductor-dss:2.58.0--r45h01b2380_0
+  site: 'one gene: its summed methylated and total calls in the region'
+  filter:
+    min_cpgs: 5
+    min_calls: 10
+    every_unit: true
+  fdr: Benjamini-Hochberg within each job, region and coefficient; significant at
+    < 0.05
+  units: libraries of one BioSample summed into one unit
+  sensitivity: repeated without units more than 3 SD from the mean on gene-body PC1
+    or PC2
+quality_flags:
+- shared_biosample
+- confounded_design
+- sex_unknown
+units: 24
+skipped: []
+jobs:
+- job_id: main
+  model: main
+  formula: ~ tidal_level + generation + treatment
+  stratum: null
+  units: 24
+  all_units:
+    units: 24
+    regions:
+      gene_body:
+        genes_tested: 31808
+        tests:
+          tidal_levelIn:
+            fdr_lt_0.05: 3645
+            lambda: 1.937
+            up: 213
+            down: 3432
+            and_abs_diff_ge_10: 556
+          generationF1:
+            fdr_lt_0.05: 403
+            lambda: 1.138
+            up: 290
+            down: 113
+            and_abs_diff_ge_10: 41
+          generationF2:
+            fdr_lt_0.05: 280
+            lambda: 1.475
+            up: 183
+            down: 97
+            and_abs_diff_ge_10: 43
+          treatmentH:
+            fdr_lt_0.05: 8
+            lambda: 0.723
+            up: 6
+            down: 2
+            and_abs_diff_ge_10: 2
+      promoter:
+        genes_tested: 30404
+        tests:
+          tidal_levelIn:
+            fdr_lt_0.05: 451
+            lambda: 1.266
+            up: 108
+            down: 343
+            and_abs_diff_ge_10: 93
+          generationF1:
+            fdr_lt_0.05: 51
+            lambda: 0.975
+            up: 27
+            down: 24
+            and_abs_diff_ge_10: 19
+          generationF2:
+            fdr_lt_0.05: 53
+            lambda: 1.123
+            up: 24
+            down: 29
+            and_abs_diff_ge_10: 10
+          treatmentH:
+            fdr_lt_0.05: 2
+            lambda: 0.841
+            up: 2
+            down: 0
+            and_abs_diff_ge_10: 0

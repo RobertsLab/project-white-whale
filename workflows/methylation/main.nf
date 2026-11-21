@@ -196,7 +196,7 @@ workflow {
         study_id: params.study_id, part: params.part, chemistry: params.chemistry,
         genome_assembly: params.genome_assembly, bismark_align_args: params.bismark_align_args,
         chemistry_align_args: chem.align,
-        extractor_args: params.extractor_args, trim_args: params.trim_args,
+        extractor_args: params.extractor_args, ignore_r2: params.ignore_r2, trim_args: params.trim_args,
         swap_mates: params.swap_mates,
         qc_min_mapping: params.qc_min_mapping, qc_min_conversion: params.qc_min_conversion,
         qc_min_cpgs_5x: params.qc_min_cpgs_5x, snp_mask: snp_mask,

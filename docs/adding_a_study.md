@@ -104,6 +104,25 @@
    sets the YAML's `chemistry` and that every file will be staged (no
    `--run`) before it downloads anything. On klone, submit the run as an `sbatch` head job
    instead ([compute profiles](compute_profiles.md)).
+
+   **Check the library type after the first run** (or on one library first,
+   for a deep study): the library kit is rarely in the deposit, and two kinds
+   need a setting in the study config.
+   - *Non-directional* (Zymo Pico Methyl-Seq and similar). FastQC's per-base
+     content shows read 1 with as much C as G (~9% each); a directional
+     library has under 1% C in read 1. Directional mode maps only half of
+     such a library's pairs (ROBERTS2022: 30%). Add `--non_directional` to
+     `bismark_align_args`.
+   - *A synthetic tail on read 2* (adaptase-based kits). The M-bias table
+     (`<sample>.dedup.M-bias.txt`) shows the first ~15 positions of read 2
+     highly methylated in CpG **and** CHH context, and non-CpG methylation
+     of 2-4% that looks like poor conversion (WANG2023). Clip it with
+     `trim_args` (`--clip_r2 18 --three_prime_clip_r1 18`); do not lower
+     `qc_min_conversion` for it.
+
+   Every paired library also reads low at the first two bases of read 2
+   (end repair); the workflow leaves them out of the calls
+   (`params.ignore_r2 = 2`).
 8. **Nothing to record by hand.** When the run succeeds it calls `whale
    record-run`, which commits `qc_summary.tsv`, `run_manifest.json`,
    `methylome_manifest.tsv`, `study_summary.yaml` and the gene x sample

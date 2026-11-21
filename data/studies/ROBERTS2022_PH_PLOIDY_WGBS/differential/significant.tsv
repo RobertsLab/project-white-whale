@@ -1,0 +1,38 @@
+job_id	analysis	region	coef	gene_id	symbol	mean_pct	diff	fdr
+main	all_units	gene_body	ploidytriploid	105327755	LOC105327755	65.88	6.78	0.03843
+main	all_units	gene_body	ploidytriploid	105331697	LOC105331697	35.34	8.35	0.00664
+main	all_units	gene_body	ploidytriploid	105335458	LOC105335458	23.2	5.02	0.00115
+main	all_units	gene_body	ploidytriploid	136274827	LOC136274827	28.67	28.48	0.0419
+main	all_units	gene_body	ploidytriploid	105329908	LOC105329908	65.29	8.71	0.03843
+main	all_units	gene_body	ploidytriploid	136275703	LOC136275703	26.79	-14.43	0.00664
+main	all_units	gene_body	ploidytriploid	136276344	LOC136276344	6.02	10.27	0.0006023
+main	all_units	promoter	ploidytriploid	136270185	LOC136270185	4.75	4.69	0.04965
+main	all_units	promoter	ph7.7	136273544	LOC136273544	42.54	22.91	1.643e-05
+main	all_units	promoter	ph7.7	105335528	LOC105335528	8.23	5.84	0.03804
+main	all_units	promoter	ph7.7	105338276	LOC105338276	7.39	7.46	0.03804
+main	without_pca_outliers	gene_body	ploidytriploid	105331697	LOC105331697	35.62	8.12	0.04406
+main	without_pca_outliers	gene_body	ploidytriploid	105335458	LOC105335458	22.98	5.11	0.007478
+main	without_pca_outliers	gene_body	ploidytriploid	136275703	LOC136275703	26.22	-14.28	0.04406
+main	without_pca_outliers	gene_body	ploidytriploid	136276344	LOC136276344	5.44	8.93	0.01045
+main	without_pca_outliers	gene_body	ploidytriploid	105319956	LOC105319956	60.86	10.5	0.01045
+main	without_pca_outliers	promoter	ploidytriploid	136272911	LOC136272911	1.9	-3.26	0.008848
+main	without_pca_outliers	promoter	ploidytriploid	105345760	LOC105345760	10.5	-6.04	0.001912
+main	without_pca_outliers	promoter	ploidytriploid	105333144	LOC105333144	27.75	-15	0.008848
+main	without_pca_outliers	promoter	ph7.7	136273544	LOC136273544	43.13	23.91	3.492e-07
+main	without_pca_outliers	promoter	ph7.7	105335655	LOC105335655	0.96	1.37	0.01631
+interaction	all_units	gene_body	ploidytriploid:ph7.7	105320320	LOC105320320	6.49		0.01507
+interaction	all_units	gene_body	ploidytriploid:ph7.7	105332144	LOC105332144	72.48		0.02372
+interaction	all_units	gene_body	ploidytriploid:ph7.7	105333876	LOC105333876	49.55		0.03425
+interaction	all_units	gene_body	ploidytriploid:ph7.7	105341855	LOC105341855	74.61		0.04113
+interaction	all_units	gene_body	ploidytriploid:ph7.7	105318192	LOC105318192	13.81		0.04113
+interaction	all_units	gene_body	ploidytriploid:ph7.7	105344591	LOC105344591	1.39		0.04113
+interaction	all_units	gene_body	ploidytriploid:ph7.7	117691560	LOC117691560	4.79		0.03425
+interaction	all_units	promoter	ploidytriploid:ph7.7	136272615	LOC136272615	60.3		0.002634
+interaction	all_units	promoter	ploidytriploid:ph7.7	105342392	LOC105342392	2.78		0.04954
+interaction	without_pca_outliers	gene_body	ploidytriploid:ph7.7	105333180	LOC105333180	8.88		0.04273
+interaction	without_pca_outliers	gene_body	ploidytriploid:ph7.7	105325370	LOC105325370	4.9		0.04273
+interaction	without_pca_outliers	gene_body	ploidytriploid:ph7.7	105320320	LOC105320320	6.27		0.04273
+interaction	without_pca_outliers	gene_body	ploidytriploid:ph7.7	105333876	LOC105333876	49.48		0.04273
+interaction	without_pca_outliers	gene_body	ploidytriploid:ph7.7	105333099	LOC105333099	7.21		0.01904
+interaction	without_pca_outliers	gene_body	ploidytriploid:ph7.7	117683777	LOC117683777	2.01		0.04273
+interaction	without_pca_outliers	promoter	ploidytriploid:ph7.7	136272615	LOC136272615	59.6		0.004793
