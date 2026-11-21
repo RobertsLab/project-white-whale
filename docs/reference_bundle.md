@@ -72,3 +72,13 @@ moment would both write it.
 
 Not in the bundle yet: the CpG index and the C/T SNP mask (later Phase 1,
 PLAN.md §6.1).
+
+## The Salmon index
+
+`workflows/rnaseq` builds a decoy-aware Salmon index from `rna.fna` with
+`genomic.fna` appended as decoys, the first time it runs on a machine, and
+keeps it in the bundle as `salmon_index/` (or `$WHALE_SALMON_INDEX/salmon_index/`;
+`salmon_index_nodecoy/` with `--salmon_decoys false`). Its `whale_index.json`
+records the SHA-256 of both FASTA files, k and the Salmon version; if the
+bundle's files no longer match, the workflow stops and asks for the index to
+be deleted. See [rnaseq.md](rnaseq.md).
