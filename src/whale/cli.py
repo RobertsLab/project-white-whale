@@ -1014,5 +1014,47 @@ def mcp_cmd(repo_path):
     run(Path(repo_path).resolve() if repo_path else _repo())
 
 
+# --- autopilot (docs/autopilot.md) --------------------------------------------
+
+@main.group("autopilot")
+def autopilot_group():
+    """The scheduled controller that moves each study one step per tick (step A: dry run only)."""
+
+
+@autopilot_group.command("tick")
+@click.option("--dry-run", is_flag=True, help="Required in step A: report what would happen, change nothing.")
+@click.option("--no-fetch", is_flag=True, help="Use main and the study branches as last fetched.")
+@click.option("--remote", default="origin", show_default=True)
+@click.option("--digest", "digest_path", default=None, type=click.Path(dir_okay=False),
+              help="Also write the Markdown digest to this file.")
+@click.option("--markdown", "as_markdown", is_flag=True, help="Print the Markdown digest instead of one line per study.")
+@click.option("--machine", "here", default=None, help="Act as this machine (default: host name).")
+def autopilot_tick_cmd(dry_run, no_fetch, remote, digest_path, as_markdown, here):
+    """Decide the next transition of every study and print it, with a digest."""
+    from whale.autopilot.digest import lines, markdown
+    from whale.autopilot.tick import AutopilotError, tick
+
+    repo = _repo()
+    try:
+        res = tick(repo, dry_run=dry_run, remote=remote, do_fetch=not no_fetch, here=here)
+    except AutopilotError as exc:
+        raise click.UsageError(str(exc)) from None
+    md = markdown(res)
+    if digest_path:
+        Path(digest_path).write_text(md + "\n")
+    if res.paused is not None:
+        click.echo(f"Paused (AUTOPILOT_PAUSED): {res.paused}")
+        return
+    for w in res.warnings:
+        click.echo(click.style(f"warning: {w}", fg="yellow"), err=True)
+    if as_markdown:
+        click.echo(md)
+        return
+    for line in lines(res):
+        click.echo(line)
+    click.echo("")
+    click.echo(md)
+
+
 if __name__ == "__main__":
     main()
