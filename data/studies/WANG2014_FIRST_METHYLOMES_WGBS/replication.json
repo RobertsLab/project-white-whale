@@ -1,0 +1,286 @@
+{
+ "study_id": "WANG2014_FIRST_METHYLOMES_WGBS",
+ "generated_on": "2026-11-21",
+ "sources": [
+  {
+   "id": "P1",
+   "citation": "Wang X, Li Q, Lian J, Li L, Jin L, Cai H, Xu F, Qi H, Zhang L, Wu F, Meng J, Que H, Fang X, Guo X, Zhang G (2014). Genome-wide and single-base resolution DNA methylomes of the Pacific oyster Crassostrea gigas provide insight into the evolution of invertebrate CpG methylation. BMC Genomics 15:1119.",
+   "doi": "10.1186/1471-2164-15-1119",
+   "read": "full text (PMC4378273, via PubMed Central) and Additional file 1 (Figs S1-S5, Tables S1-S2, text extracted from the publisher PDF); Additional file 2 (GO tables S3-S5) not read"
+  }
+ ],
+ "caveats": [],
+ "based_on": {
+  "nextflow_run": "scruffy_colden",
+  "genome_assembly": "GCF_963853765.1",
+  "snp_mask": "GCF_963853765.1.snpmask.v1",
+  "differential": null,
+  "samples": 2
+ },
+ "counts": {
+  "replicated": 2,
+  "partly": 1,
+  "not_replicated": 0,
+  "inconclusive": 2,
+  "not_testable": 18,
+  "pending": 0
+ },
+ "claims": [
+  {
+   "id": "C1",
+   "source": "P1",
+   "where": "Results, 'Genome-wide methylation level...'; Table 1",
+   "statement": "In the inbred mantle methylome, 15.96% of covered CpGs (>=2x) were called methylated (binomial test, FDR < 0.01).",
+   "kind": "methylated_fraction",
+   "verdict": "not_testable",
+   "re_derived": "our tables are per gene, not per CpG",
+   "rule": "",
+   "reason": "needs_cpg_level"
+  },
+  {
+   "id": "C2",
+   "source": "P1",
+   "where": "Results, 'Genome-wide methylation level...'; Table 1",
+   "statement": "In the wild mantle methylome, 16.25% of covered CpGs (>=2x) were called methylated (binomial test, FDR < 0.01); the paper summarises both animals as up to ~16%.",
+   "kind": "methylated_fraction",
+   "verdict": "not_testable",
+   "re_derived": "our tables are per gene, not per CpG",
+   "rule": "",
+   "reason": "needs_cpg_level"
+  },
+  {
+   "id": "C3",
+   "source": "P1",
+   "where": "Results, 'Genome-wide methylation level...'; Table 1",
+   "statement": "About 2% of all covered genomic cytosines were methylated (3,055,909 mCs = 1.95% in the inbred animal; 2,391,673 mCs = 1.96% in the wild animal), an order of magnitude above insects (0.11-0.15%) and close to sea anemone, sea squirt and human.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Requires per-cytosine significance calls in all contexts; the cross-species comparison uses other species' data.",
+   "rule": "",
+   "reason": "needs_cpg_level"
+  },
+  {
+   "id": "C4",
+   "source": "P1",
+   "where": "Abstract; Results; Table 1",
+   "statement": "More than 99% of methylated cytosines were in CpG context (99.56% inbred, 99.69% wild), with CHG at 0.08/0.06% and CHH at 0.36/0.25% of mCs.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Stated as a share of significant mCs by context. Our per-library non-CpG methylation % gives an indirect check: it should be near the ~0.4% bisulfite error rate while CpG methylation is far higher.",
+   "rule": "",
+   "reason": "needs_cpg_level"
+  },
+  {
+   "id": "C5",
+   "source": "P1",
+   "where": "Table 1 (values only; not an author conclusion)",
+   "statement": "The wild animal had a marginally higher share of methylated CpGs than the inbred animal (16.25% vs 15.96%, 0.29 points); the authors present the two as essentially equal.",
+   "kind": "group_difference",
+   "verdict": "not_testable",
+   "re_derived": "1 vs 1 samples",
+   "rule": "needs >= 2 samples per group"
+  },
+  {
+   "id": "C6",
+   "source": "P1",
+   "where": "Results; Additional file 1 Fig. S2",
+   "statement": "Most methylated CpGs were highly methylated (per-site methylation level distribution of mCGs skewed toward 1), i.e. CpG methylation is largely bimodal.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Per-CpG level distribution; only per-gene summed calls are available.",
+   "rule": "",
+   "reason": "needs_cpg_level"
+  },
+  {
+   "id": "C7",
+   "source": "P1",
+   "where": "Results, 'Accumulation of mCGs...'; Fig. 2A",
+   "statement": "The oyster genome shows a mosaic methylation pattern, with methylated stretches interspersed among long unmethylated regions (mCG density in 1-kb windows along scaffold172).",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Needs windowed mCG density along the authors' scaffolds.",
+   "rule": "",
+   "reason": "needs_coordinates"
+  },
+  {
+   "id": "C8",
+   "source": "P1",
+   "where": "Results, 'Accumulation of mCGs...'; Fig. 2B; Conclusions",
+   "statement": "Gene bodies are the most heavily methylated genomic element, well above the unannotated intergenic background ('other' category).",
+   "kind": "region_contrast",
+   "verdict": "replicated",
+   "re_derived": "gene_body 14.75% vs genome 10.88% (CpG calls pooled over all genes, mean over samples)",
+   "rule": "direction only",
+   "higher": 14.75,
+   "lower": 10.88
+  },
+  {
+   "id": "C9",
+   "source": "P1",
+   "where": "Results, 'Gene body methylation, gene length and gene expression'; Fig. 3A; Conclusions",
+   "statement": "Methylation is low upstream of the TSS and rises sharply after it, so promoters are generally unmethylated relative to gene bodies ('general lack of promoter methylation').",
+   "kind": "region_contrast",
+   "verdict": "replicated",
+   "re_derived": "gene_body 14.75% vs promoter 3.53% (CpG calls pooled over all genes, mean over samples)",
+   "rule": "direction only",
+   "higher": 14.75,
+   "lower": 3.53
+  },
+  {
+   "id": "C10",
+   "source": "P1",
+   "where": "Table 1 (values only; not an author conclusion)",
+   "statement": "Mean gene-body methylation level was 0.20 in the inbred animal and 0.18 in the wild animal (genes >=70% covered, CpGs >=5x), so inbred slightly higher by 2 points.",
+   "kind": "group_difference",
+   "verdict": "not_testable",
+   "re_derived": "1 vs 1 samples",
+   "rule": "needs >= 2 samples per group"
+  },
+  {
+   "id": "C11",
+   "source": "P1",
+   "where": "Results; Table 1",
+   "statement": "Overall gene-body methylation level in oyster is ~0.19 (0.20 inbred, 0.18 wild; mean of per-CpG levels), an order of magnitude higher than insects (0.01-0.02) and close to sea anemone (0.16).",
+   "kind": "global_level",
+   "verdict": "partly",
+   "re_derived": "16.66% (mean gene_body methylation of 31889 genes with >= 5 covered CpGs in each of 2 samples, all samples); paper 19.0%",
+   "rule": "|difference| <= 2.0 points: replicated; <= 5.0: partly",
+   "value": 16.66,
+   "difference": -2.34
+  },
+  {
+   "id": "C12",
+   "source": "P1",
+   "where": "Table 1",
+   "statement": "54% of genes in the inbred animal were methylated (>=2 significant mCGs; only genes >=70% covered).",
+   "kind": "methylated_fraction",
+   "verdict": "inconclusive",
+   "re_derived": "35.6% of 32143 genes have mean gene_body methylation >= 10%, 15.4% >= 50% (1 samples, origin = inbred); paper 54.0%",
+   "rule": "the paper's definition has no methylation cut-off to compare with",
+   "ge10": 35.64,
+   "ge50": 15.39
+  },
+  {
+   "id": "C13",
+   "source": "P1",
+   "where": "Table 1",
+   "statement": "58% of genes in the wild animal were methylated (>=2 significant mCGs; only genes >=70% covered).",
+   "kind": "methylated_fraction",
+   "verdict": "inconclusive",
+   "re_derived": "35.8% of 32263 genes have mean gene_body methylation >= 10%, 14.3% >= 50% (1 samples, origin = wild); paper 58.0%",
+   "rule": "the paper's definition has no methylation cut-off to compare with",
+   "ge10": 35.82,
+   "ge50": 14.27
+  },
+  {
+   "id": "C14",
+   "source": "P1",
+   "where": "Results; Fig. 2B; Conclusions",
+   "statement": "Within genes, coding exons (CDS) are the most frequently methylated element, above UTRs and introns; tRNA loci are also often methylated, snRNA less, rRNA rarely.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Needs CDS/UTR/intron and ncRNA-locus matrices.",
+   "rule": "",
+   "reason": "needs_other_regions"
+  },
+  {
+   "id": "C15",
+   "source": "P1",
+   "where": "Results; Fig. 2C; Abstract",
+   "statement": "Repeats as a whole are methylated about twice the intergenic background; SINEs are the most methylated repeat class (near genic levels), while LINEs and LTRs are near background.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Needs repeat-class annotation and per-repeat methylation.",
+   "rule": "",
+   "reason": "needs_other_regions"
+  },
+  {
+   "id": "C16",
+   "source": "P1",
+   "where": "Results; Fig. 2D; Additional file 1 Fig. S3; Abstract",
+   "statement": "Repeat methylation correlates negatively with repeat divergence (Spearman r = -0.15 inbred, -0.16 wild), and methylated repeats are less diverged than unmethylated ones (Wilcoxon p < 1e-15): young repeats are preferential targets.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Needs per-repeat methylation and divergence from consensus.",
+   "rule": "",
+   "reason": "needs_other_regions"
+  },
+  {
+   "id": "C17",
+   "source": "P1",
+   "where": "Results; Fig. 3A",
+   "statement": "Along genes, methylation plateaus across the body and falls slowly back to background after the TTS, with no 5'-end bias of the kind seen in insects.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Needs a binned metagene profile (100-bp bins around TSS/TTS).",
+   "rule": "",
+   "reason": "needs_other_regions"
+  },
+  {
+   "id": "C18",
+   "source": "P1",
+   "where": "Results; Fig. 3B; Additional file 1 Fig. S4; Abstract",
+   "statement": "Gene-body methylation correlates positively with gene length (Spearman r = 0.36 inbred, 0.39 wild), and methylated genes are longer than unmethylated genes (Wilcoxon p < 1e-15).",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "No check kind for length correlations; could be tested by joining our per-gene gene-body methylation to gene lengths from the GCF_963853765.1 annotation.",
+   "rule": "",
+   "reason": "other_data"
+  },
+  {
+   "id": "C19",
+   "source": "P1",
+   "where": "Results; Fig. 3A, 3C; Abstract",
+   "statement": "Gene-body methylation correlates positively with expression (Spearman r = 0.46 over all genes, 0.50 without the top 20% expressed), with moderately expressed genes the most methylated.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Uses mantle RNA-seq from the wild animal.",
+   "rule": "",
+   "reason": "needs_rnaseq"
+  },
+  {
+   "id": "C20",
+   "source": "P1",
+   "where": "Results; Fig. 3A",
+   "statement": "No genome-wide negative relationship between promoter methylation and expression was seen.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Needs expression data.",
+   "rule": "",
+   "reason": "needs_rnaseq"
+  },
+  {
+   "id": "C21",
+   "source": "P1",
+   "where": "Results; Fig. 4; Additional file 1 Fig. S5; Abstract",
+   "statement": "Gene-body methylation peaks in genes originating in the eukaryote ancestor (phylostratum 2), not in the oldest genes (phylostratum 1), and declines with younger gene age, with lineage-specific genes (phylostrata 8-10) lowest.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Needs a phylostratigraphic assignment of genes; not part of our outputs.",
+   "rule": "",
+   "reason": "other_data"
+  },
+  {
+   "id": "C22",
+   "source": "P1",
+   "where": "Results; Fig. 1; Additional file 1 Fig. S1; Abstract",
+   "statement": "The genome encodes one ortholog each of DNMT1, DNMT2 and DNMT3 plus MBD2/3 and UHRF1, expressed across development (DNMT1 and UHRF1 co-expressed, Pearson r = 0.86).",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Gene-content and expression claim, not methylation.",
+   "rule": "",
+   "reason": "other_data"
+  },
+  {
+   "id": "C23",
+   "source": "P1",
+   "where": "Results; Additional file 1 Tables S1-S2",
+   "statement": "The wild animal's reads mapped less well than the inbred animal's (unique-mapped data ~11.8x vs ~15.7x per strand; 73.9% vs 95.0% of genomic Cs covered >=2x), attributed to sequence divergence from the inbred-derived reference; lambda-based error rate was ~0.4% per library.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Mapping/QC claim tied to the authors' inbred-derived reference; our reference is a different animal, so CpGs covered per library is only an indirect check.",
+   "rule": "",
+   "reason": "other_data"
+  }
+ ]
+}

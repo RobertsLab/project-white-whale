@@ -93,6 +93,30 @@ def validate_status_cmd(files):
     sys.exit(1 if failed else 0)
 
 
+@main.command("validate-curation")
+@click.argument("study_ids", nargs=-1)
+def validate_curation_cmd(study_ids):
+    """Validate curated sample tables (default: every data/studies/*/sample_curation.tsv)."""
+    from whale.curation import FILENAME, validate_curation
+    from whale.results import read_tsv
+
+    repo = _repo()
+    studies = repo / "data" / "studies"
+    paths = [studies / s / FILENAME for s in study_ids] or sorted(studies.glob(f"*/{FILENAME}"))
+    failed = False
+    for path in paths:
+        sheet = path.parent / "samplesheet.tsv"
+        ids = [r["sample_id"] for r in read_tsv(sheet)] if sheet.exists() else []
+        errors = validate_curation(path, ids, repo) if sheet.exists() else [f"{sheet} is missing"]
+        click.echo(f"{'FAIL' if errors else 'ok  '}  {path}")
+        for e in errors:
+            click.echo(click.style(f"      error: {e}", fg="red"))
+        failed |= bool(errors)
+    if not paths:
+        click.echo("No curated sample tables yet.")
+    sys.exit(1 if failed else 0)
+
+
 @main.command("build-registry")
 @click.option("--out", type=click.Path(dir_okay=False), default=None)
 def build_registry_cmd(out):
@@ -653,6 +677,73 @@ def build_atlas_cmd(out, remote):
     click.echo(f"Wrote {path}: {summary_text(data)}")
 
 
+@main.command("differential")
+@click.option("--study", "study_ids", multiple=True,
+              help="Study ID (repeatable). Default: the study of the current study branch.")
+@click.option("--all", "all_studies", is_flag=True, help="Every study with gene tables on this checkout.")
+@click.option("--engine", type=click.Choice(["docker", "apptainer", "local"]), default="docker", show_default=True,
+              help="How to run dss.R: the pinned DSS container through Docker or Apptainer, or Rscript on PATH.")
+@click.option("--plan", "plan_only", is_flag=True, help="Show the models and jobs; fit nothing.")
+def differential_cmd(study_ids, all_studies, engine, plan_only):
+    """Re-derive differential methylation per gene with one shared DSS model (PLAN.md §6.3).
+
+    Writes data/studies/<ID>/differential/: the plan, one table per job and region,
+    tests.tsv, significant.tsv and summary.yaml."""
+    from whale.differential import (
+        DifferentialError,
+        out_dir,
+        plan,
+        run,
+        write_inputs,
+        write_summary,
+    )
+
+    repo = _repo()
+    if all_studies:
+        study_ids = sorted(p.parent.name for p in (repo / "data" / "studies").glob("*/genes"))
+    elif not study_ids:
+        branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo,
+                                capture_output=True, text=True).stdout.strip()
+        parsed = parse_branch(branch)
+        if not parsed:
+            raise click.ClickException("not on a study branch: pass --study or --all")
+        study_ids = [parsed[1]]
+    failed = []
+    for sid in study_ids:
+        try:
+            p = plan(repo, sid)
+        except DifferentialError as exc:
+            click.echo(click.style(f"{sid}: {exc}", fg="yellow"))
+            failed.append(sid)
+            continue
+        click.echo(click.style(sid, bold=True) + f": {len(p['units'])} units, {len(p['jobs'])} jobs")
+        for j in p["jobs"]:
+            where = f" [{j['stratum']}]" if j["stratum"] else ""
+            click.echo(f"  {j['job_id']}: {j['formula']}{where}, {len(j['units'])} units; tests {', '.join(j['tests'])}")
+        for reason in p["skipped"]:
+            click.echo(f"  skipped: {reason}")
+        if plan_only or not p["jobs"]:
+            continue
+        dest = out_dir(repo, sid)
+        write_inputs(p, dest)
+        try:
+            run(repo, sid, engine)
+        except DifferentialError as exc:
+            click.echo(click.style(str(exc), fg="red"))
+            failed.append(sid)
+            continue
+        s = write_summary(p, dest)
+        for j in s["jobs"]:
+            for region, r in ((j.get("all_units") or {}).get("regions") or {}).items():
+                hits = ", ".join(f"{c} {t['fdr_lt_0.05']}" for c, t in r["tests"].items())
+                click.echo(f"  {j['job_id']} {region}: {r['genes_tested']} genes; FDR < 0.05: {hits}")
+            if j.get("note"):
+                click.echo(f"  {j['job_id']}: {j['note']}")
+        click.echo(f"  wrote {dest.relative_to(repo)}/")
+    if failed:
+        raise click.ClickException("failed: " + ", ".join(failed))
+
+
 # --- claims ------------------------------------------------------------------
 
 @main.command("start-study")
@@ -853,6 +944,31 @@ def profiles_cmd():
     rows = [{"profile": k, "executor": v["executor"], "label": v["label"], "suited for": v["suited_for"]}
             for k, v in load_vocab(repo, "compute_profile").items()]
     click.echo(_table(rows, ["profile", "executor", "label", "suited for"]))
+
+
+@main.command("replicate")
+@click.argument("study_ids", nargs=-1)
+def replicate_cmd(study_ids):
+    """Test each study's published claims against its re-derived results (data/studies/<ID>/claims.yaml).
+
+    Writes replication.md and replication.json beside the claims; default: every study with claims."""
+    from whale.replication import ReplicationError, studies_with_claims, write
+
+    repo = _repo()
+    ids = list(study_ids) or studies_with_claims(repo)
+    if not ids:
+        click.echo("No study has a claims.yaml yet.")
+    failed = False
+    for sid in ids:
+        try:
+            rep = write(repo, sid)
+        except ReplicationError as exc:
+            click.echo(click.style(f"FAIL  {sid}: {exc}", fg="red"))
+            failed = True
+            continue
+        counts = ", ".join(f"{v} {k.replace('_', ' ')}" for k, v in rep["counts"].items() if v)
+        click.echo(f"ok    {sid}: {len(rep['claims'])} claims ({counts})")
+    sys.exit(1 if failed else 0)
 
 
 # --- autopilot (docs/autopilot.md) --------------------------------------------

@@ -7,6 +7,8 @@ Inputs, all committed on main:
 * data/studies/*/study_summary.yaml         which studies have a recorded run, their mask and assembly
 * data/studies/*/genes/{class}.{metric}.tsv.gz  genes x libraries (meth, calls, cpgs)
 * data/studies/*/samplesheet.tsv, qc_summary.tsv, registry/studies/*.yaml   sample metadata and QC
+* data/studies/*/sample_curation.tsv         curated per-library attributes, where a study has them
+                                             (src/whale/curation.py); they take precedence
 
 Only studies merged to main are pooled, so the atlas changes when a study PR
 merges. A study is left out (and listed with the reason) when its gene tables
@@ -32,6 +34,7 @@ from pathlib import Path
 
 import numpy as np
 
+from whale.curation import UNKNOWN, read_curation
 from whale.dashboard import GENE_MIN_CPGS, HIST_BIN, _git, summaries_on_main
 from whale.registry import load_studies
 
@@ -43,7 +46,11 @@ DENSITY_BINS = 25           # study-vs-study density grid, 4% cells
 # sample_metadata.tsv columns, in order
 METADATA_COLUMNS = ["library_id", "unit_id", "study_id", "part", "bioproject", "chemistry", "tissue",
                     "life_stage", "sample_unit", "pool_size", "ploidy", "sex", "condition", "factors",
-                    "genome_assembly", "snp_mask", "nextflow_run"]
+                    "genome_assembly", "snp_mask", "nextflow_run",
+                    # added with curated tables; appended so positional readers keep working
+                    "animal_id", "population", "metadata_source"]
+# Attributes a curated table (sample_curation.tsv) supplies for each library.
+CURATED = ("animal_id", "tissue", "life_stage", "sample_unit", "pool_size", "ploidy", "sex", "population")
 
 
 class AtlasError(RuntimeError):
@@ -77,8 +84,16 @@ def _sex(row: dict) -> str:
     return v if v in ("female", "male", "hermaphrodite") else "unknown"
 
 
-def library_metadata(entry: dict, study: dict, sheet: list[dict], libraries: list[str]) -> list[dict]:
-    """One row per library in the gene tables (those that passed the QC gate)."""
+def library_metadata(entry: dict, study: dict, sheet: list[dict], libraries: list[str],
+                     curation: dict[str, dict] | None = None) -> list[dict]:
+    """One row per library in the gene tables (those that passed the QC gate).
+
+    A library in `curation` (sample_curation.tsv rows by sample_id) takes its
+    animal, tissue, life stage, sample unit, pool size, ploidy, sex and population
+    from there; `unknown` becomes an empty cell, as for an uncurated library that
+    the deposit says nothing about. Libraries without a curated row keep the
+    registry's study-level terms or the deposit's own columns."""
+    curation = curation or {}
     s = entry["summary"]
     samples = study.get("samples") or {}
     shared = "shared_biosample" in (study.get("quality_flags") or [])
@@ -109,7 +124,19 @@ def library_metadata(entry: dict, study: dict, sheet: list[dict], libraries: lis
             "genome_assembly": s.get("genome_assembly") or "",
             "snp_mask": (s.get("snp_mask") or {}).get("mask_id") or "",
             "nextflow_run": s.get("nextflow_run") or "",
+            "animal_id": "",
+            "population": "",
+            "metadata_source": "deposit",
         })
+        cur = curation.get(lib)
+        if cur is not None:
+            for key in CURATED:
+                value = (cur.get(key) or "").strip()
+                if key == "sex":
+                    out[-1][key] = value or UNKNOWN      # the atlas's own convention for sex
+                else:
+                    out[-1][key] = "" if value == UNKNOWN else value
+            out[-1]["metadata_source"] = "curated"
     return out
 
 
@@ -156,7 +183,8 @@ def pool(repo: Path) -> dict:
             libs = lib_ids
             blocks[key].append(values)
         sheet = _tsv(base / "samplesheet.tsv") or _tsv(repo / "data" / "studies" / sid / "samplesheet.tsv")
-        meta = library_metadata(e, registered[sid], sheet, libs)
+        curation = read_curation(base) or read_curation(repo / "data" / "studies" / sid)
+        meta = library_metadata(e, registered[sid], sheet, libs, curation)
         libraries += meta
         qc += [{"study_id": sid, "part": s.get("part") or "", **r} for r in _tsv(base / "qc_summary.tsv")]
         studies.append({"study_id": sid, "part": s.get("part"), "libraries": len(libs),
@@ -165,6 +193,7 @@ def pool(repo: Path) -> dict:
                         "life_stages": sorted({m["life_stage"] for m in meta}),
                         "chemistry": meta[0]["chemistry"] if meta else "",
                         "sample_unit": meta[0]["sample_unit"] if meta else "",
+                        "curated": bool(meta) and all(m["metadata_source"] == "curated" for m in meta),
                         "snp_mask": meta[0]["snp_mask"] if meta else "",
                         "paired_rnaseq": (registered[sid].get("paired_rnaseq") or {}).get("relationship")})
 
