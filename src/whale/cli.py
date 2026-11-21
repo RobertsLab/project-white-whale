@@ -971,5 +971,15 @@ def replicate_cmd(study_ids):
     sys.exit(1 if failed else 0)
 
 
+@main.command("mcp")
+@click.option("--repo", "repo_path", default=None, type=click.Path(file_okay=False, exists=True),
+              help="Repository to serve. Default: the checkout around the current directory, or $WHALE_REPO.")
+def mcp_cmd(repo_path):
+    """Serve the summarized results to MCP clients over stdio (read-only; docs/mcp.md)."""
+    from whale.query.server import run
+
+    run(Path(repo_path).resolve() if repo_path else _repo())
+
+
 if __name__ == "__main__":
     main()
