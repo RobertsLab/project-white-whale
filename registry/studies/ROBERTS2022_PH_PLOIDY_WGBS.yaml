@@ -80,6 +80,10 @@ limitations: >
   haploid reference, and allele-specific calls are not comparable with
   diploids. (4) Sex is not recorded. (5) One tissue (ctenidia), one time
   point. (6) No paired RNA-seq was found, so this study informs Goal 1 only.
+  (7) The libraries are non-directional. Run curious_mestorf aligned them in
+  directional mode, which maps half of the pairs (30%); its calls are unbiased
+  but at half the depth. The study config now sets --non_directional; the
+  committed results are from curious_mestorf until the study is re-run.
 
 provenance:
   registered_by: "Steven Roberts"

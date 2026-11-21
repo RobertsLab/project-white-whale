@@ -78,12 +78,14 @@ limitations: >
   intertidal F0. (2) One population per tidal class, so origin is confounded
   with population background. (3) All libraries share one BioSample; the design
   comes from run library_name. (4) Pooling, heat-shock dose and sex not yet
-  confirmed from the paper's methods. (5) Bisulfite conversion, estimated
-  from non-CpG methylation, is 96.3-97.6% in every library, below the 98%
-  QC gate; the study runs with a 96% gate. Incomplete conversion inflates
-  methylation levels by up to ~3.7 points uniformly, so between-group
-  contrasts are usable but absolute levels are not comparable to studies
-  at >= 98%.
+  confirmed from the paper's methods. (5) Read 2 of every library starts with a
+  synthetic low-complexity tail (adaptase-type library) whose bases read as
+  methylated C. Run elated_pesquet did not clip it: its conversion estimate
+  (96.3-97.6%) and its CpG methylation levels (~1.5 points too high) carry
+  that artifact, and it ran with a 96% gate. The study config now clips the
+  tail (--clip_r2 18 --three_prime_clip_r1 18) and uses the base 98% gate;
+  results committed from elated_pesquet are not comparable to other studies
+  until the study is re-run.
 
 provenance:
   registered_by: "Steven Roberts"

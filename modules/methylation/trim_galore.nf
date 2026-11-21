@@ -1,6 +1,9 @@
 // Adapter and quality trimming. `extra_args` carries the chemistry preset
-// (e.g. --rrbs) plus params.trim_args; M-bias-driven clipping belongs in
-// params.extractor_args, not here, so trimmed reads stay comparable.
+// (e.g. --rrbs) plus params.trim_args. Biased read ends of genomic sequence
+// (M-bias) are left out at extraction (params.ignore_r2, params.extractor_args),
+// so trimmed reads stay comparable. Synthetic sequence is clipped here, in the
+// study config's trim_args: an adaptase tail (WANG2023) is not genome and has
+// to go before alignment.
 process TRIM_GALORE {
     tag "${sample_id}"
     label 'process_medium'
