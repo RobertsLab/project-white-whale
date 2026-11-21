@@ -27,6 +27,10 @@ sample structure is dominated by individual variation, not by either factor.
   group means of per-library methylation, in percentage points.
 - **Sensitivity**: the tests repeated without libraries more than 3 SD from
   the mean on PC1 or PC2 (SRR13207055, SRR13207071).
+- **Generalized**: the same tests now run for every study with `whale
+  differential` ([docs/differential.md](../../docs/differential.md)); its output for this
+  study, `data/studies/ROBERTS2022_PH_PLOIDY_WGBS/differential/`, reproduces these
+  p values exactly.
 - **Reproduce**: `analysis/ROBERTS2022_PH_PLOIDY_WGBS/run.sh` (the pinned DSS
   container; ~1 min).
 

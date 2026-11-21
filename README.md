@@ -85,7 +85,8 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 [gene-level methylation](docs/gene_methylation.md),
 [the C/T SNP mask](docs/snp_mask.md),
 [mirroring FASTQ to gannet](docs/fastq_mirror.md),
-[the atlas: pooled tables, landscape and concordance](docs/atlas.md).
+[the atlas: pooled tables, landscape and concordance](docs/atlas.md),
+[re-derived differential methylation](docs/differential.md).
 
 ## Commands
 
@@ -104,6 +105,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale build-atlas [--out DIR]` | Pool the merged, SNP-masked studies' gene tables and write the atlas pages' data (`site/atlas/data/`): pooled tables, landscape, concordance |
 | `whale fetch-rnaseq-samplesheet --study <ID> --condition-attribute <a> [--show-attributes]` | RNA-seq sample sheet and FASTQ manifest for a study's `paired_rnaseq.bioproject`, in `data/studies/<ID>/rnaseq/` ([docs/rnaseq.md](docs/rnaseq.md)) |
 | `whale record-rnaseq --results <dir>` | Record a finished `workflows/rnaseq` run: commit gene matrices and QC, upload the rest (the workflow runs it itself) |
+| `whale differential [--study <ID> … \| --all] [--plan] [--engine docker\|apptainer\|local]` | Re-derive differential methylation per gene with one shared DSS model (PLAN.md §6.3); writes `data/studies/<ID>/differential/` |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |
 | `whale build-registry` | Rebuild `registry/study_registry.csv` (not committed) |
@@ -115,7 +117,8 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 ```
 registry/        backlog.tsv, studies/<STUDY_ID>.yaml, controlled_vocabularies/
 schemas/         study and status JSON schemas
-workflows/       methylation/, rnaseq/ (paired expression, Goal 2), snp_mask/ (Nextflow DSL2)
+workflows/       methylation/, rnaseq/ (paired expression, Goal 2), snp_mask/ (Nextflow DSL2);
+                 differential/dss.R (shared DSS model, `whale differential`)
 modules/         Nextflow processes
 config/          base.config (profiles) and one config per study
 data/            reference/ (assembly registry), studies/<STUDY_ID>/ (small committed outputs);
