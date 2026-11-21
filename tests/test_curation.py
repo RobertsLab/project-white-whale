@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from click.testing import CliRunner
-
 from test_atlas import repo  # noqa: F401 - fixture: studies A and B on main
+
 from whale.atlas import pool
 from whale.cli import main
 from whale.curation import COLUMNS, validate_curation
