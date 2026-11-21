@@ -73,6 +73,28 @@ factors:
     levels: ["GT1", "GT2", "GT3", "GT4", "GT5"]
     reference_level: null
 
+# Each animal was biopsied four times (gill and mantle, T0 and T1), and resistant
+# and susceptible animals are matched one to one by population. So phenotype is
+# tested between animals within each tissue and time, blocked by population; time
+# and tissue are tested within animals.
+differential:
+  individual: [population, phenotype_class, code]
+  models:
+    - id: phenotype
+      formula: "~ population + phenotype_class"
+      within: [tissue_type, time]
+      note: R vs S, 5 animals each, paired by population
+    - id: time
+      formula: "~ individual + time"
+      within: [tissue_type]
+      test: [time]
+      note: T1 vs T0 in the same 10 animals
+    - id: tissue
+      formula: "~ individual + tissue_type"
+      within: [time]
+      test: [tissue_type]
+      note: mantle vs gill in the same 10 animals
+
 goals: [1]
 
 data_availability:

@@ -1,0 +1,86 @@
+# Written by `whale differential` (src/whale/differential.py, workflows/differential/dss.R).
+study_id: WANG2020_TIDAL_HEAT_WGBS
+generated_on: '2026-11-20'
+genome_assembly: GCF_963853765.1
+snp_mask: GCF_963853765.1.snpmask.v1
+gene_tables_from_run: elegant_rubens
+method:
+  test: DSS beta-binomial regression (DMLfit.multiFactor, Wald test per coefficient)
+  dss_version: 2.58.0
+  container: quay.io/biocontainers/bioconductor-dss:2.58.0--r45h01b2380_0
+  site: 'one gene: its summed methylated and total calls in the region'
+  filter:
+    min_cpgs: 5
+    min_calls: 10
+    every_unit: true
+  fdr: Benjamini-Hochberg within each job, region and coefficient; significant at
+    < 0.05
+  units: libraries of one BioSample summed into one unit
+  sensitivity: repeated without units more than 3 SD from the mean on gene-body PC1
+    or PC2
+quality_flags:
+- pooled_libraries
+- shared_biosample
+- confounded_design
+- sex_unknown
+units: 12
+skipped: []
+jobs:
+- job_id: main
+  model: main
+  formula: ~ origin + temperature
+  stratum: null
+  units: 12
+  all_units:
+    units: 12
+    regions:
+      gene_body:
+        genes_tested: 31800
+        tests:
+          originIn:
+            fdr_lt_0.05: 1622
+            lambda: 1.669
+            up: 473
+            down: 1149
+            and_abs_diff_ge_10: 306
+          temperatureH:
+            fdr_lt_0.05: 53
+            lambda: 0.906
+            up: 21
+            down: 32
+            and_abs_diff_ge_10: 7
+      promoter:
+        genes_tested: 30762
+        tests:
+          originIn:
+            fdr_lt_0.05: 540
+            lambda: 1.13
+            up: 247
+            down: 293
+            and_abs_diff_ge_10: 143
+          temperatureH:
+            fdr_lt_0.05: 40
+            lambda: 0.865
+            up: 14
+            down: 26
+            and_abs_diff_ge_10: 9
+- job_id: interaction
+  model: interaction
+  formula: ~ origin * temperature
+  stratum: null
+  units: 12
+  all_units:
+    units: 12
+    regions:
+      gene_body:
+        genes_tested: 31800
+        tests:
+          originIn:temperatureH:
+            fdr_lt_0.05: 1449
+            lambda: 1.452
+      promoter:
+        genes_tested: 30762
+        tests:
+          originIn:temperatureH:
+            fdr_lt_0.05: 252
+            lambda: 0.96
