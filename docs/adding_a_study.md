@@ -92,7 +92,9 @@
 7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML
    (`start-study` writes it as `null`; `whale validate-study` fails while a
    filled-in YAML and its config disagree) and
-   run the workflow with the profile you claimed, from the study's worktree,
+   run the workflow with the profile you claimed, from the study's worktree
+   (`workflows/methylation`; MeDIP and MBD studies use `workflows/enrichment`,
+   see [enrichment tier](enrichment.md)),
    with `whale` on the head job's `PATH` (or `WHALE_CMD` set to it).
    On a desktop or raven, `whale fetch-fastq --launch` does steps 6 and 7 in
    one go: it stages and marks the FASTQ as in step 6, then starts

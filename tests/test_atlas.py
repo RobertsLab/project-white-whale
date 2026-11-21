@@ -191,3 +191,28 @@ def test_pages_read_every_key_they_use(repo, repo_root):
         assert key in data["concordance"]["blocks"][0] and f"b.{key}" in conc, key
     for key in ("rho", "genes", "shared_tissue", "both_low", "both_high", "opposite", "other", "mean_abs_diff", "density"):
         assert key in data["concordance"]["study_pairs"][0] and f"p.{key}" in conc, key
+
+
+def test_enrichment_studies_never_enter_the_pooled_tables(repo, filled_study):
+    """A MeDIP study on main is left out, even if it had genes/ tables shaped like a base-resolution study's."""
+    _study(repo, filled_study, "E2017_DEV_MEDIP", "PRJNA5", ["E1", "E2"],
+           [{"sample_id": e, "condition": "c"} for e in ("E1", "E2")],
+           meth=[[9, 9]] * 4, calls=[[9, 9]] * 4, cpgs=[[9, 9]] * 4)
+    d = repo / "data" / "studies" / "E2017_DEV_MEDIP"
+    s = yaml.safe_load((d / "study_summary.yaml").read_text())
+    s.update(chemistry="medip", tier="enrichment", genome_assembly="GCF_OTHER")   # must not sway the assembly vote
+    (d / "study_summary.yaml").write_text(yaml.safe_dump(s))
+    _study(repo, filled_study, "F2013_GILL_MBD", "PRJNA6", ["F1"], [{"sample_id": "F1", "condition": "c"}],
+           meth=[[1]] * 4, calls=[[9]] * 4, cpgs=[[9]] * 4)
+    f = repo / "data" / "studies" / "F2013_GILL_MBD" / "study_summary.yaml"
+    f.write_text(yaml.safe_dump({**yaml.safe_load(f.read_text()), "chemistry": "mbd"}))   # tier from the vocabulary
+
+    p = pool(repo)
+    assert [s["study_id"] for s in p["studies"]] == ["A2020_X_WGBS", "B2021_Y_WGBS"]
+    assert p["genome_assembly"] == "GCF_X"
+    reasons = {e["study_id"]: e["reason"] for e in p["excluded"]}
+    assert reasons["E2017_DEV_MEDIP"].startswith("enrichment tier") and reasons["F2013_GILL_MBD"].startswith("enrichment tier")
+    libs = {m["library_id"] for m in p["libraries"]}
+    assert not libs & {"E1", "E2", "F1"} and p["matrices"][("gene_body", "meth")].shape == (4, 6)
+    data, pooled = build(repo, repo_url=URL, now="2026-11-21T00:00:00Z")
+    assert {e["study_id"] for e in data["excluded"]} >= {"E2017_DEV_MEDIP", "F2013_GILL_MBD"}
