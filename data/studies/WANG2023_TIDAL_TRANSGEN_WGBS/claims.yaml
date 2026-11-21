@@ -1,0 +1,146 @@
+study_id: WANG2023_TIDAL_TRANSGEN_WGBS
+sources:
+- id: P1
+  citation: Wang X, Cong R, Li A, Wang W, Zhang G, Li L (2023). Transgenerational effects of intertidal environment
+    on physiological phenotypes and DNA methylation in Pacific oysters. Science of the Total Environment 871:162112.
+  doi: 10.1016/j.scitotenv.2023.162112
+  read: 'abstract only (PubMed record, PMID 36764539). Full text is closed access: no PMC copy, Europe PMC lists
+    only the subscription DOI link, Semantic Scholar has no open-access PDF. Methods, figures, tables and supplements
+    were not seen, so DMG calling method, thresholds and region (gene body vs promoter) are unknown.'
+caveats:
+- 'These results come from run elated_pesquet, which did not clip the synthetic tail on read 2; global methylation
+  levels are about 1.5 points too high and are not compared here. Re-run with the clipping in PR #61.'
+- Only the abstract could be read (closed access), so the claims are few and the paper's methods, thresholds and
+  gene lists are unknown.
+claims:
+- id: C1
+  source: P1
+  where: Abstract
+  statement: Intertidal and subtidal wild (F0) oysters differ in gill DNA methylation at roughly 3,864 differentially
+    methylated genes; the number is not stated, but follows from 1655 DMGs being 42.83% of the F0 set.
+  kind: dm_count
+  check:
+    factor: tidal_level
+    level: In
+    stratum:
+      generation: F0
+    n: 3864
+    unit: DMGs
+    method: unknown (abstract only); n derived as 1655 / 0.4283, approximate
+- id: C2
+  source: P1
+  where: Abstract
+  statement: The intertidal vs subtidal methylation divergence is heritable, so In vs Sub DMGs are still present
+    in the F1 generation bred in the subtidal area; no F1 count is given in the abstract.
+  kind: dm_count
+  check:
+    factor: tidal_level
+    level: In
+    stratum:
+      generation: F1
+    n: null
+    unit: DMGs
+    method: unknown (abstract only); claim is only that the count is non-zero
+- id: C3
+  source: P1
+  where: Abstract
+  statement: Intertidal vs subtidal DMGs persist to F2, at least 1655 genes (those shared with the F0 set), so the
+    F2 In vs Sub contrast should give at least about 1655 DMGs under the paper's method.
+  kind: dm_count
+  check:
+    factor: tidal_level
+    level: In
+    stratum:
+      generation: F2
+    n: 1655
+    unit: DMGs
+    method: unknown (abstract only); 1655 is a lower bound (F0 DMGs retained in F2), not the full F2 count
+- id: C4
+  source: P1
+  where: Abstract
+  statement: 1655 of the F0 intertidal vs subtidal DMGs (42.83%) are again differentially methylated in F2, i.e.
+    the overlap of the F0 and F2 In vs Sub DMG lists is 1655 genes.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Requires overlapping per-generation In vs Sub gene lists (tidal_level stratified by generation); no claim
+      kind covers list overlap. Could be approximated if stratified contrasts exist.
+- id: C5
+  source: P1
+  where: Abstract
+  statement: Laboratory heat shock changes gill DNA methylation in intertidal F0 oysters (heat vs control DMGs exist);
+    count not stated in the abstract.
+  kind: dm_count
+  check:
+    factor: treatment
+    level: H
+    stratum:
+      tidal_level: In
+      generation: F0
+    n: null
+    unit: DMGs
+    method: unknown (abstract only); claim is only that the count is non-zero
+- id: C6
+  source: P1
+  where: Abstract
+  statement: About 2,171 thermal-response DMGs are specific to the intertidal F0 group (not found in subtidal F0);
+    the number follows from 320 being 14.74% of that set.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: '''Specific'' is a set difference between H vs C DMGs in In-F0 and in Sub-F0, not a single registered
+      contrast; the count 2171 = 320 / 0.1474 is derived.'
+- id: C7
+  source: P1
+  where: Abstract
+  statement: 320 (14.74%) of the intertidal-F0-specific thermal-response DMGs are also found among thermal-response
+    DMGs in F1 and F2.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Needs overlap of heat-response DMG lists across tidal levels and generations; no single contrast.
+- id: C8
+  source: P1
+  where: Abstract
+  statement: Transgenerational plasticity alters physiological phenotypes related to oxidative status and energy
+    in unstressed subtidal-reared offspring for at least two generations.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Physiological assays (oxidation and energy markers), not methylation data.
+- id: C9
+  source: P1
+  where: Abstract
+  statement: Intertidal parental experience alters the thermal plasticity of physiological phenotypes within and
+    across generations.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Physiological phenotype data, not methylation.
+- id: C10
+  source: P1
+  where: Abstract
+  statement: The 1655 retained F0-to-F2 DMGs are enriched for macromolecule metabolism, cellular response to stress,
+    positive regulation of molecular function, and especially fatty acid metabolism.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: GO/functional enrichment of a cross-generation overlap set; no named genes given in the abstract.
+- id: C11
+  source: P1
+  where: Abstract
+  statement: The 320 transgenerationally retained thermal-response DMGs map to carbohydrate, lipid and energy metabolism,
+    signal transduction, and organismal immune system pathways.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: KEGG pathway enrichment of an overlap set; no named genes in the abstract.
+- id: C12
+  source: P1
+  where: Abstract
+  statement: DNA methylation is an epigenetic mechanism mediating transgenerational plasticity for stress adaptation
+    in oysters.
+  kind: not_testable
+  check:
+    reason: not_quantitative
+    note: Interpretive conclusion linking methylation to phenotype.

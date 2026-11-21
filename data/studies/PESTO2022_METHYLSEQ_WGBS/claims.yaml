@@ -1,0 +1,636 @@
+study_id: PESTO2022_METHYLSEQ_WGBS
+sources:
+- id: P1
+  citation: Sol Dourdin T, Rivière G, Cormier A, Di Poi C, Guyomard K, Rabiller M, Akcha F, Bah TS, Le Monier P,
+    Sussarellu R (2023). Molecular and phenotypic effects of early exposure to an environmentally relevant pesticide
+    mixture in the Pacific oyster, Crassostrea gigas. Environmental Pollution 326:121472.
+  doi: 10.1016/j.envpol.2023.121472
+  read: Full text of the accepted author version (Ifremer Archimer 00829/94090), including methods, results, discussion
+    and figure captions. The supplement (tab. SM1-SM5, fig. SM1-SM4, incl. the DMG list tab. SM4 and the cross-stage
+    DMG table SM5) was not obtained, so no gene-level methylation claims could be taken from P1.
+  libraries: 'F0: gastrula (6 hpf) and metamorphosis-competent pediveliger (MCP, 19 dpf) libraries; exposure 0-48
+    hpf, control vs exposed. The paper analysed 10 gastrula libraries (4 control, 6 exposed; control tank C1 dropped
+    for arrested development) and 12 MCP libraries (6 and 6).'
+- id: P2
+  citation: 'Sol Dourdin T, Guyomard K, Rabiller M, Houssais N, Cormier A, Le Monier P, Sussarellu R, Rivière G
+    (2024). Ancestors'' Gift: Parental Early Exposure to the Environmentally Realistic Pesticide Mixture Drives
+    Offspring Phenotype in a Larger Extent Than Direct Exposure in the Pacific Oyster, Crassostrea gigas. Environmental
+    Science & Technology 58(4):1865-1876.'
+  doi: 10.1021/acs.est.3c08201
+  read: 'Full text of the accepted author version (Ifremer Archimer 00872/98346), including the SI figure captions
+    and the SI variant-splicing note bundled in that PDF; SI workbook es3c08201_si_002.xlsx from figshare 24994504
+    (Tables SI3-SI7 read: DEG lists, interaction genes, DMR/DMG counts, interaction DMGs, DMG-and-DEG genes).'
+  libraries: 'F1: CC, CE, EC, EE (first letter = parental F0 treatment, second = F1 exposure 0-48 hpf), 3 gastrula
+    and 3 MCP (16 dpf) libraries each.'
+caveats:
+- The sample sheet has no separate columns for stage, generation and exposure, so no factors are registered and
+  every differential claim waits for them; the claims carry the factor names they will use (stage, generation, exposure,
+  parental_exposure).
+claims:
+- id: C1
+  source: P1
+  where: Abstract; Highlights; Discussion (demethylation trend, 77.1% of DMCs hypo in MCP larvae)
+  statement: 'Early pesticide-mixture exposure significantly changed DNA methylation in F0 MCP larvae 17 days after
+    exposure ended, with a demethylation trend: 77.1% of the 220 DMCs were hypomethylated in exposed larvae.'
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Exposure factor not registered. Once registered, test as dm_direction on exposure E vs T within F0 pediveliger;
+      paper's unit is DMCs (per-CpG), ours would be genes.
+    kind_if_registered: dm_direction
+    factor: exposure
+    level: E
+    stratum:
+      stage: pediveliger
+      generation: F0
+    direction: hypo
+    share_pct: 77.1
+- id: C2
+  source: P1
+  where: Discussion (60.7% of DMCs hypo in gastrulae); Highlights
+  statement: 'In F0 gastrulae (6 h of exposure) the methylation differences also leaned to hypomethylation: 60.7%
+    of DMCs were hypomethylated in exposed embryos.'
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Exposure factor not registered. Once registered, dm_direction on exposure E vs T within F0 gastrula; per-CpG
+      unit in the paper.
+    kind_if_registered: dm_direction
+    factor: exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F0
+    direction: hypo
+    share_pct: 60.7
+- id: C3
+  source: P1
+  where: Highlights; Conclusion
+  statement: Exposed F0 oysters show a global DNA demethylation during (gastrula) and after (MCP larva) the exposure
+    window, i.e. lower methylation in exposed than in control animals; the paper supports this only with DMC direction,
+    not with a reported global level.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Exposure factor not registered. Once registered, test as group_difference of overall CpG methylation per
+      library, exposed lower than control, within F0 gastrula and F0 pediveliger separately. No numeric global levels
+      are given in the paper.
+    kind_if_registered: group_difference
+    factor: exposure
+    higher: T
+    lower: E
+    stratum:
+      generation: F0
+- id: C4
+  source: P1
+  where: Results 7
+  statement: Exposure produced 507 DMCs in F0 gastrulae (methylKit, difference >= 25%, q < 0.01, min depth 10).
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Per-CpG counts; also exposure factor not registered. Gene-level analogue is C6.
+    kind_if_registered: dm_count
+    factor: exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F0
+    n: 507
+    unit: DMCs
+    method: methylKit, |diff| >= 25%, q < 0.01, MethylDackel minDepth 10, GCA_902806645.1
+- id: C5
+  source: P1
+  where: Results 7
+  statement: Exposure produced 220 DMCs in F0 MCP larvae (same methylKit thresholds).
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Per-CpG counts; also exposure factor not registered. Gene-level analogue is C7.
+    kind_if_registered: dm_count
+    factor: exposure
+    level: E
+    stratum:
+      stage: pediveliger
+      generation: F0
+    n: 220
+    unit: DMCs
+    method: methylKit, |diff| >= 25%, q < 0.01, MethylDackel minDepth 10, GCA_902806645.1
+- id: C6
+  source: P1
+  where: Results 7 (tab. SM4)
+  statement: 386 genes in F0 gastrulae contained at least one DMC; 147 contained hypermethylated and 227 hypomethylated
+    cytosines.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Exposure factor not registered. A 'gene with >=1 DMC' is not the same as a gene significant in a per-gene
+      model, so expect only order-of-magnitude comparability.
+    kind_if_registered: dm_count
+    factor: exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F0
+    n: 386
+    unit: DMGs
+    method: genes overlapping >=1 methylKit DMC (|diff| >= 25%, q < 0.01), bedtools intersect
+- id: C7
+  source: P1
+  where: Results 7 (tab. SM4)
+  statement: 175 genes in F0 MCP larvae contained at least one DMC; 40 with hypermethylated and 135 with hypomethylated
+    cytosines.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Exposure factor not registered.
+    kind_if_registered: dm_count
+    factor: exposure
+    level: E
+    stratum:
+      stage: pediveliger
+      generation: F0
+    n: 175
+    unit: DMGs
+    method: genes overlapping >=1 methylKit DMC (|diff| >= 25%, q < 0.01), bedtools intersect
+- id: C8
+  source: P1
+  where: Results 7
+  statement: Among F0 gastrula DMGs, hypomethylated genes outnumber hypermethylated ones (227 vs 147, about 61%
+    hypo).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Exposure factor not registered.
+    kind_if_registered: dm_direction
+    factor: exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F0
+    direction: hypo
+    share_pct: 60.7
+- id: C9
+  source: P1
+  where: Results 7
+  statement: Among F0 MCP-larva DMGs, hypomethylated genes dominate (135 vs 40, about 77% hypo).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Exposure factor not registered.
+    kind_if_registered: dm_direction
+    factor: exposure
+    level: E
+    stratum:
+      stage: pediveliger
+      generation: F0
+    direction: hypo
+    share_pct: 77.1
+- id: C10
+  source: P1
+  where: Results 7; Discussion
+  statement: About 70% of methylated CpGs in control F0 gastrulae and MCP larvae lie in gene bodies.
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Share of methylated CpGs by genomic feature; we have per-gene sums, not per-CpG feature annotation. It
+      is consistent with, but does not state, gene bodies being more methylated than promoters or genome.
+- id: C11
+  source: P1
+  where: Results 7
+  statement: 'Most DMCs fall in genes (promoters, exons or introns): 75% in gastrulae and 84% in MCP larvae.'
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Per-DMC feature annotation.
+- id: C12
+  source: P1
+  where: Results 7; fig. SM3; Discussion
+  statement: Relative to the distribution of methylated CpGs, DMCs are over-represented in intergenic regions in
+    gastrulae, and in intergenic regions and introns in MCP larvae (chi-squared p < 0.0001).
+  kind: not_testable
+  check:
+    reason: needs_other_regions
+    note: Needs intergenic and intron partitions and per-CpG calls.
+- id: C13
+  source: P1
+  where: Results 7 (tab. SM5)
+  statement: 18 of the 175 MCP-larva DMGs were already DMGs in gastrulae; 10 of them kept the same direction and
+    15 of 18 were hypomethylated in MCP larvae.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Exposure factor not registered, and tab. SM5 (gene identities) was not obtained.
+- id: C14
+  source: P1
+  where: Results 7
+  statement: GO analysis found no enriched terms among DMGs at either stage.
+  kind: not_testable
+  check:
+    reason: not_quantitative
+    note: Enrichment analysis not in our outputs.
+- id: C15
+  source: P1
+  where: Abstract; Results 6
+  statement: RNA-seq of F0 gastrulae found 14 DEGs between exposed and control (10 down, 4 up in exposed), including
+    developmental transcription factors such as Pax6, Elf-2, goosecoid and engrailed-like; no DEGs in MCP larvae.
+  kind: not_testable
+  check:
+    reason: needs_rnaseq
+    note: Expression claim (DESeq2, |log2FC| > 0.5, padj < 0.05).
+- id: C16
+  source: P1
+  where: Discussion; fig. SM4
+  statement: Differential methylation and differential expression were not correlated in F0.
+  kind: not_testable
+  check:
+    reason: needs_rnaseq
+    note: Requires expression data.
+- id: C17
+  source: P1
+  where: Abstract; Results 2-5; Fig. 2
+  statement: Exposure had no effect on 24 hpf larval abnormality (82.5% vs 82.6% normal) or gastrula DNA strand
+    breaks, but exposed larvae were less mobile and slower at 8 dpf, and exposed MCP larvae had a lower epinephrine-induced
+    metamorphosis rate (23.6% vs 30.3%).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Phenotypic endpoints; not measured by the methylation pipeline.
+- id: C18
+  source: P1
+  where: Abstract; Results 4-5; Fig. 2
+  statement: Exposed F0 animals were transiently longer as larvae and heavier as spat (2-4 months), and had 9.5%
+    higher field survival than controls (log-rank p = 0.0003).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Phenotypic endpoints; not measured by the methylation pipeline.
+- id: C19
+  source: P2
+  where: Results 3.5; Fig. SI7A
+  statement: In F1 gastrulae, overall methylation separated samples by parental (F0) treatment along PC1, which
+    explained 89.75% of the variance (PCA of the 1000 most variable 500 bp tiles).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered. Once registered, test as clustering on F1 gastrula samples only; our
+      PCA is on gene-body methylation (and across all samples unless subset), the paper's on tiles.
+    kind_if_registered: clustering
+    factor: parental_exposure
+    component: PC1
+    stratum:
+      stage: gastrula
+      generation: F1
+    statement: F1 gastrula samples split by parental exposure on PC1.
+- id: C20
+  source: P2
+  where: Results 3.5; Fig. SI7B
+  statement: In F1 MCP larvae, overall methylation did not separate samples by either parental (F0) or own (F1)
+    treatment on the PCA.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: 'Factors not registered. A null clustering claim: once registered, check that neither parental_exposure
+      nor exposure separates F1 pediveliger samples on PC1/PC2.'
+    kind_if_registered: clustering
+    factor: parental_exposure
+    component: PC1
+    stratum:
+      stage: pediveliger
+      generation: F1
+    statement: No separation of F1 pediveliger samples by parental_exposure or exposure.
+- id: C21
+  source: P2
+  where: Results 3.5; Tab. SI5
+  statement: F1 gastrulae from exposed vs control parents differed at 4349 DMRs (500 bp tiles, Wald p < 0.05, |difference|
+    >= 10%).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered; also region-level (tiles) rather than genes, see C23 for the gene count.
+    kind_if_registered: dm_count
+    factor: parental_exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F1
+    n: 4349
+    unit: DMRs
+    method: methylKit 500 bp tiles, Wald test p < 0.05 (unadjusted as reported), |diff| >= 10%, MethylDackel minDepth
+      10, GCA_902806645.1
+- id: C22
+  source: P2
+  where: Results 3.5; Discussion; Tab. SI5
+  statement: 'In F1 gastrulae, offspring of exposed parents were mostly hypermethylated: 3914 of 4349 DMRs (90%)
+    hyper, 435 hypo.'
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered.
+    kind_if_registered: dm_direction
+    factor: parental_exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F1
+    direction: hyper
+    share_pct: 90.0
+- id: C23
+  source: P2
+  where: Results 3.5; Tab. SI5
+  statement: The F1 gastrula lineage DMRs intersected 2345 genes (2098 with hyper- and 247 with hypomethylated DMRs).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered. Genes overlapping >=1 DMR, not per-gene tests.
+    kind_if_registered: dm_count
+    factor: parental_exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F1
+    n: 2345
+    unit: DMGs
+    method: genes overlapping >=1 methylKit tile DMR (Wald p < 0.05, |diff| >= 10%), bedtools intersect; gene difference
+      = mean of its DMRs
+- id: C24
+  source: P2
+  where: Results 3.5
+  statement: 89.5% of F1 gastrula lineage DMGs were hypermethylated in offspring of exposed parents.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered.
+    kind_if_registered: dm_direction
+    factor: parental_exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F1
+    direction: hyper
+    share_pct: 89.5
+- id: C25
+  source: P2
+  where: Results 3.5; Tab. SI5
+  statement: F1 MCP larvae from exposed vs control parents differed at 550 DMRs (372 hyper, 178 hypo; 67.6% hyper).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered; region-level unit.
+    kind_if_registered: dm_count
+    factor: parental_exposure
+    level: E
+    stratum:
+      stage: pediveliger
+      generation: F1
+    n: 550
+    unit: DMRs
+    method: methylKit 500 bp tiles, Wald test p < 0.05, |diff| >= 10%
+- id: C26
+  source: P2
+  where: Results 3.5; Tab. SI5
+  statement: The F1 MCP-larva lineage DMRs intersected 337 genes (232 hyper, 105 hypo).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered.
+    kind_if_registered: dm_count
+    factor: parental_exposure
+    level: E
+    stratum:
+      stage: pediveliger
+      generation: F1
+    n: 337
+    unit: DMGs
+    method: genes overlapping >=1 methylKit tile DMR (Wald p < 0.05, |diff| >= 10%)
+- id: C27
+  source: P2
+  where: Results 3.5; Discussion
+  statement: 68.8% of F1 MCP-larva lineage DMGs were hypermethylated in offspring of exposed parents (a hypermethylation
+    trend at both F1 stages).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered.
+    kind_if_registered: dm_direction
+    factor: parental_exposure
+    level: E
+    stratum:
+      stage: pediveliger
+      generation: F1
+    direction: hyper
+    share_pct: 68.8
+- id: C28
+  source: P2
+  where: Tab. SI7 (genes both differentially methylated and expressed in gastrulae, with mean DMR difference)
+  statement: Named genes differentially methylated between F1 gastrula lineages (and also differentially expressed)
+    include integrin alpha-4, LRP6, MRP1, ADAMTS16, CEBPD and NR0B1, nearly all hypermethylated in the exposed lineage
+    (directions from the sign of mean_Diff, assumed exposed minus control).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: parental_exposure not registered. Paper IDs are GCA_902806645.1 gene models (G-numbers); match by product
+      description. 'Gene' here means DMR overlapping gene coordinates, taken as gene_body.
+    kind_if_registered: dm_genes
+    factor: parental_exposure
+    level: E
+    stratum:
+      stage: gastrula
+      generation: F1
+    genes:
+    - name: Integrin alpha-4
+      published_id: G32483
+      direction: hyper
+      region: gene_body
+    - name: Methylthioribose kinase
+      published_id: G2673
+      direction: hyper
+      region: gene_body
+    - name: Protein SpAN
+      published_id: G3469
+      direction: hyper
+      region: gene_body
+    - name: DAO domain-containing protein
+      published_id: G10408
+      direction: hyper
+      region: gene_body
+    - name: CUB domain-containing protein
+      published_id: G27906
+      direction: hyper
+      region: gene_body
+    - name: Baculoviral IAP repeat-containing protein 7
+      published_id: G19894
+      direction: hyper
+      region: gene_body
+    - name: CCAAT/enhancer-binding protein delta
+      published_id: G35438
+      direction: hyper
+      region: gene_body
+    - name: Glyoxylate reductase/hydroxypyruvate reductase
+      published_id: G22426
+      direction: hyper
+      region: gene_body
+    - name: Putative GTP-binding protein ard-1-like / TRIM2
+      published_id: G35041
+      direction: hyper
+      region: gene_body
+    - name: Cytoglobin-1
+      published_id: G13625
+      direction: hyper
+      region: gene_body
+    - name: Beta-1,4-N-acetylgalactosaminyltransferase bre-4
+      published_id: G19854
+      direction: hyper
+      region: gene_body
+    - name: Chitotriosidase-1
+      published_id: G2555
+      direction: hyper
+      region: gene_body
+    - name: Alpha-amylase
+      published_id: G35515
+      direction: hyper
+      region: gene_body
+    - name: UPAR/Ly6 domain-containing protein
+      published_id: G19065
+      direction: hyper
+      region: gene_body
+    - name: BEN domain-containing protein 3
+      published_id: G19984
+      direction: hyper
+      region: gene_body
+    - name: A disintegrin and metalloproteinase with thrombospondin motifs 16 (ADAMTS16)
+      published_id: G6572
+      direction: hyper
+      region: gene_body
+    - name: 15-hydroxyprostaglandin dehydrogenase [NAD+]
+      published_id: G13385
+      direction: hyper
+      region: gene_body
+    - name: Multidrug resistance-associated protein 1
+      published_id: G24039
+      direction: hyper
+      region: gene_body
+    - name: Nuclear receptor subfamily 0 group B member 1
+      published_id: G34812
+      direction: hyper
+      region: gene_body
+    - name: Low-density lipoprotein receptor-related protein 6
+      published_id: G15724
+      direction: hyper
+      region: gene_body
+    - name: Motile sperm domain-containing protein 2
+      published_id: G27088
+      direction: hyper
+      region: gene_body
+    - name: Solute carrier family 22 member 4
+      published_id: G13706
+      direction: hyper
+      region: gene_body
+    - name: Xanthine dehydrogenase
+      published_id: G30166
+      direction: hyper
+      region: gene_body
+    - name: Baculoviral IAP repeat-containing protein 7
+      published_id: G17332
+      direction: hypo
+      region: gene_body
+    - name: Tripartite motif-containing protein 2/3
+      published_id: G19871
+      direction: hypo
+      region: gene_body
+- id: C29
+  source: P2
+  where: Results 3.5; Tab. SI5, SI6; Fig. SI10
+  statement: 'Methylation showed F1-by-F0 treatment interactions: 103 DMRs in 84 genes in gastrulae and 141 DMRs
+    in 69 genes in MCP larvae (LRT p < 0.1).'
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Interaction contrast (parental_exposure x exposure) is not part of our single-factor contrasts, and neither
+      factor is registered.
+- id: C30
+  source: P2
+  where: Results 3.5; Fig. SI8; Discussion
+  statement: F1 gastrula lineage DMRs were over-represented in intergenic regions, which hold 15% of constitutive
+    methylation but 27% of DMRs (chi-squared p < 0.05).
+  kind: not_testable
+  check:
+    reason: needs_other_regions
+    note: Needs an intergenic partition and region-level calls.
+- id: C31
+  source: P2
+  where: Discussion
+  statement: 'Pesticide-associated differential methylation went in opposite directions across generations: hypomethylation
+    in exposed F0 (P1) versus hypermethylation in F1 offspring of exposed parents.'
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Joint statement over C1/C2 (F0 exposure, hypo) and C22/C24/C27 (F1 parental exposure, hyper); testable
+      only by combining those once factors are registered.
+- id: C32
+  source: P2
+  where: Results 3.5; Fig. SI11-SI12
+  statement: In F1 gastrulae, 51 genes were both differentially methylated and expressed with no correlation between
+    the two, and a PLS showed methylation (first latent component, 66.1% of variance, separating CC from EE) as
+    the main driver; no PLS separation in MCP larvae, and no DMG was a DEG at that stage.
+  kind: not_testable
+  check:
+    reason: needs_rnaseq
+    note: Integration with expression data.
+- id: C33
+  source: P2
+  where: Abstract; Results 3.4; Tab. SI3-SI4; Fig. 3
+  statement: Parental exposure changed F1 gene expression (451 DEGs in gastrulae, 241 in MCP larvae), with F1:F0
+    interaction genes such as calmodulin, MyD88 and OLIG3 in gastrulae and HSP68/HSP70 in MCP larvae, and lower
+    expression of calmodulin and two adrenergic receptors in MCP larvae from exposed parents.
+  kind: not_testable
+  check:
+    reason: needs_rnaseq
+    note: Expression claims.
+- id: C34
+  source: P2
+  where: Results 3.4; Fig. 4
+  statement: Transcriptomic response to pesticide exposure in F1 MCP larvae was significant in the control lineage
+    but attenuated in the exposed lineage (MCMCglmm p = 0.006 vs n.s.).
+  kind: not_testable
+  check:
+    reason: needs_rnaseq
+    note: Expression-based DAPC.
+- id: C35
+  source: P2
+  where: Results 3.6; Fig. 5
+  statement: SNP allele frequencies show similar genetic divergence between F1 lineages (AFD 0.079) as between parents
+    and offspring, but SNPs overlap only 6% of gastrula DMRs and 0% of MCP DMRs, so methylation differences are
+    argued to be largely independent of genetic divergence.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Genotype analysis from RNA-seq SNPs and DMR coordinates.
+- id: C36
+  source: P2
+  where: Abstract; Results 3.2-3.3; Fig. 2
+  statement: 'Parental exposure mattered more for F1 phenotype than own exposure: the exposed lineage had a lower
+    epinephrine-induced metamorphosis rate (F1 exposure also lowered it, no interaction), and EE spat had lower
+    field survival (24%) than CC, CE and EC (33%, 32%, 32%).'
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Phenotypic endpoints.
+- id: C37
+  source: P2
+  where: Results 3.5; Fig. SI9
+  statement: Lineage DMGs were enriched for cell fate, cell junction and muscle development terms in gastrulae,
+    and for development and organismal homeostasis terms in MCP larvae.
+  kind: not_testable
+  check:
+    reason: not_quantitative
+    note: GO enrichment not in our outputs.
+design_note: 'No factors are registered. The design lives only in the sample sheet''s `condition` column (e.g. Gastrula_DNA_F1_ET:
+  parents E, offspring T; T = control). Factor names used below are proposals for registration: `stage` (gastrula
+  / pediveliger), `generation` (F0 / F1), `exposure` (offspring''s own 0-48 hpf exposure; reference "T", non-reference
+  "E"), `parental_exposure` (F1 only; reference "T", non-reference "E"). Every differential claim is therefore `not_testable`
+  (reason other_data) for now, and carries `kind_if_registered` plus the fields it would need. P2''s "lineage" contrasts
+  pool both F1 exposure groups (CC+CE vs EC+EE). Both papers used GCA_902806645.1 (not the White Whale reference),
+  methylKit, and per-CpG (P1) or 500 bp tile (P2) units, so even once factors are registered the counts are only
+  comparable in direction and rough scale with per-gene DSS calls.
+
+  '
