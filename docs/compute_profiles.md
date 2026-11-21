@@ -10,7 +10,8 @@ variables instead.
 | `WHALE_RAW` | directory holding `<STUDY_ID>/` FASTQ folders | `data/raw` |
 | `WHALE_REFERENCE` | directory holding `<ASSEMBLY>/genomic.fna` etc. | `data/reference` |
 | `WHALE_BISMARK_INDEX` | directory holding the cached `bismark_genome/` index | the reference bundle |
-| `WHALE_METHYLOMES` | where per-sample outputs are published | `data/methylomes` |
+| `WHALE_SALMON_INDEX` | directory holding the cached `salmon_index/` (workflows/rnaseq) | the reference bundle |
+| `WHALE_METHYLOMES` | where per-sample outputs are published (RNA-seq under `<STUDY_ID>/rnaseq/`) | `data/methylomes` |
 | `WHALE_WORKDIR` | Nextflow work directory, on fast local disk | `work` (klone: scrubbed) |
 | `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` | local executor limits (desktop, raven) | 10 / 28 GB; 32 / 120 GB |
 | `WHALE_SLURM_ACCOUNT`, `WHALE_SLURM_QUEUE` | klone | `srlab`, `ckpt-all` |

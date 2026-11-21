@@ -14,6 +14,9 @@ carried across by hand.
 | `.github/PULL_REQUEST_TEMPLATE/study.md` | same path | `44022f1` | Methylome checklist |
 | `config/base.config` (`klone` profile) | `config/base.config` | `44022f1` | `WHALE_*` variables; methylation processes only |
 | `modules/methylation/*.nf` (containers, Bismark `--score_min L,0,-0.6`) | `modules/methylation/` | `44022f1` | Rewritten; container pins and Bismark settings kept |
+| `modules/rnaseq/fastp.nf` | `modules/rnaseq/trim_fastp.nf` | `8b088a0` | Container pin, explicit single-end adapter, `--detect_adapter_for_pe`, `--tag_seq` poly-X kept; trimmed reads not published; outputs under `<STUDY_ID>/rnaseq/qc/` |
+| `modules/rnaseq/salmon.nf` (`SALMON_QUANT`, `SALMON_INDEX`) | `modules/rnaseq/align_quant_salmon.nf` | `8b088a0` | Biocontainers pin of Salmon 1.10.3; genome decoys added to the index, which is cached with `storeDir` and checksummed; no `--geneMap` (genes from `tx2gene.tsv` in GENE_MATRICES); PE-only `--gcBias` and `--tag_seq` handling kept |
+| `workflows/rnaseq/nextflow.config` (`se_adapter`, `tag_seq`) | `workflows/rnaseq/nextflow.config` | `8b088a0` | Same defaults |
 | `data/reference/genome_assemblies.yaml` | same path | `44022f1` | Two assemblies; `default` flag |
 | `docs/compute_profiles.md` (klone section) | `docs/running_on_klone.md` | `44022f1` | Summarized |
 

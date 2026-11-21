@@ -855,5 +855,102 @@ def profiles_cmd():
     click.echo(_table(rows, ["profile", "executor", "label", "suited for"]))
 
 
+# --- RNA-seq (Goal 2): workflows/rnaseq, docs/rnaseq.md ---------------------
+
+@main.command("fetch-rnaseq-samplesheet")
+@click.option("--study", "study_id", required=True, help="The methylation study whose paired RNA-seq this is.")
+@click.option("--bioproject", default=None, help="Default: the study YAML's paired_rnaseq.bioproject.")
+@click.option("--show-attributes", is_flag=True,
+              help="Only list the RNA-seq runs' deposited sample attributes, to choose --condition-attribute.")
+@click.option("--condition-attribute", "condition_attributes", multiple=True,
+              help="Sample attribute defining an experimental group (repeatable), as for fetch-samplesheet.")
+@click.option("--attribute", "extra_attributes", multiple=True, help="Additional sample attribute to carry (repeatable).")
+@click.option("--label-field", default=None, help="Run-report field holding per-library design labels.")
+@click.option("--label-pattern", default=None, help="Regex with named groups applied to --label-field.")
+@click.option("--library-strategy", "library_strategies", multiple=True,
+              help="Keep runs with this ENA library_strategy (repeatable). Default: RNA-Seq.")
+def fetch_rnaseq_samplesheet_cmd(study_id, bioproject, show_attributes, condition_attributes, extra_attributes,
+                                 label_field, label_pattern, library_strategies):
+    """Build a study's RNA-seq sample sheet and FASTQ manifest in data/studies/<study>/rnaseq/.
+
+    Reads the RNA-seq BioProject from the study YAML (paired_rnaseq) and ENA's
+    metadata; downloads no sequence data. Stage the FASTQ with
+    `whale fetch-fastq --manifest data/studies/<study>/rnaseq/fastq_manifest.tsv
+    --dest $WHALE_RAW/<study>/rnaseq --accession <RNA-seq BioProject>`.
+    """
+    from whale.ena import ENAError, sample_attribute_summary
+    from whale.results import RecordError
+    from whale.rnaseq import (
+        RNASEQ_STRATEGIES,
+        fetch_rnaseq_samplesheet,
+        load_study,
+        paired_bioproject,
+    )
+
+    repo = _repo()
+    strategies = list(library_strategies) or RNASEQ_STRATEGIES
+    try:
+        if show_attributes:
+            project = bioproject or paired_bioproject(load_study(repo, study_id))[0]
+            for k, vals in sample_attribute_summary(project, strategies).items():
+                shown = ", ".join(v or "''" for v in vals[:8]) + (f", … ({len(vals)} values)" if len(vals) > 8 else "")
+                click.echo(f"{k:28} {shown}")
+            return
+        if not condition_attributes:
+            raise click.UsageError("--condition-attribute is required (use --show-attributes to see the choices).")
+        report = fetch_rnaseq_samplesheet(
+            repo, study_id, condition_attributes=list(condition_attributes), bioproject=bioproject,
+            library_strategies=strategies, extra_attributes=list(extra_attributes),
+            label_field=label_field, label_pattern=label_pattern)
+    except (ENAError, RecordError) as exc:
+        raise click.ClickException(str(exc)) from None
+    except (OSError, HTTPException) as exc:
+        raise click.ClickException(f"could not read from ENA (retried): {exc}") from None
+    click.echo(f"{report['bioproject']} -> {study_id} RNA-seq ({report['relationship']}): {report['n_runs']} runs, "
+               f"{report['n_libraries']} libraries, {report['total_fastq_bytes'] / 1e9:.1f} GB of FASTQ")
+    click.echo(f"  layouts    : {', '.join(report['library_layouts'])}")
+    for group, n in report["group_sizes_libraries"].items():
+        click.echo(f"    {group:32} {n} / {report['group_sizes_runs'][group]}")
+    if report.get("libraries_with_several_runs"):
+        click.echo(click.style(f"\n{len(report['libraries_with_several_runs'])} libraries were sequenced in several "
+                               "runs; the workflow quantifies each run separately.", fg="yellow"))
+    if report["relationship"] != "same_animals":
+        click.echo(click.style(f"\npaired_rnaseq.relationship is {report['relationship']!r}: these libraries "
+                               "cannot be paired one to one with the methylomes.", fg="yellow"))
+    click.echo(f"\nWrote {', '.join(report['outputs'])} and {report['provenance_file']}")
+
+
+@main.command("record-rnaseq")
+@click.option("--results", required=True, type=click.Path(exists=True, file_okay=False),
+              help="The run's output folder: <WHALE_METHYLOMES>/<STUDY_ID>/rnaseq.")
+@click.option("--run-name", default=None, help="Nextflow run name (default: from run_manifest.json).")
+@click.option("--no-upload", is_flag=True, help="Do not copy the per-library files to the data host.")
+@click.option("--upload-target", default=None,
+              help="user@host:/path or a local folder (default: data/data_host.yaml upload_target).")
+@click.option("--no-commit", is_flag=True)
+@click.option("--no-push", is_flag=True)
+@click.option("--remote", default="origin", show_default=True)
+def record_rnaseq_cmd(results, run_name, no_upload, upload_target, no_commit, no_push, remote):
+    """Record a finished RNA-seq run: commit gene matrices and QC, upload the rest. The workflow runs this itself."""
+    from whale.results import RecordError
+    from whale.rnaseq import record_rnaseq
+
+    repo = _repo()
+    try:
+        res = record_rnaseq(repo, results, run_name=run_name, upload=not no_upload, upload_target=upload_target,
+                            commit=not no_commit, push=not (no_push or no_commit), remote=remote)
+    except (ClaimError, RecordError) as exc:
+        raise click.ClickException(str(exc)) from None
+    click.echo(f"{res['study_id']} RNA-seq: {res['passed']} of {res['libraries']} libraries pass the QC gate; "
+               f"{res['files']} files listed in rnaseq_manifest.tsv")
+    if res["mixed_strandedness"]:
+        click.echo(click.style("Libraries differ in strandedness; see qc_summary.tsv.", fg="yellow"))
+    if res["upload_error"]:
+        click.echo(click.style(f"not on the data host: {res['upload_error']}; run `whale record-rnaseq` again "
+                               "once the host is reachable.", fg="yellow"), err=True)
+    if res["pushed"]:
+        click.echo(f"Pushed {res['branch']}")
+
+
 if __name__ == "__main__":
     main()

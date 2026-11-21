@@ -102,6 +102,8 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale mirror-fastq [--accession <PRJ…>] [--plan] [--jobs N] [--max-gb G]` | Prefetch backlog FASTQ to gannet: NCBI `.sra` converted on raven (ENA as fallback), verified and resumable |
 | `whale build-dashboard [--no-claims] [--no-mirror]` | Write `site/data.json` for the progress dashboard (`site/index.html`, published to GitHub Pages) |
 | `whale build-atlas [--out DIR]` | Pool the merged, SNP-masked studies' gene tables and write the atlas pages' data (`site/atlas/data/`): pooled tables, landscape, concordance |
+| `whale fetch-rnaseq-samplesheet --study <ID> --condition-attribute <a> [--show-attributes]` | RNA-seq sample sheet and FASTQ manifest for a study's `paired_rnaseq.bioproject`, in `data/studies/<ID>/rnaseq/` ([docs/rnaseq.md](docs/rnaseq.md)) |
+| `whale record-rnaseq --results <dir>` | Record a finished `workflows/rnaseq` run: commit gene matrices and QC, upload the rest (the workflow runs it itself) |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |
 | `whale build-registry` | Rebuild `registry/study_registry.csv` (not committed) |
@@ -113,7 +115,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 ```
 registry/        backlog.tsv, studies/<STUDY_ID>.yaml, controlled_vocabularies/
 schemas/         study and status JSON schemas
-workflows/       methylation/ (Nextflow DSL2)
+workflows/       methylation/, rnaseq/ (paired expression, Goal 2), snp_mask/ (Nextflow DSL2)
 modules/         Nextflow processes
 config/          base.config (profiles) and one config per study
 data/            reference/ (assembly registry), studies/<STUDY_ID>/ (small committed outputs);
