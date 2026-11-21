@@ -653,6 +653,73 @@ def build_atlas_cmd(out, remote):
     click.echo(f"Wrote {path}: {summary_text(data)}")
 
 
+@main.command("differential")
+@click.option("--study", "study_ids", multiple=True,
+              help="Study ID (repeatable). Default: the study of the current study branch.")
+@click.option("--all", "all_studies", is_flag=True, help="Every study with gene tables on this checkout.")
+@click.option("--engine", type=click.Choice(["docker", "apptainer", "local"]), default="docker", show_default=True,
+              help="How to run dss.R: the pinned DSS container through Docker or Apptainer, or Rscript on PATH.")
+@click.option("--plan", "plan_only", is_flag=True, help="Show the models and jobs; fit nothing.")
+def differential_cmd(study_ids, all_studies, engine, plan_only):
+    """Re-derive differential methylation per gene with one shared DSS model (PLAN.md §6.3).
+
+    Writes data/studies/<ID>/differential/: the plan, one table per job and region,
+    tests.tsv, significant.tsv and summary.yaml."""
+    from whale.differential import (
+        DifferentialError,
+        out_dir,
+        plan,
+        run,
+        write_inputs,
+        write_summary,
+    )
+
+    repo = _repo()
+    if all_studies:
+        study_ids = sorted(p.parent.name for p in (repo / "data" / "studies").glob("*/genes"))
+    elif not study_ids:
+        branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo,
+                                capture_output=True, text=True).stdout.strip()
+        parsed = parse_branch(branch)
+        if not parsed:
+            raise click.ClickException("not on a study branch: pass --study or --all")
+        study_ids = [parsed[1]]
+    failed = []
+    for sid in study_ids:
+        try:
+            p = plan(repo, sid)
+        except DifferentialError as exc:
+            click.echo(click.style(f"{sid}: {exc}", fg="yellow"))
+            failed.append(sid)
+            continue
+        click.echo(click.style(sid, bold=True) + f": {len(p['units'])} units, {len(p['jobs'])} jobs")
+        for j in p["jobs"]:
+            where = f" [{j['stratum']}]" if j["stratum"] else ""
+            click.echo(f"  {j['job_id']}: {j['formula']}{where}, {len(j['units'])} units; tests {', '.join(j['tests'])}")
+        for reason in p["skipped"]:
+            click.echo(f"  skipped: {reason}")
+        if plan_only or not p["jobs"]:
+            continue
+        dest = out_dir(repo, sid)
+        write_inputs(p, dest)
+        try:
+            run(repo, sid, engine)
+        except DifferentialError as exc:
+            click.echo(click.style(str(exc), fg="red"))
+            failed.append(sid)
+            continue
+        s = write_summary(p, dest)
+        for j in s["jobs"]:
+            for region, r in ((j.get("all_units") or {}).get("regions") or {}).items():
+                hits = ", ".join(f"{c} {t['fdr_lt_0.05']}" for c, t in r["tests"].items())
+                click.echo(f"  {j['job_id']} {region}: {r['genes_tested']} genes; FDR < 0.05: {hits}")
+            if j.get("note"):
+                click.echo(f"  {j['job_id']}: {j['note']}")
+        click.echo(f"  wrote {dest.relative_to(repo)}/")
+    if failed:
+        raise click.ClickException("failed: " + ", ".join(failed))
+
+
 # --- claims ------------------------------------------------------------------
 
 @main.command("start-study")
