@@ -474,7 +474,7 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
         click.echo(click.style("  Not enough free space for what is left.", fg="red"))
     if dry_run:
         if launch:
-            click.echo(f"Would then launch: {' '.join(nextflow_command(study_id, profile, parsed[2]))}")
+            click.echo(f"Would then launch: {' '.join(nextflow_command(study_id, profile, parsed[2], repo=repo))}")
         return
     if short and not ignore_space:
         raise click.ClickException("not enough free space; free some or pass --ignore-space.")
@@ -505,7 +505,7 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
             raise click.ClickException(f"downloads verified, but the stage was not set: {exc}") from None
         click.echo(f"Stage: {new['stage']} on {new['machine']}")
     if launch:
-        cmd = nextflow_command(study_id, new["profile"], parsed[2])
+        cmd = nextflow_command(study_id, new["profile"], parsed[2], repo=repo)
         # The pipeline finds the FASTQ under $WHALE_RAW, so point it at where they went.
         env = {**os.environ, "WHALE_RAW": str(target.resolve().parent)}
         click.echo(f"Launching: {' '.join(cmd)}")
@@ -946,6 +946,116 @@ def profiles_cmd():
     click.echo(_table(rows, ["profile", "executor", "label", "suited for"]))
 
 
+@main.command("record-enrichment")
+@click.option("--results", required=True, type=click.Path(exists=True, file_okay=False),
+              help="The enrichment run's output folder: <WHALE_METHYLOMES>/<STUDY_ID>[/parts/<PART>].")
+@click.option("--run-name", default=None, help="Nextflow run name (default: from run_manifest.json).")
+@click.option("--no-upload", is_flag=True, help="Do not copy the per-sample tables to the data host.")
+@click.option("--upload-target", default=None,
+              help="user@host:/path or a local folder (default: data/data_host.yaml upload_target).")
+@click.option("--no-commit", is_flag=True)
+@click.option("--no-push", is_flag=True)
+@click.option("--remote", default="origin", show_default=True)
+def record_enrichment_cmd(results, run_name, no_upload, upload_target, no_commit, no_push, remote):
+    """Record a finished MeDIP/MBD run (workflows/enrichment) on this study branch. The workflow runs this itself."""
+    from whale.enrichment import record_enrichment_run
+    from whale.results import RecordError
+
+    repo = _repo()
+    try:
+        res = record_enrichment_run(repo, results, run_name=run_name, upload=not no_upload,
+                                    upload_target=upload_target, commit=not no_commit,
+                                    push=not (no_push or no_commit), remote=remote)
+    except (ClaimError, RecordError) as exc:
+        raise click.ClickException(str(exc)) from None
+    label = res["study_id"] + (f" part {res['part']}" if res["part"] else "")
+    click.echo(f"{label} (enrichment tier): {res['passed']} of {res['libraries']} libraries pass the QC gate")
+    click.echo(f"{label}: stage {res['stage']}" + (f" (recorded {', '.join(res['added'])})" if res["added"] else ""))
+    if res["upload_error"]:
+        click.echo(click.style(f"tables not on the data host: {res['upload_error']}", fg="yellow"), err=True)
+        click.echo("The study stays below summarized; run `whale record-enrichment` again once the host is reachable.",
+                   err=True)
+    if res["pushed"]:
+        click.echo(f"Pushed {res['branch']}" + ("; PR marked ready for review" if res["pr_ready"] else ""))
+
+
+@main.command("replicate")
+@click.argument("study_ids", nargs=-1)
+def replicate_cmd(study_ids):
+    """Test each study's published claims against its re-derived results (data/studies/<ID>/claims.yaml).
+
+    Writes replication.md and replication.json beside the claims; default: every study with claims."""
+    from whale.replication import ReplicationError, studies_with_claims, write
+
+    repo = _repo()
+    ids = list(study_ids) or studies_with_claims(repo)
+    if not ids:
+        click.echo("No study has a claims.yaml yet.")
+    failed = False
+    for sid in ids:
+        try:
+            rep = write(repo, sid)
+        except ReplicationError as exc:
+            click.echo(click.style(f"FAIL  {sid}: {exc}", fg="red"))
+            failed = True
+            continue
+        counts = ", ".join(f"{v} {k.replace('_', ' ')}" for k, v in rep["counts"].items() if v)
+        click.echo(f"ok    {sid}: {len(rep['claims'])} claims ({counts})")
+    sys.exit(1 if failed else 0)
+
+
+@main.command("mcp")
+@click.option("--repo", "repo_path", default=None, type=click.Path(file_okay=False, exists=True),
+              help="Repository to serve. Default: the checkout around the current directory, or $WHALE_REPO.")
+def mcp_cmd(repo_path):
+    """Serve the summarized results to MCP clients over stdio (read-only; docs/mcp.md)."""
+    from whale.query.server import run
+
+    run(Path(repo_path).resolve() if repo_path else _repo())
+
+
+# --- autopilot (docs/autopilot.md) --------------------------------------------
+
+@main.group("autopilot")
+def autopilot_group():
+    """The scheduled controller that moves each study one step per tick (step A: dry run only)."""
+
+
+@autopilot_group.command("tick")
+@click.option("--dry-run", is_flag=True, help="Required in step A: report what would happen, change nothing.")
+@click.option("--no-fetch", is_flag=True, help="Use main and the study branches as last fetched.")
+@click.option("--remote", default="origin", show_default=True)
+@click.option("--digest", "digest_path", default=None, type=click.Path(dir_okay=False),
+              help="Also write the Markdown digest to this file.")
+@click.option("--markdown", "as_markdown", is_flag=True, help="Print the Markdown digest instead of one line per study.")
+@click.option("--machine", "here", default=None, help="Act as this machine (default: host name).")
+def autopilot_tick_cmd(dry_run, no_fetch, remote, digest_path, as_markdown, here):
+    """Decide the next transition of every study and print it, with a digest."""
+    from whale.autopilot.digest import lines, markdown
+    from whale.autopilot.tick import AutopilotError, tick
+
+    repo = _repo()
+    try:
+        res = tick(repo, dry_run=dry_run, remote=remote, do_fetch=not no_fetch, here=here)
+    except AutopilotError as exc:
+        raise click.UsageError(str(exc)) from None
+    md = markdown(res)
+    if digest_path:
+        Path(digest_path).write_text(md + "\n")
+    if res.paused is not None:
+        click.echo(f"Paused (AUTOPILOT_PAUSED): {res.paused}")
+        return
+    for w in res.warnings:
+        click.echo(click.style(f"warning: {w}", fg="yellow"), err=True)
+    if as_markdown:
+        click.echo(md)
+        return
+    for line in lines(res):
+        click.echo(line)
+    click.echo("")
+    click.echo(md)
+
+
 # --- RNA-seq (Goal 2): workflows/rnaseq, docs/rnaseq.md ---------------------
 
 @main.command("fetch-rnaseq-samplesheet")
@@ -1041,31 +1151,6 @@ def record_rnaseq_cmd(results, run_name, no_upload, upload_target, no_commit, no
                                "once the host is reachable.", fg="yellow"), err=True)
     if res["pushed"]:
         click.echo(f"Pushed {res['branch']}")
-
-
-@main.command("replicate")
-@click.argument("study_ids", nargs=-1)
-def replicate_cmd(study_ids):
-    """Test each study's published claims against its re-derived results (data/studies/<ID>/claims.yaml).
-
-    Writes replication.md and replication.json beside the claims; default: every study with claims."""
-    from whale.replication import ReplicationError, studies_with_claims, write
-
-    repo = _repo()
-    ids = list(study_ids) or studies_with_claims(repo)
-    if not ids:
-        click.echo("No study has a claims.yaml yet.")
-    failed = False
-    for sid in ids:
-        try:
-            rep = write(repo, sid)
-        except ReplicationError as exc:
-            click.echo(click.style(f"FAIL  {sid}: {exc}", fg="red"))
-            failed = True
-            continue
-        counts = ", ".join(f"{v} {k.replace('_', ' ')}" for k, v in rep["counts"].items() if v)
-        click.echo(f"ok    {sid}: {len(rep['claims'])} claims ({counts})")
-    sys.exit(1 if failed else 0)
 
 
 if __name__ == "__main__":

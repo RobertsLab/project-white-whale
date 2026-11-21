@@ -194,9 +194,23 @@ def config_name(study_id: str, part: str | None = None) -> str:
     return f"config/{study_id}.part-{part}.config" if part else f"config/{study_id}.config"
 
 
-def nextflow_command(study_id: str, profile: str, part: str | None = None) -> list[str]:
+def study_workflow(repo: Path | None, study_id: str, part: str | None = None) -> str:
+    """workflows/enrichment for an enrichment-tier chemistry (MeDIP, MBD) in the study config, else
+    workflows/methylation."""
+    if repo is not None:
+        cfg = Path(repo) / config_name(study_id, part)
+        chem = config_chemistry(cfg.read_text()) if cfg.exists() else None
+        if chem:
+            from whale.vocab import load_vocab
+
+            if (load_vocab(Path(repo), "assay_chemistry").get(chem) or {}).get("tier") == "enrichment":
+                return "workflows/enrichment"
+    return "workflows/methylation"
+
+
+def nextflow_command(study_id: str, profile: str, part: str | None = None, repo: Path | None = None) -> list[str]:
     """The `nextflow run` that processes a claimed study, from the root of its worktree."""
-    return ["nextflow", "run", "workflows/methylation", "-c", config_name(study_id, part),
+    return ["nextflow", "run", study_workflow(repo, study_id, part), "-c", config_name(study_id, part),
             "-profile", f"{profile},docker" if profile == "desktop" else profile]
 
 

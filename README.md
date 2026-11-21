@@ -86,7 +86,8 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 [the C/T SNP mask](docs/snp_mask.md),
 [mirroring FASTQ to gannet](docs/fastq_mirror.md),
 [the atlas: pooled tables, landscape and concordance](docs/atlas.md),
-[re-derived differential methylation](docs/differential.md).
+[re-derived differential methylation](docs/differential.md),
+[asking Claude about the results (`whale mcp`)](docs/mcp.md).
 
 ## Commands
 
@@ -106,6 +107,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale fetch-rnaseq-samplesheet --study <ID> --condition-attribute <a> [--show-attributes]` | RNA-seq sample sheet and FASTQ manifest for a study's `paired_rnaseq.bioproject`, in `data/studies/<ID>/rnaseq/` ([docs/rnaseq.md](docs/rnaseq.md)) |
 | `whale record-rnaseq --results <dir>` | Record a finished `workflows/rnaseq` run: commit gene matrices and QC, upload the rest (the workflow runs it itself) |
 | `whale differential [--study <ID> … \| --all] [--plan] [--engine docker\|apptainer\|local]` | Re-derive differential methylation per gene with one shared DSS model (PLAN.md §6.3); writes `data/studies/<ID>/differential/` |
+| `whale mcp [--repo DIR]` | Read-only MCP server over the summarized results, for Claude Code and Claude Desktop (`pip install -e ".[mcp]"`; [docs/mcp.md](docs/mcp.md)) |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |
 | `whale build-registry` | Rebuild `registry/study_registry.csv` (not committed) |
