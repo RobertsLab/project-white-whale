@@ -1,0 +1,361 @@
+study_id: ROBERTS2022_PH_PLOIDY_WGBS
+sources:
+- id: P1
+  citation: 'Venkataraman YR (2021). Ocean acidification influences on physiology and epigenetics in the Pacific
+    oyster (Crassostrea gigas). PhD dissertation, University of Washington. Chapter 4: Polyploidy and environmental
+    stress have distinct impacts on Pacific oyster (Crassostrea gigas) ctenidia methylomes (pp. 86-112).'
+  doi: null
+  url: http://hdl.handle.net/1773/48032
+  read: full text of chapter 4 (abstract, methods, results, discussion, Table 4.1, Figs 4.1-4.4) and the Appendix
+    A.4 data-accessibility list, from the ResearchWorks PDF
+- id: R1
+  citation: RobertsLab/project-oyster-oa GitHub repository, analyses/Haws_04-DSS/DML, Haws_07-DML-characterization,
+    Haws_09-functional-enrichment (authors' own output cited in Appendix A.4).
+  doi: null
+  url: https://github.com/RobertsLab/project-oyster-oa
+  read: DSS DML tables (DML-pH-DSS.csv, DML-ploidy-DSS.csv, DML-ploidypH-DSS.csv) and enriched-GO-with-transcript
+    tables; used only to make P1's claims precise (gene identities behind Table 4.1). NCBI Gene esummary used to
+    resolve LOC gene IDs to product names.
+caveats:
+- 'These results come from run curious_mestorf, which aligned these non-directional (Zymo Pico Methyl-Seq) libraries
+  in directional mode and so used about half of the read pairs (30% mapping). Calls are unbiased but at half depth;
+  re-run with --non_directional (PR #61) and re-derive before treating the differential verdicts as final.'
+- The paper is a dissertation chapter; the authors' own DML tables (RobertsLab/project-oyster-oa) label the pH and
+  ploidy sets the other way round from the chapter's text. The claims follow the chapter.
+claims:
+- id: C1
+  source: P1
+  where: Results 4.4.1
+  statement: Across all 24 samples, 11.6% of cytosines in CpG context were called methylated (Bismark, pooled over
+    samples).
+  kind: global_level
+  check:
+    level_pct: 11.6
+    groups: all
+    measure: Bismark percent methylated CpG-context cytosine calls, pooled across all samples
+- id: C2
+  source: P1
+  where: Abstract; Results 4.4.3; Discussion 4.5.1
+  statement: There was no global methylation difference between diploid and triploid oysters; both were predominantly
+    lowly methylated (no difference value or test statistic reported).
+  kind: group_difference
+  check:
+    factor: ploidy
+    higher: null
+    lower: null
+    difference_pct: 0
+    expect: no_difference
+    note: Claim is the absence of a difference; falsified if triploid and diploid overall CpG methylation differ
+      significantly.
+- id: C3
+  source: P1
+  where: Abstract
+  statement: There were no global methylation differences between samples, including between low (7.7) and high
+    (8.2) pH treatments (no values reported).
+  kind: group_difference
+  check:
+    factor: ph
+    higher: null
+    lower: null
+    difference_pct: 0
+    expect: no_difference
+    note: Claim is the absence of a difference; falsified if 7.7 and 8.2 overall CpG methylation differ significantly.
+- id: C4
+  source: P1
+  where: Results 4.4.3; Fig. 4.1E
+  statement: A global PCA of CpG percent methylation (PC1 11.0%, PC2 6.63% of variance) did not separate samples
+    by ploidy.
+  kind: clustering
+  check:
+    factor: ploidy
+    component: PC1
+    statement: Diploid and triploid samples do not separate on PC1 or PC2 (no separation expected).
+- id: C5
+  source: P1
+  where: Results 4.4.3; Fig. 4.1E
+  statement: The same global PCA did not separate samples by pH treatment.
+  kind: clustering
+  check:
+    factor: ph
+    component: PC1
+    statement: pH 7.7 and 8.2 samples do not separate on PC1 or PC2 (no separation expected).
+- id: C6
+  source: P1
+  where: Results 4.4.3; Fig. 4.1C-D
+  statement: Of 10,497,320 CpGs with >=5x coverage in every sample, 9.4% were highly methylated (mean >=50%).
+  kind: methylated_fraction
+  check:
+    unit: cpgs
+    region: genome
+    threshold_pct: 50
+    fraction_pct: 9.4
+    definition: CpGs with >=5x in all samples; mean percent methylation across samples >=50% = highly methylated
+      (10-50% moderate 8.1%, <10% low 82.5%)
+- id: C7
+  source: P1
+  where: Results 4.4.3; Fig. 4.2
+  statement: 'Methylation is concentrated in genes: 94.3% of highly methylated CpGs lay in genes (53.2% intronic,
+    35.7% CDS), a distribution significantly different from all 5x CpGs (chi-squared).'
+  kind: region_contrast
+  check:
+    higher: gene_body
+    lower: genome
+    note: Paper's evidence is the genic share of highly methylated CpGs (94.3%) vs all 5x CpGs; no per-region mean
+      methylation levels reported.
+- id: C8
+  source: P1
+  where: Results 4.4.3; Fig. 4.2
+  statement: Upstream 1 kb flanking regions held only 0.5% of highly methylated CpGs versus 94.3% in genes, implying
+    low promoter-proximal methylation relative to gene bodies.
+  kind: region_contrast
+  check:
+    higher: gene_body
+    lower: promoter
+    note: Inferred from shares of highly methylated CpGs (upstream flank 0.5% vs genes 94.3%); shares partly reflect
+      region size; paper's upstream flank excludes gene bodies.
+- id: C9
+  source: P1
+  where: Abstract; Results 4.4.4; Fig. 4.3A
+  statement: DSS multifactor model identified 154 ploidy-DML (ploidyT coefficient) out of 12,794,074 CpGs with >=1x
+    coverage.
+  kind: dm_count
+  check:
+    factor: ploidy
+    level: triploid
+    stratum:
+      ph: '8.2'
+    n: 154
+    unit: DMCs
+    method: DSS DMLfit.multiFactor ~ploidy+pH+ploidy:pH, Wald test on ploidyT, p<0.05 and BH FDR<0.01, no smoothing,
+      no delta cut-off; stratum reflects treatment coding (effect at pH 8.2); R1 table named ploidy has 178 rows
+- id: C10
+  source: P1
+  where: Abstract; Results 4.4.4; Fig. 4.3B
+  statement: DSS multifactor model identified 178 pH-DML (pHL coefficient).
+  kind: dm_count
+  check:
+    factor: ph
+    level: '7.7'
+    stratum:
+      ploidy: diploid
+    n: 178
+    unit: DMCs
+    method: DSS DMLfit.multiFactor ~ploidy+pH+ploidy:pH, Wald test on pHL, p<0.05 and BH FDR<0.01, no smoothing;
+      stratum reflects treatment coding (effect in diploids); R1 table named pH has 154 rows
+- id: C11
+  source: P1
+  where: Results 4.4.4; Fig. 4.3C
+  statement: The ploidy x pH interaction term gave 53 interaction-DML.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Interaction contrast is not a registered contrast (registry has ploidy and ph main factors only); also
+      CpG-level.
+- id: C12
+  source: P1
+  where: Results 4.4.4; Fig. 4.4
+  statement: 'Ploidy-DML were mostly genic: 145 of 154 (94.2%) fell in 109 genes, chiefly introns (74.0%), then
+    CDS (16.9%) and UTR (5.2%).'
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Counts genes containing a significant CpG, not genes tested as units; intron/CDS split also needs other
+      regions.
+- id: C13
+  source: P1
+  where: Results 4.4.4; Fig. 4.4
+  statement: 'pH-DML were mostly genic: 123 of 178 (69.1%) fell in 94 genes, chiefly introns (58.4%), with 48.3%
+    in transposable elements and 15.2% intergenic.'
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Per-CpG locations in introns/TEs/intergenic are not available; genes-with-DML is not a per-gene test.
+- id: C14
+  source: P1
+  where: Results 4.4.4
+  statement: 'DML sets overlapped little: 21 loci shared by pH and ploidy, 11 by pH and interaction, 17 by ploidy
+    and interaction, and 25 in all three.'
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Locus-level overlaps.
+- id: C15
+  source: P1
+  where: Results 4.4.4; Fig. 4.3D
+  statement: Chromosome 9 carried the most DML per 10,000 CpGs despite having the fewest genes.
+  kind: not_testable
+  check:
+    reason: needs_coordinates
+    note: Per-chromosome DML density on the Roslin assembly.
+- id: C16
+  source: P1
+  where: Results 4.4.4; Discussion 4.5.1
+  statement: Few DML overlapped C/T SNPs (5 pH-DML, 3 ploidy-DML, 1 interaction-DML), so DML were not SNP artefacts.
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Locus-level SNP overlap.
+- id: C17
+  source: P1
+  where: Results 4.4.5; Table 4.1
+  statement: Genes with ploidy-DML were enriched for protein dephosphorylation and cell-cell adhesion (3 BP terms,
+    2 genes each); the dephosphorylation gene carries 3 ploidy-DML.
+  kind: dm_genes
+  check:
+    factor: ploidy
+    level: triploid
+    stratum:
+      ph: '8.2'
+    genes:
+    - name: receptor-type tyrosine-protein phosphatase epsilon
+      published_id: LOC105331010 (GeneID 105331010); 3 ploidy-DML at NC_047560.1:599422-599438
+      direction: null
+      region: gene_body
+    note: Only one of the GO-term genes is resolvable from R1's withTranscript table; the second gene per term and
+      the cell-cell adhesion genes are not listed there.
+- id: C18
+  source: P1
+  where: Abstract; Results 4.4.5; Table 4.1; Discussion 4.5.2
+  statement: Genes with pH-DML were enriched for apoptosis (10 BP terms) and for myosin/cytoskeletal binding, ubiquitin
+    ligase activity and zinc ion binding (8 MF terms); the genes behind these terms are listed.
+  kind: dm_genes
+  check:
+    factor: ph
+    level: '7.7'
+    stratum:
+      ploidy: diploid
+    genes:
+    - name: tripartite motif-containing protein 5
+      published_id: LOC105326056
+      direction: null
+      region: gene_body
+    - name: uncharacterized LOC105330472
+      published_id: LOC105330472
+      direction: null
+      region: gene_body
+    - name: uncharacterized LOC117683735
+      published_id: LOC117683735
+      direction: null
+      region: gene_body
+    - name: mitogen-activated protein kinase kinase kinase 15
+      published_id: LOC105338968
+      direction: null
+      region: gene_body
+    - name: mitogen-activated protein kinase kinase kinase 4
+      published_id: LOC105339386 (3 pH-DML)
+      direction: null
+      region: gene_body
+    - name: serine protease HTRA2, mitochondrial
+      published_id: LOC105347711
+      direction: null
+      region: gene_body
+    - name: apoptosis-inducing factor 1, mitochondrial
+      published_id: LOC105348828
+      direction: null
+      region: gene_body
+    - name: capping protein inhibiting regulator of actin dynamics
+      published_id: LOC117684293
+      direction: null
+      region: gene_body
+    - name: FERM domain-containing protein 5
+      published_id: LOC105322131
+      direction: null
+      region: gene_body
+    - name: spectrin beta chain
+      published_id: LOC105340614
+      direction: null
+      region: gene_body
+    - name: E3 ubiquitin-protein ligase RNF213-like
+      published_id: LOC105349000
+      direction: null
+      region: gene_body
+    - name: E3 ubiquitin-protein ligase TRIM71-like
+      published_id: LOC117691546
+      direction: null
+      region: gene_body
+    - name: prostaglandin reductase-3
+      published_id: LOC105328838
+      direction: null
+      region: gene_body
+    - name: probable nuclear hormone receptor HR3
+      published_id: LOC105335191
+      direction: null
+      region: gene_body
+    - name: histone deacetylase 6
+      published_id: LOC105348104
+      direction: null
+      region: gene_body
+    - name: S phase cyclin A-associated protein in the endoplasmic reticulum
+      published_id: LOC105348300
+      direction: null
+      region: gene_body
+    - name: uncharacterized LOC117687382
+      published_id: LOC117687382 (5 pH-DML)
+      direction: null
+      region: gene_body
+    note: Gene list from R1 pH-BP/pH-MF EnrichedGO-DML-withTranscript tables; names from NCBI Gene for Roslin annotation
+      (GCF_902806645.1). Direction not stated in P1.
+- id: C19
+  source: P1
+  where: Results 4.4.5; Discussion 4.5.2; Conclusion
+  statement: Interaction-DML genes showed no significantly enriched GO terms, so ploidy and pH together showed no
+    clear functional signature.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Interaction contrast not registered; GO enrichment not part of re-derived results.
+- id: C20
+  source: P1
+  where: Abstract; Discussion 4.5.1
+  statement: Functions of ploidy-DML genes do not resemble those reported for naturally polyploid organisms (e.g.
+    transposon silencing, transcriptional control).
+  kind: not_testable
+  check:
+    reason: not_quantitative
+    note: Interpretive comparison with other taxa.
+- id: C21
+  source: P1
+  where: Abstract; Results 4.4.4-4.4.5
+  statement: Both ploidy- and pH-DML were enriched in genes with multiple transcripts, suggesting regulation via
+    alternative splicing.
+  kind: not_testable
+  check:
+    reason: needs_rnaseq
+    note: Transcript-structure/splicing inference; no RNA-seq.
+- id: C22
+  source: P1
+  where: Results 4.4.3
+  statement: Pairwise Pearson correlations of CpG methylation between samples were uniformly high (0.87-0.93).
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Computed on per-CpG methylKit profiles (>=5x, >=8 samples per group).
+- id: C23
+  source: P1
+  where: Results 4.4.1; Fig. 4.1A-B
+  statement: Coverage was similarly distributed in diploids and triploids (of 12.79 M CpGs with >=1x, 5.40 M had
+    higher mean coverage in triploids).
+  kind: not_testable
+  check:
+    reason: needs_cpg_level
+    note: Per-CpG coverage comparison; per-library CpGs covered is available but the claim is about the coverage
+      distribution.
+- id: C24
+  source: P1
+  where: Results 4.4.1
+  statement: 61.0% of trimmed read pairs aligned uniquely to the Roslin genome plus mitochondrion (7.4 x 10^8 of
+    ~2.4 x 10^9 reads).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: Alignment metric on a different genome assembly and aligner settings (non-directional, score_min L,0,-0.6).
+notes: 'Model and strata: P1 fitted DSS DMLfit.multiFactor with formula ~ ploidy + pH + ploidy:pH and tested coefficients
+  ploidyT, pHL and ploidyT:pHL separately (Wald test, FDR < 0.01, no smoothing, no effect-size cut-off). With R''s
+  default treatment coding, the ploidyT coefficient is the triploid-vs-diploid effect at high pH (8.2) and pHL is
+  the low-vs-high pH effect in diploids; the dissertation nevertheless interprets them as main effects. The strata
+  below follow the model coding. Discrepancy: in R1 the file named DML-pH-DSS.csv has 154 rows and DML-ploidy-DSS.csv
+  has 178 rows, the reverse of the counts stated in P1 (178 pH-DML, 154 ploidy-DML); the GO-enrichment loci for
+  pH come from the 154-row file. Counts below follow the dissertation text. P1 states no direction (hyper/hypo)
+  for any DML set. Design caveat: pH is confounded with tank and sampling day (one tank per pH).
+
+  '
