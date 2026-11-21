@@ -11,7 +11,10 @@ Every study on `main` with a `study_summary.yaml` and gene tables
 
 - gene tables not SNP-masked ([the C/T SNP mask](snp_mask.md)): re-run the
   study with `WHALE_SNP_MASK` and `-resume`, which redoes only the gene step;
-- gene tables on another assembly than most studies.
+- gene tables on another assembly than most studies;
+- enrichment-tier studies (MeDIP, MBD-seq), always: their values are relative
+  enrichment, not % methylation, and are shown on their own
+  ([enrichment tier](enrichment.md#where-enrichment-studies-are-shown)).
 
 Left-out studies are listed on both pages with the reason. Study branches are
 not pooled: a study joins the atlas when its PR merges, and the Pages workflow

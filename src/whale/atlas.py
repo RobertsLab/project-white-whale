@@ -12,7 +12,9 @@ Inputs, all committed on main:
 
 Only studies merged to main are pooled, so the atlas changes when a study PR
 merges. A study is left out (and listed with the reason) when its gene tables
-are not SNP-masked or are on another assembly.
+are not SNP-masked or are on another assembly, and always when it is an
+enrichment-tier study (MeDIP, MBD-seq: relative enrichment, not per-CpG
+methylation; PLAN.md §4.1, docs/enrichment.md).
 
 Outputs (`write`): the pooled tables, genes x libraries for each class and
 metric, `sample_metadata.tsv` and `sample_qc.tsv`, plus `atlas.json` for the
@@ -36,6 +38,7 @@ import numpy as np
 
 from whale.curation import UNKNOWN, read_curation
 from whale.dashboard import GENE_MIN_CPGS, HIST_BIN, _git, summaries_on_main
+from whale.enrichment import is_enrichment
 from whale.registry import load_studies
 
 CLASSES = [("gene_body", "Gene body"), ("promoter", "Promoter")]
@@ -148,7 +151,8 @@ def pool(repo: Path) -> dict:
     repo = Path(repo)
     registered = load_studies(repo)
     entries = summaries_on_main(repo)
-    assemblies = [e["summary"].get("genome_assembly") for e in entries if e["summary"].get("genome_assembly")]
+    assemblies = [e["summary"].get("genome_assembly") for e in entries
+                  if e["summary"].get("genome_assembly") and not is_enrichment(repo, e["summary"])]
     assembly = max(set(assemblies), key=assemblies.count) if assemblies else None
 
     genes, libraries, qc, studies, excluded = None, [], [], [], []
@@ -159,7 +163,9 @@ def pool(repo: Path) -> dict:
         base = repo / e["path"].rsplit("/", 1)[0]
         paths = {(c, m): base / "genes" / f"{c}.{m}.tsv.gz" for c, _ in CLASSES for m in METRICS}
         reason = None
-        if not all(p.exists() for p in paths.values()):
+        if is_enrichment(repo, s):
+            reason = "enrichment tier (MeDIP/MBD): relative enrichment, never pooled with base-resolution methylation"
+        elif not all(p.exists() for p in paths.values()):
             reason = "no gene tables (recorded before gene-level summaries)"
         elif not (s.get("snp_mask") or {}).get("mask_id"):
             reason = "gene tables not SNP-masked"

@@ -474,7 +474,7 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
         click.echo(click.style("  Not enough free space for what is left.", fg="red"))
     if dry_run:
         if launch:
-            click.echo(f"Would then launch: {' '.join(nextflow_command(study_id, profile, parsed[2]))}")
+            click.echo(f"Would then launch: {' '.join(nextflow_command(study_id, profile, parsed[2], repo=repo))}")
         return
     if short and not ignore_space:
         raise click.ClickException("not enough free space; free some or pass --ignore-space.")
@@ -505,7 +505,7 @@ def fetch_fastq_cmd(study_id, manifest, dest, runs, jobs, dry_run, ignore_space,
             raise click.ClickException(f"downloads verified, but the stage was not set: {exc}") from None
         click.echo(f"Stage: {new['stage']} on {new['machine']}")
     if launch:
-        cmd = nextflow_command(study_id, new["profile"], parsed[2])
+        cmd = nextflow_command(study_id, new["profile"], parsed[2], repo=repo)
         # The pipeline finds the FASTQ under $WHALE_RAW, so point it at where they went.
         env = {**os.environ, "WHALE_RAW": str(target.resolve().parent)}
         click.echo(f"Launching: {' '.join(cmd)}")
@@ -944,6 +944,39 @@ def profiles_cmd():
     rows = [{"profile": k, "executor": v["executor"], "label": v["label"], "suited for": v["suited_for"]}
             for k, v in load_vocab(repo, "compute_profile").items()]
     click.echo(_table(rows, ["profile", "executor", "label", "suited for"]))
+
+
+@main.command("record-enrichment")
+@click.option("--results", required=True, type=click.Path(exists=True, file_okay=False),
+              help="The enrichment run's output folder: <WHALE_METHYLOMES>/<STUDY_ID>[/parts/<PART>].")
+@click.option("--run-name", default=None, help="Nextflow run name (default: from run_manifest.json).")
+@click.option("--no-upload", is_flag=True, help="Do not copy the per-sample tables to the data host.")
+@click.option("--upload-target", default=None,
+              help="user@host:/path or a local folder (default: data/data_host.yaml upload_target).")
+@click.option("--no-commit", is_flag=True)
+@click.option("--no-push", is_flag=True)
+@click.option("--remote", default="origin", show_default=True)
+def record_enrichment_cmd(results, run_name, no_upload, upload_target, no_commit, no_push, remote):
+    """Record a finished MeDIP/MBD run (workflows/enrichment) on this study branch. The workflow runs this itself."""
+    from whale.enrichment import record_enrichment_run
+    from whale.results import RecordError
+
+    repo = _repo()
+    try:
+        res = record_enrichment_run(repo, results, run_name=run_name, upload=not no_upload,
+                                    upload_target=upload_target, commit=not no_commit,
+                                    push=not (no_push or no_commit), remote=remote)
+    except (ClaimError, RecordError) as exc:
+        raise click.ClickException(str(exc)) from None
+    label = res["study_id"] + (f" part {res['part']}" if res["part"] else "")
+    click.echo(f"{label} (enrichment tier): {res['passed']} of {res['libraries']} libraries pass the QC gate")
+    click.echo(f"{label}: stage {res['stage']}" + (f" (recorded {', '.join(res['added'])})" if res["added"] else ""))
+    if res["upload_error"]:
+        click.echo(click.style(f"tables not on the data host: {res['upload_error']}", fg="yellow"), err=True)
+        click.echo("The study stays below summarized; run `whale record-enrichment` again once the host is reachable.",
+                   err=True)
+    if res["pushed"]:
+        click.echo(f"Pushed {res['branch']}" + ("; PR marked ready for review" if res["pr_ready"] else ""))
 
 
 @main.command("replicate")

@@ -309,6 +309,8 @@ def record_run(repo, results, *, run_name: str | None = None, upload: bool = Tru
     for name in ("run_manifest.json", "qc_summary.tsv"):
         if not (results / name).exists():
             raise RecordError(f"{results / name} is missing; did the run finish?")
+    if json.loads((results / "run_manifest.json").read_text()).get("params", {}).get("tier") == "enrichment":
+        raise RecordError(f"{results} is an enrichment-tier run (MeDIP/MBD); record it with `whale record-enrichment`.")
     qc = read_tsv(results / "qc_summary.tsv")
     if not qc:
         raise RecordError(f"{results / 'qc_summary.tsv'} lists no libraries.")

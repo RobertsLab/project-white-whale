@@ -82,6 +82,10 @@ def _pct(x) -> str:
 def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
     """One study's finding, stated from its study_summary.yaml and nothing else."""
     s = entry["summary"]
+    if s.get("tier") == "enrichment":
+        from whale.enrichment import finding as enrichment_finding
+
+        return enrichment_finding(entry, study, repo_url)
     label = s["study_id"] + (f" ({s['part']})" if s.get("part") else "")
     qc = s.get("qc") or {}
     meth = s.get("cpg_methylation_pct") or {}
