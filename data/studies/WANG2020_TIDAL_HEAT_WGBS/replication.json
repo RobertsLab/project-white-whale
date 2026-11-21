@@ -1,0 +1,524 @@
+{
+ "study_id": "WANG2020_TIDAL_HEAT_WGBS",
+ "generated_on": "2026-11-21",
+ "sources": [
+  {
+   "id": "P1",
+   "citation": "Wang X, Li A, Wang W, Que H, Zhang G, Li L (2021). DNA methylation mediates differentiation in thermal responses of Pacific oyster (Crassostrea gigas) derived from different tidal levels. Heredity 126:10-22.",
+   "doi": "10.1038/s41437-020-0351-7",
+   "read": "full text (PMC7852555 HTML, incl. Table 1 and figure legends) and both supplements (ESM1 .doc: Figs S1-S7 legends only, figure images not inspected; ESM2 .pdf: Tables S1-S4 in full)"
+  }
+ ],
+ "caveats": [],
+ "based_on": {
+  "nextflow_run": "elegant_rubens",
+  "genome_assembly": "GCF_963853765.1",
+  "snp_mask": "GCF_963853765.1.snpmask.v1",
+  "differential": "2026-11-20",
+  "samples": 12
+ },
+ "counts": {
+  "replicated": 5,
+  "partly": 8,
+  "not_replicated": 4,
+  "inconclusive": 1,
+  "not_testable": 9,
+  "pending": 0
+ },
+ "claims": [
+  {
+   "id": "C1",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1a",
+   "statement": "Intertidal control oysters (InC) had a mean CpG methylation level of 15.0%.",
+   "kind": "global_level",
+   "verdict": "partly",
+   "re_derived": "12.74% (mean over 3 samples, origin = In, temperature = C; CpG calls pooled per library); paper 15.0%",
+   "rule": "|difference| <= 2.0 points: replicated; <= 5.0: partly",
+   "value": 12.74,
+   "difference": -2.26
+  },
+  {
+   "id": "C2",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1a",
+   "statement": "Subtidal control oysters (SubC) had a mean CpG methylation level of 14.5%.",
+   "kind": "global_level",
+   "verdict": "partly",
+   "re_derived": "12.37% (mean over 3 samples, origin = Sub, temperature = C; CpG calls pooled per library); paper 14.5%",
+   "rule": "|difference| <= 2.0 points: replicated; <= 5.0: partly",
+   "value": 12.37,
+   "difference": -2.13
+  },
+  {
+   "id": "C3",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1a",
+   "statement": "Heat-shocked intertidal oysters (InH) had a mean CpG methylation level of 13.4%.",
+   "kind": "global_level",
+   "verdict": "replicated",
+   "re_derived": "11.50% (mean over 3 samples, origin = In, temperature = H; CpG calls pooled per library); paper 13.4%",
+   "rule": "|difference| <= 2.0 points: replicated; <= 5.0: partly",
+   "value": 11.5,
+   "difference": -1.9
+  },
+  {
+   "id": "C4",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1a",
+   "statement": "Heat-shocked subtidal oysters (SubH) had a mean CpG methylation level of 15.4%.",
+   "kind": "global_level",
+   "verdict": "partly",
+   "re_derived": "13.10% (mean over 3 samples, origin = Sub, temperature = H; CpG calls pooled per library); paper 15.4%",
+   "rule": "|difference| <= 2.0 points: replicated; <= 5.0: partly",
+   "value": 13.1,
+   "difference": -2.3
+  },
+  {
+   "id": "C5",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1a; Discussion para 2",
+   "statement": "In intertidal oysters, heat shock significantly lowered global CpG methylation (InC 15.0% vs InH 13.4%, ANOVA P < 0.05, n = 3 pools each).",
+   "kind": "group_difference",
+   "verdict": "replicated",
+   "re_derived": "temperature C 12.74% vs H 11.50% (difference +1.24 points, n = 3 vs 3, permutation p = 0.0984, the smallest possible with these group sizes is 0.1, groups completely separated, within origin = In)",
+   "rule": "same direction and p < 0.05 (or, when group sizes cannot reach 0.05, complete separation): replicated; same direction: partly; opposite: not replicated",
+   "difference": 1.24,
+   "p": 0.0984
+  },
+  {
+   "id": "C6",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1a; Discussion para 2",
+   "statement": "In subtidal oysters, heat shock slightly raised global CpG methylation (SubC 14.5% vs SubH 15.4%); the paper calls this slight and gives no significance.",
+   "kind": "group_difference",
+   "verdict": "replicated",
+   "re_derived": "temperature H 13.10% vs C 12.37% (difference +0.73 points, n = 3 vs 3, permutation p = 0.0984, the smallest possible with these group sizes is 0.1, groups completely separated, within origin = Sub)",
+   "rule": "same direction and p < 0.05 (or, when group sizes cannot reach 0.05, complete separation): replicated; same direction: partly; opposite: not replicated",
+   "difference": 0.73,
+   "p": 0.0984
+  },
+  {
+   "id": "C7",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1a",
+   "statement": "Under control conditions intertidal oysters were marginally more methylated than subtidal oysters (15.0% vs 14.5%); no test of this difference is reported in the text.",
+   "kind": "group_difference",
+   "verdict": "partly",
+   "re_derived": "origin In 12.74% vs Sub 12.37% (difference +0.37 points, n = 3 vs 3, permutation p = 0.401, the smallest possible with these group sizes is 0.1, within temperature = C)",
+   "rule": "same direction and p < 0.05 (or, when group sizes cannot reach 0.05, complete separation): replicated; same direction: partly; opposite: not replicated",
+   "difference": 0.37,
+   "p": 0.4013
+  },
+  {
+   "id": "C8",
+   "source": "P1",
+   "where": "Results, Global methylation pattern",
+   "statement": "Non-CpG methylation was very low in control oysters: 0.20% of CHG and 0.16% of CHH sites methylated on average.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Values are split by CHG and CHH context; our pipeline reports non-CpG methylation pooled per library, which can be compared only loosely (expect well under 1%). Our values are also uncorrected for conversion while the paper's are lambda-corrected.",
+   "rule": "",
+   "reason": "other_data"
+  },
+  {
+   "id": "C9",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1b",
+   "statement": "Hierarchical clustering of the 12 methylomes grouped samples by tidal origin rather than by heat treatment (except two SubH samples that branched apart).",
+   "kind": "clustering",
+   "verdict": "not_testable",
+   "re_derived": "only a PCA's PC1 and PC2 are kept, not hierarchical clustering",
+   "rule": "",
+   "reason": "other_data"
+  },
+  {
+   "id": "C10",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1c",
+   "statement": "In PCA of the 12 samples, PC1 separated intertidal from subtidal oysters.",
+   "kind": "clustering",
+   "verdict": "replicated",
+   "re_derived": "origin explains 82% (adjusted R^2) of PC1 (20.98% of variance); PCA of job main",
+   "rule": "adjusted R^2 >= 0.5 replicated; >= 0.2 partly",
+   "r2": 0.818
+  },
+  {
+   "id": "C11",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1c",
+   "statement": "PC2 separated heat-shocked from control samples, with the heat effect pointing in opposite directions for intertidal and subtidal oysters.",
+   "kind": "clustering",
+   "verdict": "not_replicated",
+   "re_derived": "temperature explains 0% (adjusted R^2) of PC2 (12.81% of variance); PCA of job main",
+   "rule": "adjusted R^2 >= 0.5 replicated; >= 0.2 partly",
+   "r2": 0.0
+  },
+  {
+   "id": "C12",
+   "source": "P1",
+   "where": "Results, Global methylation pattern; Fig. 1d; Discussion para 3",
+   "statement": "DAPC showed a larger heat-induced methylation shift (greater plasticity) in intertidal than subtidal oysters (MCMC P < 0.05), with intertidal shifting down and subtidal up.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "DAPC on gene methylation at common C sites with an MCMC mixed model of shift length; no comparable analysis in our outputs. The direction part overlaps C5/C6 and the per-gene direction claims C17/C19; an origin x temperature interaction is not a registered contrast.",
+   "rule": "",
+   "reason": "other_data"
+  },
+  {
+   "id": "C13",
+   "source": "P1",
+   "where": "Results, Correlation between DNA methylation status and gene expression; Fig. 3b; Discussion para 2",
+   "statement": "Methylation is concentrated in gene bodies, with other genomic regions less methylated.",
+   "kind": "region_contrast",
+   "verdict": "replicated",
+   "re_derived": "gene_body 17.30% vs genome 12.43% (CpG calls pooled over all genes, mean over samples)",
+   "rule": "direction only",
+   "higher": 17.3,
+   "lower": 12.43
+  },
+  {
+   "id": "C14",
+   "source": "P1",
+   "where": "Results; Fig. 3a-b, Fig. S2; Abstract",
+   "statement": "Gene-body methylation correlated positively with gene expression in all four groups; non-expressed genes had the lowest methylation and high/medium-expression genes the highest.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Uses matched RNA-seq (PRJNA407831) FPKM; no r value given in the text.",
+   "rule": "",
+   "reason": "needs_rnaseq"
+  },
+  {
+   "id": "C15",
+   "source": "P1",
+   "where": "Results, Estimation of genotypic effect; Fig. 2",
+   "statement": "Libraries clustered genetically by tidal origin (SNPs from WGBS reads), but per-gene FST between InC and SubC was barely correlated with methylation difference (r = 0.02 gene body, 0.01 exon; 16,516 genes), so methylation divergence was argued to be largely independent of genotype.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Requires SNP calling and FST per gene; not in our outputs.",
+   "rule": "",
+   "reason": "other_data"
+  },
+  {
+   "id": "C16",
+   "source": "P1",
+   "where": "Results, DNA methylation differentiation ... in response to heat stress; Fig. 6a",
+   "statement": "Heat shock in intertidal oysters gave 2137 DMGs (491 hyper, 1646 hypo in InH vs InC). The paper's Venn counts (788 shared + 1279 intertidal-unique = 2067) do not add up to this total.",
+   "kind": "dm_count",
+   "verdict": "partly",
+   "re_derived": "job main, temperatureH: gene_body: 53 genes at FDR < 0.05 (lambda 0.906); promoter: 40 genes at FDR < 0.05 (lambda 0.865); paper 2137 DMGs",
+   "rule": "genes vs genes: within 3x of the paper's count replicated; fewer or more but some: partly; none: not replicated; approximate: our job pools over origin (paper: In only), so at most partly",
+   "value": 93,
+   "approximate": true
+  },
+  {
+   "id": "C17",
+   "source": "P1",
+   "where": "Results; Fig. 6a; Abstract; Discussion para 4",
+   "statement": "Most heat-responsive DMGs in intertidal oysters were hypomethylated (1646 of 2137, 77%).",
+   "kind": "dm_direction",
+   "verdict": "partly",
+   "re_derived": "job main, temperatureH: 35 higher and 58 lower in H (FDR < 0.05, both regions)",
+   "rule": "majority direction of >= 5 significant genes; approximate: our job pools over origin (paper: In only), so at most partly",
+   "up": 35,
+   "down": 58,
+   "approximate": true
+  },
+  {
+   "id": "C18",
+   "source": "P1",
+   "where": "Results; Fig. 6a",
+   "statement": "Heat shock in subtidal oysters gave 2459 DMGs (1636 hyper, 823 hypo in SubH vs SubC). The paper's Venn counts (788 shared + 1554 subtidal-unique = 2342) do not add up to this total.",
+   "kind": "dm_count",
+   "verdict": "partly",
+   "re_derived": "job main, temperatureH: gene_body: 53 genes at FDR < 0.05 (lambda 0.906); promoter: 40 genes at FDR < 0.05 (lambda 0.865); paper 2459 DMGs",
+   "rule": "genes vs genes: within 3x of the paper's count replicated; fewer or more but some: partly; none: not replicated; approximate: our job pools over origin (paper: Sub only), so at most partly",
+   "value": 93,
+   "approximate": true
+  },
+  {
+   "id": "C19",
+   "source": "P1",
+   "where": "Results; Fig. 6a; Abstract; Discussion para 4",
+   "statement": "Most heat-responsive DMGs in subtidal oysters were hypermethylated (1636 of 2459, 66.5%), opposite to intertidal oysters.",
+   "kind": "dm_direction",
+   "verdict": "not_replicated",
+   "re_derived": "job main, temperatureH: 35 higher and 58 lower in H (FDR < 0.05, both regions)",
+   "rule": "majority direction of >= 5 significant genes; approximate: our job pools over origin (paper: Sub only), so at most partly",
+   "up": 35,
+   "down": 58,
+   "approximate": true
+  },
+  {
+   "id": "C20",
+   "source": "P1",
+   "where": "Results, DNA methylation differentiation ... under temperate conditions; Fig. 4a; Fig. S3",
+   "statement": "Intertidal and subtidal control oysters differed in methylation at many genes (InC vs SubC DMGs, all C contexts), but the total number of DMGs is not reported, only the 90 that were also DEGs.",
+   "kind": "dm_count",
+   "verdict": "inconclusive",
+   "re_derived": "job main, originIn: gene_body: 1622 genes at FDR < 0.05 (lambda 1.669); promoter: 540 genes at FDR < 0.05 (lambda 1.13)",
+   "rule": "genes vs genes: within 3x of the paper's count replicated; fewer or more but some: partly; none: not replicated; approximate: our job pools over temperature (paper: C only), so at most partly; test statistics are inflated (lambda 1.669 > 1.3), so the count is not trusted: at most partly",
+   "value": 2162,
+   "approximate": true,
+   "inflated": true
+  },
+  {
+   "id": "C21",
+   "source": "P1",
+   "where": "Results; Fig. 5a-c",
+   "statement": "The opposite heat responses (InH below InC, SubH above SubC) held across promoter, exon, intron and repeat regions and in DMRs, and a heatmap of all DMRs clustered samples by tidal origin.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Exon, intron, repeat and DMR-level summaries are not available; the promoter part is only indirectly reflected in the per-gene promoter direction counts of C17/C19.",
+   "rule": "",
+   "reason": "needs_other_regions"
+  },
+  {
+   "id": "C22",
+   "source": "P1",
+   "where": "Results; Fig. 6b-d, Fig. S6, Table S3",
+   "statement": "Named genes differentially methylated and expressed after heat in intertidal oysters include HSPA12A (CGI_10004348, ML +0.26), the caspase-like gene CGI_10006605 (hypo, expression up), IAP-1 CGI_10013106 (hyper, expression down) and unannotated CGI_10002343 (ML -0.22); directions are ML differences InH minus InC from Table S3.",
+   "kind": "dm_genes",
+   "verdict": "not_replicated",
+   "re_derived": "job main, temperatureH: 0 replicated, 0 partly, 6 not, of 6 tested (4 not found in the annotation, 0 not tested)",
+   "rule": "per gene: FDR < 0.05 in the claimed direction replicated, p < 0.05 partly (both corrected for the number of matching genes and regions); claim: most tested genes replicated, any replicated or partly: partly; approximate: our job pools over origin (paper: In only), so at most partly",
+   "genes": [
+    {
+     "name": "heat shock 70 kDa protein 12A (HSPA12A)",
+     "status": "not_replicated",
+     "detail": "LOC105317916 (heat shock 70 kDa protein 12A), promoter: diff +1.47 points, p 0.000428, FDR 0.15; best of 170 tests (85 matching genes), so p and FDR are multiplied by 170 for the verdict"
+    },
+    {
+     "name": "caspase-like protein",
+     "status": "not_found",
+     "detail": "no gene with this symbol or description in the annotation"
+    },
+    {
+     "name": "inhibitor of apoptosis protein-1 (IAP)",
+     "status": "not_found",
+     "detail": "no gene with this symbol or description in the annotation"
+    },
+    {
+     "name": "uncharacterized protein",
+     "status": "not_found",
+     "detail": "no gene with this symbol or description in the annotation"
+    },
+    {
+     "name": "tripartite motif-containing protein 2 (TRIM2)",
+     "status": "not_replicated",
+     "detail": "LOC136276060 (tripartite motif-containing protein 2-like), gene_body: diff -2.58 points, p 0.000553, FDR 0.132; best of 494 tests (247 matching genes), so p and FDR are multiplied by 494 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "heat shock protein 68",
+     "status": "not_replicated",
+     "detail": "LOC105348305 (heat shock protein 68-like), gene_body: diff +7.82 points, p 0.0379, FDR 0.749; best of 12 tests (6 matching genes), so p and FDR are multiplied by 12 for the verdict; opposite to the paper's hypo"
+    },
+    {
+     "name": "heat shock protein beta-1",
+     "status": "not_replicated",
+     "detail": "LOC105331471 (Heat shock protein beta-1), gene_body: diff -0.25 points, p 0.183, FDR 1; best of 4 tests (2 matching genes), so p and FDR are multiplied by 4 for the verdict"
+    },
+    {
+     "name": "stress-70 protein (HSPA9)",
+     "status": "not_replicated",
+     "detail": "LOC105347255 (stress-70 protein, mitochondrial), gene_body: diff -1.66 points, p 0.271, FDR 1; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict"
+    },
+    {
+     "name": "solute carrier family 23 member 2",
+     "status": "not_replicated",
+     "detail": "LOC105333806 (solute carrier family 23 member 2), promoter: diff -0.57 points, p 0.0312, FDR 0.927; best of 18 tests (9 matching genes), so p and FDR are multiplied by 18 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "protein FAM111A",
+     "status": "not_found",
+     "detail": "no gene with this symbol or description in the annotation"
+    }
+   ],
+   "approximate": true
+  },
+  {
+   "id": "C23",
+   "source": "P1",
+   "where": "Results; Fig. 6b, Fig. S6, Table S4",
+   "statement": "Named genes differentially methylated and expressed after heat in subtidal oysters include HSPA12A (CGI_10004348, ML -0.06, opposite to intertidal), CGI_10002343 (ML -0.20) and oxidation-reduction / stress genes such as Nrf2, HSPA12B and ferritin; directions are ML differences SubH minus SubC from Table S4. (The BSP of 8 CpGs in HSPA12A instead showed SubH above SubC.)",
+   "kind": "dm_genes",
+   "verdict": "not_replicated",
+   "re_derived": "job main, temperatureH: 0 replicated, 0 partly, 9 not, of 9 tested (2 not found in the annotation, 0 not tested)",
+   "rule": "per gene: FDR < 0.05 in the claimed direction replicated, p < 0.05 partly (both corrected for the number of matching genes and regions); claim: most tested genes replicated, any replicated or partly: partly; approximate: our job pools over origin (paper: Sub only), so at most partly",
+   "genes": [
+    {
+     "name": "heat shock 70 kDa protein 12A (HSPA12A)",
+     "status": "not_replicated",
+     "detail": "LOC105317916 (heat shock 70 kDa protein 12A), promoter: diff +1.47 points, p 0.000428, FDR 0.15; best of 170 tests (85 matching genes), so p and FDR are multiplied by 170 for the verdict; opposite to the paper's hypo"
+    },
+    {
+     "name": "uncharacterized protein",
+     "status": "not_found",
+     "detail": "no gene with this symbol or description in the annotation"
+    },
+    {
+     "name": "heat shock 70 kDa protein 12B (HSPA12B)",
+     "status": "not_replicated",
+     "detail": "LOC105331268 (heat shock 70 kDa protein 12B), gene_body: diff -1.14 points, p 0.0173, FDR 0.602; best of 54 tests (27 matching genes), so p and FDR are multiplied by 54 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "DnaJ homolog subfamily B member 4",
+     "status": "not_replicated",
+     "detail": "LOC105323151 (dnaJ homolog subfamily B member 4), promoter: diff +0.00 points, p 0.673, FDR 1; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict"
+    },
+    {
+     "name": "nuclear factor erythroid 2-related factor (NFE2L2/Nrf2)",
+     "status": "not_found",
+     "detail": "no gene with this symbol or description in the annotation"
+    },
+    {
+     "name": "ferritin, lower subunit",
+     "status": "not_replicated",
+     "detail": "LOC105336322 (ferritin, lower subunit), gene_body: diff -3.36 points, p 0.103, FDR 0.942; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict"
+    },
+    {
+     "name": "N-acetylglucosamine-6-phosphate deacetylase",
+     "status": "not_replicated",
+     "detail": "LOC105317588 (N-acetylglucosamine-6-phosphate deacetylase), promoter: diff -0.16 points, p 0.253, FDR 1; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "location of vulva defective 1",
+     "status": "not_replicated",
+     "detail": "LOC117690295 (location of vulva defective 1-like), gene_body: diff +0.04 points, p 0.679, FDR 1; best of 4 tests (2 matching genes), so p and FDR are multiplied by 4 for the verdict"
+    },
+    {
+     "name": "leucine-rich repeat transmembrane protein",
+     "status": "not_replicated",
+     "detail": "LOC105323753 (leucine-rich repeat transmembrane protein FLRT3), gene_body: diff +10.11 points, p 0.126, FDR 0.961; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict"
+    },
+    {
+     "name": "neurogenic locus notch homolog protein 1",
+     "status": "not_replicated",
+     "detail": "LOC105346730 (neurogenic locus notch homolog protein 1-like), gene_body: diff -1.36 points, p 0.0102, FDR 0.48; best of 26 tests (13 matching genes), so p and FDR are multiplied by 26 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "complement C1q tumor necrosis factor-related protein 3",
+     "status": "not_replicated",
+     "detail": "LOC105321401 (complement C1q tumor necrosis factor-related protein 3), gene_body: diff +0.80 points, p 0.00642, FDR 0.397; best of 28 tests (14 matching genes), so p and FDR are multiplied by 28 for the verdict; opposite to the paper's hypo"
+    }
+   ],
+   "approximate": true
+  },
+  {
+   "id": "C24",
+   "source": "P1",
+   "where": "Results, ... under temperate conditions; Fig. 4b; Table S2",
+   "statement": "Among InC vs SubC DMGs that were also DEGs, six HSP70-family genes (HSPA12A/HSPA12B paralogs) differed in methylation in both directions; the largest ML differences (InC minus SubC) were in syntenin-1, plasminogen, angiopoietin-related protein 6 and N-acetylglucosamine-6-phosphate deacetylase. DMGs here pool CG, CHG and CHH contexts.",
+   "kind": "dm_genes",
+   "verdict": "partly",
+   "re_derived": "job main, originIn: 3 replicated, 1 partly, 8 not, of 12 tested (2 not found in the annotation, 0 not tested)",
+   "rule": "per gene: FDR < 0.05 in the claimed direction replicated, p < 0.05 partly (both corrected for the number of matching genes and regions); claim: most tested genes replicated, any replicated or partly: partly; approximate: our job pools over temperature (paper: C only), so at most partly",
+   "genes": [
+    {
+     "name": "heat shock 70 kDa protein 12A",
+     "status": "not_replicated",
+     "detail": "LOC117681114 (heat shock 70 kDa protein 12A-like), gene_body: diff -3.18 points, p 0.000216, FDR 0.00947; best of 170 tests (85 matching genes), so p and FDR are multiplied by 170 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "heat shock 70 kDa protein 12A",
+     "status": "not_replicated",
+     "detail": "LOC117681114 (heat shock 70 kDa protein 12A-like), gene_body: diff -3.18 points, p 0.000216, FDR 0.00947; best of 170 tests (85 matching genes), so p and FDR are multiplied by 170 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "heat shock 70 kDa protein 12A",
+     "status": "not_replicated",
+     "detail": "LOC117681114 (heat shock 70 kDa protein 12A-like), gene_body: diff -3.18 points, p 0.000216, FDR 0.00947; best of 170 tests (85 matching genes), so p and FDR are multiplied by 170 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "heat shock 70 kDa protein 12A",
+     "status": "partly",
+     "detail": "LOC117681114 (heat shock 70 kDa protein 12A-like), gene_body: diff -3.18 points, p 0.000216, FDR 0.00947; best of 170 tests (85 matching genes), so p and FDR are multiplied by 170 for the verdict"
+    },
+    {
+     "name": "heat shock 70 kDa protein 12B",
+     "status": "replicated",
+     "detail": "LOC105331268 (heat shock 70 kDa protein 12B), gene_body: diff -3.41 points, p 2.82e-15, FDR 6.91e-12; best of 54 tests (27 matching genes), so p and FDR are multiplied by 54 for the verdict"
+    },
+    {
+     "name": "heat shock 70 kDa protein 12B",
+     "status": "replicated",
+     "detail": "LOC105331268 (heat shock 70 kDa protein 12B), gene_body: diff -3.41 points, p 2.82e-15, FDR 6.91e-12; best of 54 tests (27 matching genes), so p and FDR are multiplied by 54 for the verdict"
+    },
+    {
+     "name": "syntenin-1",
+     "status": "replicated",
+     "detail": "LOC105331551 (syntenin-1), gene_body: diff -7.80 points, p 7.49e-07, FDR 0.000115; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict"
+    },
+    {
+     "name": "plasminogen",
+     "status": "not_replicated",
+     "detail": "LOC136276146 (plasminogen-like), promoter: diff -4.80 points, p 0.132, FDR 0.708; best of 22 tests (11 matching genes), so p and FDR are multiplied by 22 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "angiopoietin-related protein 6",
+     "status": "not_replicated",
+     "detail": "LOC105317261 (angiopoietin-related protein 6), gene_body: diff -0.28 points, p 0.0243, FDR 0.204; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "N-acetylglucosamine-6-phosphate deacetylase",
+     "status": "not_replicated",
+     "detail": "LOC105317588 (N-acetylglucosamine-6-phosphate deacetylase), gene_body: diff -3.17 points, p 0.0631, FDR 0.344; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "sodium/myo-inositol cotransporter 2",
+     "status": "not_replicated",
+     "detail": "LOC136272689 (sodium/myo-inositol cotransporter 2-like), gene_body: diff -0.06 points, p 0.818, FDR 0.956; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict; opposite to the paper's hyper"
+    },
+    {
+     "name": "protein FAM113A",
+     "status": "not_found",
+     "detail": "no gene with this symbol or description in the annotation"
+    },
+    {
+     "name": "alpha-mannosidase 2x",
+     "status": "not_replicated",
+     "detail": "LOC117687453 (alpha-mannosidase 2x), gene_body: diff -9.04 points, p 0.0486, FDR 0.301; best of 2 tests (1 matching genes), so p and FDR are multiplied by 2 for the verdict"
+    },
+    {
+     "name": "proto-oncogene tyrosine-protein kinase FER",
+     "status": "not_found",
+     "detail": "no gene with this symbol or description in the annotation"
+    }
+   ],
+   "approximate": true
+  },
+  {
+   "id": "C25",
+   "source": "P1",
+   "where": "Results; Fig. 4a, Fig. 6b; Abstract; Discussion para 5",
+   "statement": "DMGs overlapped DEGs: 90 genes (11.46% of DEGs) for InC vs SubC, 67 (10.65%) for InH vs InC and 55 (6.88%) for SubH vs SubC; among the intertidal overlap genes 77% were hypomethylated, and 62% of subtidal overlap genes were hypermethylated with higher expression.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Overlap with RNA-seq DEGs from PRJNA407831.",
+   "rule": "",
+   "reason": "needs_rnaseq"
+  },
+  {
+   "id": "C26",
+   "source": "P1",
+   "where": "Results; Fig. 4c, Fig. 6b, Figs S3-S4; Abstract",
+   "statement": "Heat-responsive methylation-regulated genes were enriched for apoptosis and development in intertidal oysters and for oxidation-reduction and ion homeostasis in subtidal oysters; origin-differing genes were enriched for cell adhesion, carbohydrate transport and apoptosis.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "GO/KEGG enrichment on DMG-DEG overlap sets (GOseq, KOBAS); depends on RNA-seq and on the paper's annotation.",
+   "rule": "",
+   "reason": "needs_rnaseq"
+  },
+  {
+   "id": "C27",
+   "source": "P1",
+   "where": "Results; Fig. S7",
+   "statement": "Bisulfite PCR of 8 CpGs in HSPA12A (scaffold1801:18940-19215) confirmed WGBS: InC nearly unmethylated, InH higher; SubH higher than SubC.",
+   "kind": "not_testable",
+   "verdict": "not_testable",
+   "re_derived": "Single-locus CpG validation on the oyster_v9 genome; per-CpG calls and these coordinates are not available.",
+   "rule": "",
+   "reason": "needs_coordinates"
+  }
+ ]
+}

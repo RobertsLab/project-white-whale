@@ -922,5 +922,30 @@ def profiles_cmd():
     click.echo(_table(rows, ["profile", "executor", "label", "suited for"]))
 
 
+@main.command("replicate")
+@click.argument("study_ids", nargs=-1)
+def replicate_cmd(study_ids):
+    """Test each study's published claims against its re-derived results (data/studies/<ID>/claims.yaml).
+
+    Writes replication.md and replication.json beside the claims; default: every study with claims."""
+    from whale.replication import ReplicationError, studies_with_claims, write
+
+    repo = _repo()
+    ids = list(study_ids) or studies_with_claims(repo)
+    if not ids:
+        click.echo("No study has a claims.yaml yet.")
+    failed = False
+    for sid in ids:
+        try:
+            rep = write(repo, sid)
+        except ReplicationError as exc:
+            click.echo(click.style(f"FAIL  {sid}: {exc}", fg="red"))
+            failed = True
+            continue
+        counts = ", ".join(f"{v} {k.replace('_', ' ')}" for k, v in rep["counts"].items() if v)
+        click.echo(f"ok    {sid}: {len(rep['claims'])} claims ({counts})")
+    sys.exit(1 if failed else 0)
+
+
 if __name__ == "__main__":
     main()
