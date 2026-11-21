@@ -1,0 +1,531 @@
+study_id: VALDIVIESO2025_POMS_RS_EMSEQ
+sources:
+- id: P1
+  citation: Valdivieso A, Morga B, Degremont L, Mege M, Courtay G, Dorant Y, Escoubas J-M, Gawra J, de Lorgeril
+    J, Mitta G, Cosseau C, Vidal-Dupiol J (2025). DNA methylation landscapes before and after Pacific Oyster Mortality
+    Syndrome are different within and between resistant and susceptible Magallana gigas. Science of the Total Environment
+    962:178385.
+  doi: 10.1016/j.scitotenv.2025.178385
+  read: full text (HAL accepted manuscript, hal-04901984); supplementary workbook mmc10.xlsx Tables S1-S18 (S4,
+    S5, S7, S9, S11, S13-S18 tallied); supplementary Figs S3 (global methylation) and S4 (PCA) viewed
+caveats:
+- The paper compares T1 with T0 within each phenotype; the shared model's time jobs pool both phenotypes (with each
+  oyster as a block), so those verdicts are approximate and at most partly.
+claims:
+- id: C1
+  source: P1
+  where: Results 3.2; Fig. S3
+  statement: Genome-wide CpG methylation is low, about 12-13 % per library (individual values roughly 11.5-13.6
+    % in Fig. S3 across tissues, phenotypes and times); the paper gives no single number in the text, value read
+    from the figure.
+  kind: global_level
+  check:
+    level_pct: 12.6
+    groups: all
+    measure: global CpG methylation per sample (Bismark CpG calls, >=10x), read from Fig. S3 boxplots
+- id: C2
+  source: P1
+  where: Results 3.2; Discussion 4.1; Fig. S3A
+  statement: In gills, global methylation is consistently higher after POMS infection (T1) than before (T0), by
+    about 0.54 percentage points.
+  kind: group_difference
+  check:
+    factor: time
+    higher: T1
+    lower: T0
+    difference_pct: 0.54
+    stratum:
+      tissue_type: G
+- id: C3
+  source: P1
+  where: Results 3.2; Discussion 4.1; Fig. S3B
+  statement: In mantle, global methylation is consistently higher at T1 than at T0, by about 0.48 percentage points.
+  kind: group_difference
+  check:
+    factor: time
+    higher: T1
+    lower: T0
+    difference_pct: 0.48
+    stratum:
+      tissue_type: M
+- id: C4
+  source: P1
+  where: Results 3.2; Fig. S3A
+  statement: Global methylation in gills is higher in susceptible than resistant oysters (one-way ANOVA across the
+    four phenotype x time groups, F = 4.62, P = 0.005); in Fig. S3A the only group differing significantly is susceptible
+    T1 (~13.2 % vs ~12.4-12.8 % for the others).
+  kind: group_difference
+  check:
+    factor: phenotype_class
+    higher: S
+    lower: R
+    stratum:
+      tissue_type: G
+- id: C5
+  source: P1
+  where: Results 3.2; Fig. S3B
+  statement: Global methylation in mantle is higher in susceptible than resistant oysters (one-way ANOVA, F = 7.49,
+    P = 0.002); in Fig. S3B the difference is driven by susceptible T1 (~12.9-13 %), while at T0 susceptible medians
+    are slightly below resistant ones.
+  kind: group_difference
+  check:
+    factor: phenotype_class
+    higher: S
+    lower: R
+    stratum:
+      tissue_type: M
+- id: C6
+  source: P1
+  where: Results 3.2; Fig. S4
+  statement: In PCAs of CpGs common to all samples (1,886,331 in gills, 1,806,224 in mantle), samples cluster mainly
+    by source population (each oyster's T0 and T1 sit together; population 5, SC18, separates on PC1), PC1 and PC2
+    each explaining about 8-11 % of variance.
+  kind: clustering
+  check:
+    factor: population
+    component: PC1/PC2
+    statement: samples group by population (GT5 separated on PC1; GT1-GT4 spread on PC2), within each tissue
+- id: C7
+  source: P1
+  where: Results 3.2; Fig. S4
+  statement: 'Infection (time) has only a subtle effect on the methylation landscape: T0 and T1 samples do not separate
+    in the PCA, nor do phenotypes.'
+  kind: clustering
+  check:
+    factor: time
+    component: PC1/PC2
+    statement: no separation of T0 vs T1 (nor S vs R) on the leading PCs; paired samples from the same oyster lie
+      together
+- id: C8
+  source: P1
+  where: Results 3.3.1; Tables S5-S7; Fig. 2A
+  statement: In susceptible gills, T1 vs T0 gave 3069 DMRs located in 2014 genes.
+  kind: dm_count
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: G
+      phenotype_class: S
+    n: 2014
+    unit: DMGs
+    method: DSS DMRs (500 bp smoothing, >=4 CpGs, >=10 % diff, FDR<=0.05) overlapped with gene bodies; 3069 DMRs
+- id: C9
+  source: P1
+  where: Results 3.3.2; Tables S5, S8, S9; Fig. 2B
+  statement: In resistant gills, T1 vs T0 gave 2594 DMRs located in 1702 genes (Fig. 2 legend says 1027 genes, apparently
+    a typo; Table S9 lists 1702).
+  kind: dm_count
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: G
+      phenotype_class: R
+    n: 1702
+    unit: DMGs
+    method: DSS DMRs (500 bp smoothing, >=4 CpGs, >=10 % diff, FDR<=0.05) overlapped with gene bodies; 2594 DMRs
+- id: C10
+  source: P1
+  where: Results 3.3.4; Tables S5, S10, S11; Fig. 3A
+  statement: In susceptible mantle, T1 vs T0 gave 2836 DMRs in 1866 genes.
+  kind: dm_count
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: M
+      phenotype_class: S
+    n: 1866
+    unit: DMGs
+    method: DSS DMRs (500 bp smoothing, >=4 CpGs, >=10 % diff, FDR<=0.05) overlapped with gene bodies; 2836 DMRs
+- id: C11
+  source: P1
+  where: Results 3.3.5; Tables S5, S12, S13; Fig. 3B
+  statement: In resistant mantle, T1 vs T0 gave 5469 DMRs, the largest response, in 2977 genes (1683 hyper + 1294
+    hypo; Table S13 lists 2977, Fig. 3 legend says 2997).
+  kind: dm_count
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: M
+      phenotype_class: R
+    n: 2977
+    unit: DMGs
+    method: DSS DMRs (500 bp smoothing, >=4 CpGs, >=10 % diff, FDR<=0.05) overlapped with gene bodies; 5469 DMRs
+- id: C12
+  source: P1
+  where: Results 3.3.1; Table S7
+  statement: 'In susceptible gills, DMR genes are split almost evenly after infection: 1014 hypermethylated vs 1000
+    hypomethylated at T1 (50.3 % hyper).'
+  kind: dm_direction
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: G
+      phenotype_class: S
+    direction: hyper
+    share_pct: 50.3
+- id: C13
+  source: P1
+  where: Results 3.3.2; Table S9
+  statement: 'In resistant gills, slightly more DMR genes gain methylation after infection: 923 hyper vs 779 hypo
+    (54.2 % hyper).'
+  kind: dm_direction
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: G
+      phenotype_class: R
+    direction: hyper
+    share_pct: 54.2
+- id: C14
+  source: P1
+  where: Results 3.3.4; Table S11
+  statement: 'In susceptible mantle, most DMR genes lose methylation after infection: 1176 hypo vs 690 hyper (63.0
+    % hypo).'
+  kind: dm_direction
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: M
+      phenotype_class: S
+    direction: hypo
+    share_pct: 63.0
+- id: C15
+  source: P1
+  where: Results 3.3.5; Table S13
+  statement: 'In resistant mantle, most DMR genes gain methylation after infection: 1683 hyper vs 1294 hypo (56.5
+    % hyper).'
+  kind: dm_direction
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: M
+      phenotype_class: R
+    direction: hyper
+    share_pct: 56.5
+- id: C16
+  source: P1
+  where: Results 3.3.3, 3.4; Table S14; Discussion 4.1
+  statement: Highlighted immune genes are differentially methylated after infection in susceptible gills (directions
+    from Table S14 gene means, ST1-ST0); MAPKAP1 falls from 35.1 % to 31.7 %.
+  kind: dm_genes
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: G
+      phenotype_class: S
+    genes:
+    - name: bak1 / Bcl-2-like protein antagonist/killer
+      published_id: G17360
+      direction: hypo
+      region: gene_body
+    - name: birc3 / Baculoviral IAP repeat-containing protein 7
+      published_id: G19919
+      direction: hypo
+      region: gene_body
+    - name: trim3 / Tripartite motif-containing protein 3
+      published_id: G18939
+      direction: hyper
+      region: gene_body
+    - name: trim36 / Tripartite motif-containing protein 2 (table description)
+      published_id: G18954
+      direction: hyper
+      region: gene_body
+    - name: trim71 / Tripartite motif-containing protein 2 (table description)
+      published_id: G19802
+      direction: hypo
+      region: gene_body
+    - name: uba1 / Ubiquitin-activating enzyme E1
+      published_id: G29533
+      direction: hyper
+      region: gene_body
+    - name: itga2 / Integrin alpha-2
+      published_id: G31928
+      direction: hypo
+      region: gene_body
+    - name: Interferon alpha-inducible protein 27
+      published_id: G9050
+      direction: hypo
+      region: gene_body
+    - name: Macrophage mannose receptor 1
+      published_id: G28068
+      direction: hypo
+      region: gene_body
+    - name: MAPKAP1 / Target of rapamycin complex 2 subunit MAPKAP1
+      published_id: G25230
+      direction: hypo
+      region: gene_body
+- id: C17
+  source: P1
+  where: Results 3.3.3, 3.4; Table S14
+  statement: The same highlighted immune genes are differentially methylated after infection in resistant gills
+    (directions RT1-RT0 from Table S14); MAPKAP1 falls sharply from 36.9 % to 5.0 %.
+  kind: dm_genes
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: G
+      phenotype_class: R
+    genes:
+    - name: bak1 / Bcl-2-like protein antagonist/killer
+      published_id: G17360
+      direction: hypo
+      region: gene_body
+    - name: birc3 / Baculoviral IAP repeat-containing protein 7
+      published_id: G19919
+      direction: hypo
+      region: gene_body
+    - name: trim3 / Tripartite motif-containing protein 3
+      published_id: G18939
+      direction: hypo
+      region: gene_body
+    - name: trim36 / Tripartite motif-containing protein 2 (table description)
+      published_id: G18954
+      direction: hyper
+      region: gene_body
+    - name: trim71 / Tripartite motif-containing protein 2 (table description)
+      published_id: G19802
+      direction: hyper
+      region: gene_body
+    - name: uba1 / Ubiquitin-activating enzyme E1
+      published_id: G29533
+      direction: hyper
+      region: gene_body
+    - name: itga2 / Integrin alpha-2
+      published_id: G31928
+      direction: hyper
+      region: gene_body
+    - name: Interferon alpha-inducible protein 27
+      published_id: G9050
+      direction: hypo
+      region: gene_body
+    - name: Macrophage mannose receptor 1
+      published_id: G28068
+      direction: hyper
+      region: gene_body
+    - name: MAPKAP1 / Target of rapamycin complex 2 subunit MAPKAP1
+      published_id: G25230
+      direction: hypo
+      region: gene_body
+- id: C18
+  source: P1
+  where: Results 3.3.6, 3.4; Table S14
+  statement: Highlighted immune genes are differentially methylated after infection in susceptible mantle (directions
+    ST1-ST0 from Table S14); interferon-induced protein 44 falls from 43.6 % to 12.9 %.
+  kind: dm_genes
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: M
+      phenotype_class: S
+    genes:
+    - name: bak1 / Bcl-2-like protein antagonist/killer
+      published_id: G17360
+      direction: hyper
+      region: gene_body
+    - name: birc3 / Baculoviral IAP repeat-containing protein 7
+      published_id: G19919
+      direction: hypo
+      region: gene_body
+    - name: trim3 / Tripartite motif-containing protein 3
+      published_id: G18939
+      direction: hyper
+      region: gene_body
+    - name: trim36 / Tripartite motif-containing protein 2 (table description)
+      published_id: G18954
+      direction: hypo
+      region: gene_body
+    - name: trim71 / Tripartite motif-containing protein 2 (table description)
+      published_id: G19802
+      direction: hypo
+      region: gene_body
+    - name: uba1 / Ubiquitin-activating enzyme E1
+      published_id: G29533
+      direction: hyper
+      region: gene_body
+    - name: itga2 / Integrin alpha-2
+      published_id: G31928
+      direction: hypo
+      region: gene_body
+    - name: Interferon alpha-inducible protein 27
+      published_id: G9050
+      direction: hypo
+      region: gene_body
+    - name: Macrophage mannose receptor 1
+      published_id: G28068
+      direction: hypo
+      region: gene_body
+    - name: Interferon-induced protein 44
+      published_id: G31185
+      direction: hypo
+      region: gene_body
+- id: C19
+  source: P1
+  where: Results 3.3.6, 3.4; Table S14
+  statement: Highlighted immune genes are differentially methylated after infection in resistant mantle (directions
+    RT1-RT0 from Table S14); interferon-induced protein 44 falls from 47.5 % to 27.1 %.
+  kind: dm_genes
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: M
+      phenotype_class: R
+    genes:
+    - name: bak1 / Bcl-2-like protein antagonist/killer
+      published_id: G17360
+      direction: hyper
+      region: gene_body
+    - name: birc3 / Baculoviral IAP repeat-containing protein 7
+      published_id: G19919
+      direction: hyper
+      region: gene_body
+    - name: trim3 / Tripartite motif-containing protein 3
+      published_id: G18939
+      direction: hyper
+      region: gene_body
+    - name: trim36 / Tripartite motif-containing protein 2 (table description)
+      published_id: G18954
+      direction: hypo
+      region: gene_body
+    - name: trim71 / Tripartite motif-containing protein 2 (table description)
+      published_id: G19802
+      direction: hypo
+      region: gene_body
+    - name: uba1 / Ubiquitin-activating enzyme E1
+      published_id: G29533
+      direction: hyper
+      region: gene_body
+    - name: itga2 / Integrin alpha-2
+      published_id: G31928
+      direction: hyper
+      region: gene_body
+    - name: Interferon alpha-inducible protein 27
+      published_id: G9050
+      direction: hyper
+      region: gene_body
+    - name: Macrophage mannose receptor 1
+      published_id: G28068
+      direction: hypo
+      region: gene_body
+    - name: Interferon-induced protein 44
+      published_id: G31185
+      direction: hypo
+      region: gene_body
+- id: C20
+  source: P1
+  where: Results 3.5.1; Fig. 4A; Table S15
+  statement: Before infection, a 151 bp, 10-CpG DMR in the Hedgehog-interacting protein gene body is about 20.0
+    points less methylated in resistant than susceptible gills (22.6 points lower in resistant T1 vs susceptible
+    T0; only 2.6 points between resistant T0 and T1).
+  kind: dm_genes
+  check:
+    factor: phenotype_class
+    level: R
+    stratum:
+      tissue_type: G
+      time: T0
+    genes:
+    - name: Hedgehog-interacting protein
+      published_id: G9133
+      direction: hypo
+      region: gene_body
+- id: C21
+  source: P1
+  where: Results 3.5.2; Fig. 4B; Table S17
+  statement: In resistant gills, a 194 bp, 5-CpG DMR in the THO complex subunit 3 gene body loses methylation after
+    infection (resistant T0 is 2.4-fold and susceptible T0 2.8-fold the resistant T1 level).
+  kind: dm_genes
+  check:
+    factor: time
+    level: T1
+    stratum:
+      tissue_type: G
+      phenotype_class: R
+    genes:
+    - name: THO complex subunit 3
+      published_id: G14367
+      direction: hypo
+      region: gene_body
+- id: C22
+  source: P1
+  where: Abstract; Discussion 4.1; Conclusion
+  statement: Resistant and susceptible oysters already carry distinct methylation patterns before exposure (T0),
+    irrespective of population origin; the paper reports no plain R-vs-S DMR count at T0, only the filtered epibiomarker
+    sets (C24).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: phenotype_class R vs S within time T0 is a registered contrast, but the paper gives no count or direction
+      for it; only gene-level example is C20
+- id: C23
+  source: P1
+  where: Abstract; Results 3.4; Fig. S7; Table S14
+  statement: 31 immune-related genes carry DMRs after infection in all four tissue x phenotype comparisons (from
+    222, 185, 181 and 284 immune-related DMR genes in S gills, R gills, S mantle, R mantle), with contrasting directions
+    between phenotypes.
+  kind: not_testable
+  check:
+    reason: other_data
+    note: intersection of four stratified T1-vs-T0 gene lists filtered by the authors' immune-gene annotation; could
+      be approximated as an overlap of our four per-gene time contrasts, but no kind covers overlap counts and the
+      immune flag is author-curated
+- id: C24
+  source: P1
+  where: Abstract; Results 3.5.1; Tables 1, S15, S16
+  statement: 1998 candidate phenotype epibiomarker DMRs (1204 gills, 1030 in gene bodies; 794 mantle, 718 in gene
+    bodies) meet |RT0-ST0| >= 20 %, |RT1-ST0| >= 20 % and |RT0-RT1| <= 5 %.
+  kind: not_testable
+  check:
+    reason: needs_coordinates
+    note: multi-criteria DMR filter on group means, not a single DSS contrast; per-region on paper genome coordinates
+- id: C25
+  source: P1
+  where: Abstract; Results 3.5.2; Tables 2, S17, S18
+  statement: 164 gene-body candidate site (POMS exposure) epibiomarkers (66 of 68 DMRs in gills, 98 of 128 in mantle)
+    meet |ST0-RT0| <= 5 %, |ST0-RT1| >= 20 % and |RT0-RT1| >= 20 %; note the abstract's 164 counts gene-body DMRs
+    while its 1998 counts all DMRs.
+  kind: not_testable
+  check:
+    reason: needs_coordinates
+    note: multi-criteria DMR filter on group means; per-region on paper genome coordinates
+- id: C26
+  source: P1
+  where: Results 3.3.3, 3.3.6; Fig. S6C-H
+  statement: 'Genes with DMRs after infection overlap between phenotypes: 527 in gills (277 with the same direction:
+    157 hyper, 120 hypo) and 788 in mantle (384 same direction: 213 hyper, 171 hypo).'
+  kind: not_testable
+  check:
+    reason: other_data
+    note: overlap between two stratified time contrasts; no kind for gene-list overlap, though it could be approximated
+      from our per-gene results
+- id: C27
+  source: P1
+  where: Abstract; Results 3.3.1-3.3.6; Figs. 2-3
+  statement: Genes with DMRs after infection are enriched for immunity, signalling, metabolism and transport GO
+    terms and KEGG pathways (e.g. response to virus and DNA damage response in hypermethylated S-gill genes; mitophagy
+    in hypermethylated R-gill genes).
+  kind: not_testable
+  check:
+    reason: other_data
+    note: GO_MWU / DAVID enrichment against the paper's annotation; enrichment is not part of the re-derived outputs
+- id: C28
+  source: P1
+  where: Results 3.1; Fig. 1C; Fig. S2; Tables S1-S3
+  statement: 'The cohabitation challenge worked: survival differed among populations (15 % in SC18/#5 to 85 % in
+    Thau/#1, log-rank P <= 0.001), and at T1 OsHV-1 load was higher in susceptible than resistant tissues (Mann-Whitney
+    W = 23, P = 0.032).'
+  kind: not_testable
+  check:
+    reason: other_data
+    note: survival and qPCR viral load, not methylation

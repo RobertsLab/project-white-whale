@@ -93,6 +93,30 @@ def validate_status_cmd(files):
     sys.exit(1 if failed else 0)
 
 
+@main.command("validate-curation")
+@click.argument("study_ids", nargs=-1)
+def validate_curation_cmd(study_ids):
+    """Validate curated sample tables (default: every data/studies/*/sample_curation.tsv)."""
+    from whale.curation import FILENAME, validate_curation
+    from whale.results import read_tsv
+
+    repo = _repo()
+    studies = repo / "data" / "studies"
+    paths = [studies / s / FILENAME for s in study_ids] or sorted(studies.glob(f"*/{FILENAME}"))
+    failed = False
+    for path in paths:
+        sheet = path.parent / "samplesheet.tsv"
+        ids = [r["sample_id"] for r in read_tsv(sheet)] if sheet.exists() else []
+        errors = validate_curation(path, ids, repo) if sheet.exists() else [f"{sheet} is missing"]
+        click.echo(f"{'FAIL' if errors else 'ok  '}  {path}")
+        for e in errors:
+            click.echo(click.style(f"      error: {e}", fg="red"))
+        failed |= bool(errors)
+    if not paths:
+        click.echo("No curated sample tables yet.")
+    sys.exit(1 if failed else 0)
+
+
 @main.command("build-registry")
 @click.option("--out", type=click.Path(dir_okay=False), default=None)
 def build_registry_cmd(out):
@@ -920,6 +944,31 @@ def profiles_cmd():
     rows = [{"profile": k, "executor": v["executor"], "label": v["label"], "suited for": v["suited_for"]}
             for k, v in load_vocab(repo, "compute_profile").items()]
     click.echo(_table(rows, ["profile", "executor", "label", "suited for"]))
+
+
+@main.command("replicate")
+@click.argument("study_ids", nargs=-1)
+def replicate_cmd(study_ids):
+    """Test each study's published claims against its re-derived results (data/studies/<ID>/claims.yaml).
+
+    Writes replication.md and replication.json beside the claims; default: every study with claims."""
+    from whale.replication import ReplicationError, studies_with_claims, write
+
+    repo = _repo()
+    ids = list(study_ids) or studies_with_claims(repo)
+    if not ids:
+        click.echo("No study has a claims.yaml yet.")
+    failed = False
+    for sid in ids:
+        try:
+            rep = write(repo, sid)
+        except ReplicationError as exc:
+            click.echo(click.style(f"FAIL  {sid}: {exc}", fg="red"))
+            failed = True
+            continue
+        counts = ", ".join(f"{v} {k.replace('_', ' ')}" for k, v in rep["counts"].items() if v)
+        click.echo(f"ok    {sid}: {len(rep['claims'])} claims ({counts})")
+    sys.exit(1 if failed else 0)
 
 
 @main.command("mcp")

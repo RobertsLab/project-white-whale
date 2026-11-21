@@ -63,8 +63,12 @@ process BISMARK_ALIGN {
     script:
     def paired = reads instanceof List && reads.size() == 2
     def input = paired ? "-1 ${reads[0]} -2 ${reads[1]}" : "${reads}"
-    // Each Bismark instance runs ~3 bowtie2 threads; --multicore = cpus / 3.
-    def multicore = Math.max(1, (task.cpus as int) / 3 as int)
+    // A directional Bismark instance runs 2 bowtie2 processes (~3 busy threads
+    // with its own work): --multicore = cpus / 3. --non_directional runs 4
+    // (all four strands), so cpus / 5 there, and each library takes about
+    // twice as long.
+    def per_instance = align_args.contains('--non_directional') ? 5 : 3
+    def multicore = Math.max(1, (task.cpus as int) / per_instance as int)
     // No --basename: Bismark 0.24 refuses it together with --multicore, so
     // outputs are named after the first input file and renamed here.
     """
@@ -128,12 +132,17 @@ process BISMARK_METHYLATION_EXTRACTOR {
     // Strand-merged CpG calls are the per-sample unit of the shared matrices
     // (PLAN.md §6.2). Non-CpG context files are kept for the CHH-based
     // conversion estimate when a study has no spike-in.
+    // params.ignore_r2: the first bases of read 2 come from end repair with
+    // unmethylated cytosines and read as unmethylated in every library type
+    // (the M-bias plots of every paired study show it), so they are left out
+    // of the calls. Paired-end only: read 1 has no such bias.
+    def ignore_r2 = (params.ignore_r2 as int) > 0 ? "--ignore_r2 ${params.ignore_r2 as int}" : ''
     """
     # Paired-end if the first read's SAM flag has bit 1 set. Plain shell
     # arithmetic: awk's and() is GNU-only and the container's awk may not be.
     PE=""
     FLAG=\$(samtools view ${bam} 2>/dev/null | head -1 | cut -f2)
-    if [ -n "\$FLAG" ] && [ \$(( FLAG & 1 )) -eq 1 ]; then PE="--paired-end --no_overlap"; fi
+    if [ -n "\$FLAG" ] && [ \$(( FLAG & 1 )) -eq 1 ]; then PE="--paired-end --no_overlap ${ignore_r2}"; fi
     bismark_methylation_extractor \$PE --gzip --bedGraph --comprehensive --merge_non_CpG \\
         --genome_folder ${genome_dir} --multicore ${Math.max(1, (task.cpus as int) / 3 as int)} \\
         ${params.extractor_args} ${bam}

@@ -12,6 +12,7 @@ lint:
 validate:
 	whale validate-study
 	whale validate-status
+	whale validate-curation
 
 stub:
 	nextflow run workflows/methylation -profile test -stub
