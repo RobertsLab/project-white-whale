@@ -16,6 +16,7 @@ carried across by hand.
 | `modules/methylation/*.nf` (containers, Bismark `--score_min L,0,-0.6`) | `modules/methylation/` | `44022f1` | Rewritten; container pins and Bismark settings kept |
 | `data/reference/genome_assemblies.yaml` | same path | `44022f1` | Two assemblies; `default` flag |
 | `docs/compute_profiles.md` (klone section) | `docs/running_on_klone.md` | `44022f1` | Summarized |
+| `src/whale/query/server.py` (`whale mcp`) | `src/query/mcp_server.py` | `9ee585e` | Pattern only (FastMCP, optional `mcp` extra held below 2.0, instructions, missing-SDK message); White Whale's own tools over study summaries, the pooled atlas, differential and replication results |
 
 When vendoring more, add a row here with the AREE commit
 (`git -C <AREE checkout> log -1 --format=%h -- <file>`).
