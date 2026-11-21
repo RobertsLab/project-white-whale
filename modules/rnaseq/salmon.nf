@@ -11,7 +11,8 @@
 // <index dir>/salmon_index, by default inside the reference bundle like the
 // Bismark index, so later runs on the machine reuse it. Its
 // whale_index.json records the inputs' SHA-256, k and Salmon version, which
-// main.nf checks against the bundle and params before a run.
+// main.nf checks against the bundle and params before a run; transcripts.txt
+// lists the transcript names (the stub quantification reads them).
 process SALMON_INDEX {
     tag "${transcripts.simpleName}"
     label 'process_high'
@@ -36,6 +37,7 @@ process SALMON_INDEX {
         : "salmon index -t ${transcripts} ${opts}"
     """
     ${build}
+    grep '^>' ${transcripts} | cut -d' ' -f1 | sed 's/^>//' > ${index_name}/transcripts.txt
     cat > ${index_name}/whale_index.json <<EOF_JSON
     {
       "salmon": "\$(salmon --version | sed 's/salmon //')",
@@ -54,7 +56,7 @@ process SALMON_INDEX {
     def decoys = genome ? true : false
     """
     mkdir ${index_name}
-    grep '^>' ${transcripts} | cut -d' ' -f1 | sed 's/^>//' > ${index_name}/stub_transcripts.txt
+    grep '^>' ${transcripts} | cut -d' ' -f1 | sed 's/^>//' > ${index_name}/transcripts.txt
     cat > ${index_name}/whale_index.json <<EOF_JSON
     {"salmon": "stub", "kmer": ${params.salmon_kmer}, "decoys": ${decoys}, "index_args": "${params.salmon_index_args}",
      "transcripts": "${transcripts.name}", "transcripts_sha256": "\$(sha256sum ${transcripts} | cut -d' ' -f1)",
@@ -99,7 +101,7 @@ process SALMON_QUANT {
     """
     mkdir -p ${sample_id}/aux_info
     { printf 'Name\\tLength\\tEffectiveLength\\tTPM\\tNumReads\\n'
-      while read t; do printf '%s\\t1000\\t800\\t0\\t0\\n' "\$t"; done < ${index}/stub_transcripts.txt; } > ${sample_id}/quant.sf
+      while read t; do printf '%s\\t1000\\t800\\t0\\t0\\n' "\$t"; done < ${index}/transcripts.txt; } > ${sample_id}/quant.sf
     printf '{"num_processed": 0, "num_mapped": 0, "num_decoy_fragments": 0, "percent_mapped": 0.0, "library_types": ["${paired ? 'ISR' : 'SR'}"]}\\n' > ${sample_id}/aux_info/meta_info.json
     printf '{"expected_format": "${paired ? 'ISR' : 'SR'}", "compatible_fragment_ratio": 0.0}\\n' > ${sample_id}/lib_format_counts.json
     printf 'SALMON_QUANT:\\n  salmon: "stub"\\n' > versions.yml
