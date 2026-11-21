@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,mcp]"   # mcp: so the `whale mcp` tests run rather than skip
       - name: Lint
         run: ruff check src tests
       - name: Tests

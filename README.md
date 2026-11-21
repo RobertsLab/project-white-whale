@@ -85,7 +85,8 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 [gene-level methylation](docs/gene_methylation.md),
 [the C/T SNP mask](docs/snp_mask.md),
 [mirroring FASTQ to gannet](docs/fastq_mirror.md),
-[the atlas: pooled tables, landscape and concordance](docs/atlas.md).
+[the atlas: pooled tables, landscape and concordance](docs/atlas.md),
+[asking Claude about the results (`whale mcp`)](docs/mcp.md).
 
 ## Commands
 
@@ -102,6 +103,7 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale mirror-fastq [--accession <PRJ…>] [--plan] [--jobs N] [--max-gb G]` | Prefetch backlog FASTQ to gannet: NCBI `.sra` converted on raven (ENA as fallback), verified and resumable |
 | `whale build-dashboard [--no-claims] [--no-mirror]` | Write `site/data.json` for the progress dashboard (`site/index.html`, published to GitHub Pages) |
 | `whale build-atlas [--out DIR]` | Pool the merged, SNP-masked studies' gene tables and write the atlas pages' data (`site/atlas/data/`): pooled tables, landscape, concordance |
+| `whale mcp [--repo DIR]` | Read-only MCP server over the summarized results, for Claude Code and Claude Desktop (`pip install -e ".[mcp]"`; [docs/mcp.md](docs/mcp.md)) |
 | `whale validate-study [files] [--strict]` | Validate study YAMLs against the schema and vocabularies |
 | `whale validate-status [files]` | Validate `status.yaml` files |
 | `whale build-registry` | Rebuild `registry/study_registry.csv` (not committed) |
