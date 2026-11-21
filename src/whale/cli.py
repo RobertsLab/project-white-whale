@@ -93,6 +93,30 @@ def validate_status_cmd(files):
     sys.exit(1 if failed else 0)
 
 
+@main.command("validate-curation")
+@click.argument("study_ids", nargs=-1)
+def validate_curation_cmd(study_ids):
+    """Validate curated sample tables (default: every data/studies/*/sample_curation.tsv)."""
+    from whale.curation import FILENAME, validate_curation
+    from whale.results import read_tsv
+
+    repo = _repo()
+    studies = repo / "data" / "studies"
+    paths = [studies / s / FILENAME for s in study_ids] or sorted(studies.glob(f"*/{FILENAME}"))
+    failed = False
+    for path in paths:
+        sheet = path.parent / "samplesheet.tsv"
+        ids = [r["sample_id"] for r in read_tsv(sheet)] if sheet.exists() else []
+        errors = validate_curation(path, ids, repo) if sheet.exists() else [f"{sheet} is missing"]
+        click.echo(f"{'FAIL' if errors else 'ok  '}  {path}")
+        for e in errors:
+            click.echo(click.style(f"      error: {e}", fg="red"))
+        failed |= bool(errors)
+    if not paths:
+        click.echo("No curated sample tables yet.")
+    sys.exit(1 if failed else 0)
+
+
 @main.command("build-registry")
 @click.option("--out", type=click.Path(dir_okay=False), default=None)
 def build_registry_cmd(out):
