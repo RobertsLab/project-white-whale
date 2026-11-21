@@ -22,14 +22,14 @@ accessions:
   pmid: null
   other: "24 BioSamples, one per animal (replicate codes 2NH05-3NL12)"
 
-citation: "Roberts Lab, University of Washington (2020). Whole genome bisulfite sequencing (WGBS) of diploid and triploid Crassostrea gigas ctenidia exposed to different pH levels. NCBI BioProject PRJNA682817. No publication linked as of 2026-10-23."
+citation: "Venkataraman YR (2021). Polyploidy and environmental stress have distinct impacts on Pacific oyster (Crassostrea gigas) ctenidia methylomes. Chapter 4 of: Ocean acidification influences on physiology and epigenetics in the Pacific oyster (Crassostrea gigas). PhD dissertation, University of Washington. No journal article found as of 2026-11-21; the deposit links none."
 species: "Magallana gigas"
-population: "Diploid and triploid adults provided by Maria Haws, University of Hawaii at Hilo (BioSample biomaterial provider); collected 2020-08-15/16, USA: Hawaii. Hatchery, family and how triploids were produced are not stated."
+population: "Diploid and triploid adults from the Hawaiian Shellfish LLC hatchery (Kea'au, Hawaii; broodstock from the Oregon State University Molluscan Broodstock Program), provided by Maria Haws, University of Hawaii at Hilo (BioSample biomaterial provider). Triploids were produced from diploid females x tetraploid males; the diploids are not the triploids' parents (dissertation 4.3.1). Collected 2020-08-15/16."
 original_assembly: null
 
 chemistry: wgbs
 library_layout: paired
-platform: "Illumina NovaSeq 6000, paired-end; 37-83 M read pairs per library (mean 52 M)"
+platform: "Illumina NovaSeq 6000, paired-end; 37-83 M read pairs per library (mean 52 M). Libraries made by Zymo Research with the Zymo Pico Methyl-Seq kit (dissertation methods), which is non-directional."
 
 samples:
   n_runs: 24
@@ -63,18 +63,22 @@ goals: [1]
 data_availability:
   raw_data_available: true
   fastq_size_gb: 145.2
-  published_dml_dmr_tables: false
-  access_notes: "Raw paired FASTQ for all 24 runs public in SRA/ENA (first public 2020-12-06). No processed methylation data deposited."
+  published_dml_dmr_tables: true
+  access_notes: "Raw paired FASTQ for all 24 runs public in SRA/ENA (first public 2020-12-06). No processed methylation data deposited. The dissertation's DSS DML tables (ploidy, pH, interaction) are in github.com/RobertsLab/project-oyster-oa, analyses/Haws_04-DSS/DML, on Cgigas_uk_roslin_v1 (GCF_902806645.1) coordinates."
 
 quality_flags:
   - sex_unknown
+  - confounded_design
 
 limitations: >
-  (1) Exposure details are not in the deposit: pH 7.7 vs 8.2 is recorded,
-  but not the duration, method (CO2 or acid), temperature, or whether the
-  low-pH and control animals shared a source population and tanks. (2) The
-  diploid and triploid animals' origin (hatchery, families, triploid
-  induction method) is not stated, so ploidy may be confounded with family.
+  (1) pH is confounded with tank and sampling day: the animals were held
+  six weeks in one flow-through tank per pH, and the low-pH tank was sampled
+  on 2020-08-15, the high-pH tank on 2020-08-16 (dissertation; lab sample
+  sheets). The lab's later re-analysis (project-oyster-oa
+  code/Haws/04.4-DSS-plan.md) found four genetic-outlier animals, all at
+  high pH, and DML counts within the range of shuffled labels. (2) Ploidy is
+  confounded with family: triploids come from diploid females x tetraploid
+  males, not from the sequenced diploids.
   (3) Triploid genomes carry three copies of each chromosome; per-CpG
   methylation proportions in triploids average three alleles against a
   haploid reference, and allele-specific calls are not comparable with

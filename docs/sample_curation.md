@@ -53,6 +53,9 @@ every BioSample record, and the paper with its methods and supplements. Neither
 reads the study YAML or the other's work, so where they agree it is because the
 sources say so, not because one copied the other. A third person compares the
 two field by field and settles each disagreement from the sources, and the
-settled table is committed with the curation notes in the study YAML. Values
-neither source states are `unknown`, never a guess; an inference is marked
-`low` and explained in `notes`.
+settled table is committed with the curation notes in the study YAML. The
+instructions each curator gets are in [sample_curation_brief.md](sample_curation_brief.md)
+(its output is the table above plus a `study.json` of study-level facts:
+publication, library kit, published DML/DMR tables, paired RNA-seq,
+discrepancies). Values neither source states are `unknown`, never a guess;
+an inference is marked `low` and explained in `notes`.

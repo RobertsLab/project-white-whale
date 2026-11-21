@@ -79,7 +79,7 @@ data_availability:
   raw_data_available: true
   fastq_size_gb: 624.9
   published_dml_dmr_tables: true
-  access_notes: "Raw paired-end FASTQ for all 40 runs are public in ENA under PRJEB81880 (first public 2024-11-06), all with ENA-generated FASTQ and MD5s. The paper's supplementary tables (S5-S18) list DSS DMRs and genes per comparison; they were not retrieved or inspected for this registration, and are significance-filtered calls on cgigas_uk_roslin_v1 coordinates, so this study is registered for raw reanalysis."
+  access_notes: "Raw paired-end FASTQ for all 40 runs are public in ENA under PRJEB81880 (first public 2024-11-06), all with ENA-generated FASTQ and MD5s. The paper's supplementary workbook (mmc10.xlsx, Tables S1-S18) lists DMRs with coordinates and group means per comparison (Tables S6, S8, S10, S12) on cgigas_uk_roslin_v1 (GCA_902806645.1) coordinates, and per-library statistics (Table S4). Read for the 2026-11-21 sample curation."
 
 quality_flags:
   - confounded_design
@@ -107,15 +107,17 @@ limitations: >
   over about five weeks: growth, the 30 d recovery, possible regeneration at
   the T0 biopsy site (whether T1 was taken from the same site is not stated),
   and the move to the challenge tanks. There is no uninfected control kept
-  through the same period. (6) Identifier anomaly: oyster code 21 appears for
-  both the resistant (GT4_21_*_R) and the susceptible (GT4_21_*_S)
-  population-4 oyster. Codes are otherwise distinct within a population, so
-  either codes are not unique tags or a label is wrong; the four libraries per
-  animal should be checked for genotype concordance (C/T-neutral SNPs) before
-  the results are used, which also confirms T0/T1 and gill/mantle pairing for
-  all ten animals. BioSample sample_description says 'susceptible (R)' for the
-  ten susceptible mantle libraries; the phenotype attribute and library_name
-  say susceptible, and are used. (7) Sources conflict on details: recovery
+  through the same period. (6) Identifier error in the deposit, resolved:
+  the four susceptible population-4 libraries (ERR13913478, ERR13913479,
+  ERR13913498, ERR13913499) are named GT4_21_*_S, the code of the resistant
+  population-4 oyster, but the paper's Table S4 lists them as GT4_15 (oyster
+  #4_15), and their ENA read counts are exactly twice Table S4's raw reads.
+  sample_curation.tsv records them as animal #4_15. The four libraries per
+  animal can still be checked for genotype concordance (C/T-neutral SNPs) to
+  confirm the T0/T1 and gill/mantle pairing of all ten animals. BioSample
+  sample_description says 'susceptible (R)' for the ten susceptible mantle
+  libraries; the phenotype attribute and library_name say susceptible, and are
+  used. (7) Sources conflict on details: recovery
   after biopsy is 30 days in the methods but three weeks in the results;
   acclimation reached 21 C but tanks are reported at 20 C; every BioSample
   gives collection date 2022-03-01 and age 10 months though progenitors were
