@@ -26,9 +26,42 @@ class Machine:
     slurm_accounts: list = field(default_factory=list)
     head_job: str | None = None
     ssh_host: str | None = None       # sbatch machines: where a tick elsewhere reads `squeue`
+    checkout_root: str | None = None  # holds the study worktrees, white-whale-<STUDY_ID>[-<PART>]
+    path_prepend: list = field(default_factory=list)  # put first on PATH in a job (whale, nextflow, java)
+    setup: str | None = None          # shell run first in a job, e.g. "unset TMPDIR"
+    log_dir: str | None = None        # sbatch machines: where a job's --output goes
 
     def exports(self) -> str:
         return " ".join(f"{k}={v}" for k, v in self.env.items())
+
+    def checkout(self, study_id: str, part: str | None = None) -> str | None:
+        """The study's worktree on this machine (as `whale start-study` names it), if checkout_root is set."""
+        if not self.checkout_root:
+            return None
+        return f"{self.checkout_root.rstrip('/')}/white-whale-{study_id}{f'-{part}' if part else ''}"
+
+    def sbatch(self, cmd: str, *, study_id: str, part: str | None = None, kind: str = "head") -> str:
+        """`sbatch ... --wrap` that runs cmd in the study's worktree with this machine's PATH and env.
+
+        The job is named whale-<kind>-<STUDY_ID>[-<PART>] and runs with --chdir in the worktree,
+        so `whale autopilot` reading the queue (slurm.assign) attributes it to the study.
+        """
+        name = f"whale-{kind}-{study_id}{f'-{part}' if part else ''}"
+        opts = [self.head_job or "", f"--job-name={name}"]
+        where = self.checkout(study_id, part)
+        if where:
+            opts.append(f"--chdir={where}")
+        if self.log_dir:
+            opts.append(f"--output={self.log_dir.rstrip('/')}/{name}-%j.log")
+        steps = []
+        if self.path_prepend:
+            steps.append("export PATH=" + ":".join(self.path_prepend) + ":$PATH")
+        if self.setup:
+            steps.append(self.setup)
+        if self.env:
+            steps.append(f"export {self.exports()}")
+        steps.append(cmd)
+        return "sbatch " + " ".join(o for o in opts if o) + " --wrap '" + "; ".join(steps) + "'"
 
 
 def load_machines(repo: Path, path: Path | None = None) -> dict[str, Machine]:

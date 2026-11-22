@@ -91,7 +91,13 @@ Each decision is one of: *advance* (the autopilot would do it), *running*,
 (`local` or `sbatch`), whether it has a gannet SSH key and `gh`, the
 `WHALE_*` variables to export before any launch or `-resume`, extra `-c`
 configs (Hete's `hete-limits.config`), klone's per-partition accounts, and
-klone's `ssh_host` for reading its queue. Accounts are written in full
+klone's `ssh_host` for reading its queue. A klone head or staging job is
+built like the hand-written head-job scripts: `--job-name=whale-head-<ID>`
+(or `whale-fastq-<ID>`), `--chdir` into the study worktree under
+`checkout_root`, `--output` into `log_dir`, then in the job the whale conda
+env first on `PATH` (`path_prepend`), `setup` (`unset TMPDIR`), the
+`WHALE_*` exports and the command. The name and working directory are what
+the queue reader matches to the study. Accounts are written in full
 (`compute-coenv`, `cpu-g2-mem2x-srlab`, `cpu-g2-coenv`): `sbatch` also takes
 the short group name, but `scontrol` and `squeue` use the full one.
 Step A uses them only to decide what *would* be launched where. Free disk

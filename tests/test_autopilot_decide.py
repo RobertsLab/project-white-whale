@@ -90,6 +90,7 @@ def test_registered_to_fastq_staged():
     d = run(s)
     assert (d.state, d.next_state, d.kind) == ("registered", "fastq_staged", "advance")
     assert d.action.startswith("sbatch --account=coenv") and "whale fetch-fastq --mark-staged" in d.action
+    assert "--job-name=whale-fastq-TESTER2099_X_WGBS" in d.action
 
 
 def test_registered_chemistry_null_is_fixed_first():
