@@ -1,0 +1,119 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: ROBERTSLAB2013_EPIGENOMICS_WGBS
+part: null
+generated_on: '2026-11-22'
+nextflow_run: goofy_franklin
+commit: ea3d7dd29f36ae7537b810d3edea39fdc05a00f7
+genome_assembly: GCF_963853765.1
+chemistry: wgbs
+snp_mask: null
+libraries: 14
+passed: 1
+failed:
+- sample_id: SRR1693528
+  reasons: 14996 CpGs at >=5x < 1000000
+- sample_id: SRR1693531
+  reasons: 10938 CpGs at >=5x < 1000000
+- sample_id: SRR1693532
+  reasons: 3511 CpGs at >=5x < 1000000
+- sample_id: SRR1693534
+  reasons: 9978 CpGs at >=5x < 1000000
+- sample_id: SRR1693537
+  reasons: 1336 CpGs at >=5x < 1000000
+- sample_id: SRR1693538
+  reasons: 14163 CpGs at >=5x < 1000000
+- sample_id: SRR1696820
+  reasons: 100161 CpGs at >=5x < 1000000
+- sample_id: SRR1696826
+  reasons: 3722 CpGs at >=5x < 1000000
+- sample_id: SRR1696827
+  reasons: 45018 CpGs at >=5x < 1000000
+- sample_id: SRR1696867
+  reasons: 93835 CpGs at >=5x < 1000000
+- sample_id: SRR1696868
+  reasons: 84595 CpGs at >=5x < 1000000
+- sample_id: SRR1697248
+  reasons: 14502 CpGs at >=5x < 1000000
+- sample_id: SRR942533
+  reasons: mapping 18.1% < 20.0%; conversion 96.201% < 98.0%; 982485 CpGs at >=5x
+    < 1000000
+qc:
+  mapping_pct:
+    n: 14
+    median: 52.6
+    mean: 48.71
+    min: 18.1
+    max: 54.7
+    sd: 9.69
+  duplication_pct:
+    n: 14
+    median: 0.95
+    mean: 1.59
+    min: 0.53
+    max: 9.29
+    sd: 2.24
+  conversion_pct:
+    n: 14
+    median: 99.81
+    mean: 99.56
+    min: 96.2
+    max: 99.86
+    sd: 0.97
+  cpgs_5x:
+    n: 14
+    median: 14749.0
+    mean: 693838.0
+    min: 1336.0
+    max: 8334492.0
+    sd: 2213910.23
+  mean_depth:
+    n: 14
+    median: 1.33
+    mean: 2.62
+    min: 1.17
+    max: 16.19
+    sd: 3.97
+cpg_methylation_pct:
+  n: 1
+  median: 13.18
+  mean: 13.18
+  min: 13.18
+  max: 13.18
+  sd: null
+by_factor:
+- factor_id: sample_type
+  column: condition
+  reference_level: gonad
+  levels:
+  - level: Gill
+    n: 0
+  - level: gonad
+    n: 1
+    median: 13.18
+    mean: 13.18
+    min: 13.18
+    max: 13.18
+    sd: null
+  - level: larvae_72
+    n: 0
+  - level: larvae_120
+    n: 0
+by_condition:
+- condition: Gill
+  n: 0
+- condition: gonad
+  n: 1
+  median: 13.18
+  mean: 13.18
+  min: 13.18
+  max: 13.18
+  sd: null
+- condition: larvae_120
+  n: 0
+- condition: larvae_72
+  n: 0
+methylomes:
+  files: 151
+  bytes: 359235986
+  on_data_host: false
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/ROBERTSLAB2013_EPIGENOMICS_WGBS/

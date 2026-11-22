@@ -3,12 +3,12 @@
 study_id: ROBERTSLAB2013_EPIGENOMICS_WGBS
 accession: PRJNA213124
 part: null
-stage: fastq_staged
+stage: qc_passed
 profile: desktop
 machine: Hete
 claimed_by: Steven Roberts
 claimed_on: '2026-10-23'
-nextflow_run: null
+nextflow_run: goofy_franklin
 notes: null
 history:
 - stage: claimed
@@ -23,3 +23,17 @@ history:
   date: '2026-10-24'
   machine: Hete
   note: 27 files, 35.7 GB, MD5 verified
+- stage: aligned
+  date: '2026-11-22'
+  machine: Hete
+  note: 14 libraries aligned; median mapping 52.6%
+- stage: called
+  date: '2026-11-22'
+  machine: Hete
+  note: CpG calls for 14 libraries (run goofy_franklin)
+- stage: qc_passed
+  date: '2026-11-22'
+  machine: Hete
+  note: '1 of 14 libraries pass the QC gate; failed: SRR1693528, SRR1693531, SRR1693532,
+    SRR1693534, SRR1693537, SRR1693538, SRR1696820, SRR1696826, SRR1696827, SRR1696867,
+    SRR1696868, SRR1697248, SRR942533'
