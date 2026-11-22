@@ -14,6 +14,8 @@
 #   env                  exported before any launch or -resume (cache keys depend on them)
 #   extra_configs        passed last with -c on every launch
 #   slurm_accounts       klone: account for each partition, in the order to try
+#   ssh_host             sbatch machines: host a tick elsewhere reads `squeue -u $USER` on (ssh BatchMode,
+#                        so it needs a live ControlMaster session; it never prompts for Duo)
 version: "0.1.0"
 machines:
   Hete:
@@ -50,6 +52,7 @@ machines:
     disk_floor_gb: 2000
     disk_path: /gscratch/scrubbed
     launch: sbatch
+    ssh_host: klone.hyak.uw.edu
     gannet_key: false
     gh: true
     env:
@@ -58,9 +61,11 @@ machines:
       WHALE_METHYLOMES: /gscratch/scrubbed/$USER/whale/methylomes
       NXF_HOME: /gscratch/scrubbed/$USER/whale/nxf-home
       NXF_TEMP: /gscratch/scrubbed/$USER/whale/tmp
-    # docs/compute_profiles.md, "Choosing a partition". Each partition has its own account.
+    # docs/compute_profiles.md, "Choosing a partition". Each partition has its own account,
+    # named <partition>-<group> (`sacctmgr show assoc user=$USER`). sbatch also accepts the
+    # short group name, but scontrol and squeue use the full one, so write the full one.
     slurm_accounts:
-      - {partition: compute, account: coenv}
-      - {partition: cpu-g2-mem2x, account: srlab}
-      - {partition: cpu-g2, account: coenv}
-    head_job: "--account=coenv --partition=compute --cpus-per-task=2 --mem=8G --time=4-00:00:00"
+      - {partition: compute, account: compute-coenv}
+      - {partition: cpu-g2-mem2x, account: cpu-g2-mem2x-srlab}
+      - {partition: cpu-g2, account: cpu-g2-coenv}
+    head_job: "--account=compute-coenv --partition=compute --cpus-per-task=2 --mem=8G --time=4-00:00:00"

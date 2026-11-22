@@ -53,6 +53,9 @@ def classify(s: StudyState) -> str:
         # Any Nextflow run of it here (even one we cannot tell is alive) means it is past launching.
         if s.run is not None and s.run.session:
             return "running"
+        # A head job in its machine's Slurm queue (read this tick) means it was launched there.
+        if s.head_jobs:
+            return "running"
         return "fastq_staged"
     if stage in RUN_STAGES:
         return "running"
@@ -158,12 +161,22 @@ def decide(s: StudyState, ctx: dict, machines: dict[str, Machine], *, here: str,
             return Decision(s.key, state, None, "waiting", "a free run slot",
                             f"{name} is running {runs.count(name)} of {m.max_concurrent_runs if m else '?'} studies",
                             machine=name)
+        if machine is not None and machine.launch == "sbatch":
+            if s.slurm_checked:
+                runs.take(name)
+                return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
+                                f"FASTQ staged and {name}'s queue has no job for it", machine=name)
+            # Never propose a launch that might duplicate a head job we could not see.
+            why = s.slurm_error or "its queue was not read"
+            return Decision(s.key, state, None, "waiting", f"read the {name} queue",
+                            f"FASTQ staged, but {name}'s queue could not be read from {here} ({why}); "
+                            f"launch only once `squeue -u $USER` there shows no head job for it",
+                            machine=name, evidence=[f"would run: {_launch_command(s, machine)}"])
         runs.take(name)
         if s.worktree is None and (machine is None or machine.name.lower() != here.lower()):
-            check = ("`squeue -u $USER` on klone shows no head job for it" if machine and machine.launch == "sbatch"
-                     else f"no Nextflow is running it on {name}")
             return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
-                            f"FASTQ staged; no run visible from {here}: launch once {check}", machine=name)
+                            f"FASTQ staged; no run visible from {here}: launch once no Nextflow is running it "
+                            f"on {name}", machine=name)
         return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
                         "FASTQ staged and nothing has run yet", machine=name)
 
@@ -256,8 +269,14 @@ def _decide_running(s: StudyState, machine: Machine | None) -> Decision:
                             "no library passed the QC gate",
                             question=f"No library of {sid} passed QC: exclude it, or re-run with other settings?",
                             machine=name, evidence=[f"stage called, 0 of {(s.summary or {}).get('libraries')} pass"])
+        if s.head_jobs:
+            head = s.head_jobs[0]
+            return Decision(s.key, "running", None, "running", "wait",
+                            f"head job {head.job_id} is {head.state} on {name} ({head.elapsed})",
+                            machine=name, evidence=[j.describe() for j in s.slurm_jobs])
+        where = f"; {name}'s queue has no head job for it" if s.slurm_checked else ""
         return Decision(s.key, "running", None, "running", "wait",
-                        f"stage {s.stage} on {name}; no run log readable from here", machine=name)
+                        f"stage {s.stage} on {name}; no run log readable from here{where}", machine=name)
 
     hazards = [m for m in matches if m.hazard]
     if run.status == "live":

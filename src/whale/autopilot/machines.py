@@ -25,6 +25,7 @@ class Machine:
     limits_config: str | None = None
     slurm_accounts: list = field(default_factory=list)
     head_job: str | None = None
+    ssh_host: str | None = None       # sbatch machines: where a tick elsewhere reads `squeue`
 
     def exports(self) -> str:
         return " ".join(f"{k}={v}" for k, v in self.env.items())

@@ -31,10 +31,18 @@ For every study the tick reads:
 | `git merge-base --is-ancestor` | whether the branch is merged into main |
 | the study's worktree, if it is on this machine | `.nextflow.log`, `.nextflow/history`, `.nextflow.pid`, the failed task's `.exitcode` and `.command.err`, other `*.out` / `*.log` files |
 | `config/autopilot.yaml` | per-machine limits |
+| `squeue -u $USER` on each sbatch machine (klone) | its jobs: run locally on that machine, otherwise `ssh -o BatchMode=yes <ssh_host>` (`src/whale/autopilot/slurm.py`) |
 
-A run on another machine is not visible. The decision then says so: for
-example, for a study staged on klone the launch is proposed "once `squeue`
-shows no head job for it".
+A Nextflow log on another machine is not visible, but klone's queue is. A
+job belongs to a study when its name or the last component of its working
+directory contains the study id (the head job runs in the study checkout,
+`white-whale-<STUDY_ID>`), or when a `whale-head-<PREFIX>` job's prefix names
+exactly one study on klone. A staged study with such a job is `running`, takes
+a run slot, and is never relaunched. If the queue cannot be read (no SSH
+ControlMaster session, so Duo would have to prompt), a staged klone study
+waits instead of advancing: the tick will not propose a launch that might
+duplicate a head job it could not see. For any other machine the decision
+says what to check before launching ("once no Nextflow is running it").
 
 ### The state machine
 
@@ -74,7 +82,10 @@ Each decision is one of: *advance* (the autopilot would do it), *running*,
 `max_concurrent_runs`, `disk_floor_gb` / `disk_path`, how it launches
 (`local` or `sbatch`), whether it has a gannet SSH key and `gh`, the
 `WHALE_*` variables to export before any launch or `-resume`, extra `-c`
-configs (Hete's `hete-limits.config`), and klone's per-partition accounts.
+configs (Hete's `hete-limits.config`), klone's per-partition accounts, and
+klone's `ssh_host` for reading its queue. Accounts are written in full
+(`compute-coenv`, `cpu-g2-mem2x-srlab`, `cpu-g2-coenv`): `sbatch` also takes
+the short group name, but `scontrol` and `squeue` use the full one.
 Step A uses them only to decide what *would* be launched where. Free disk
 is measured only on the machine the tick runs on.
 

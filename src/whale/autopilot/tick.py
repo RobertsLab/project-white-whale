@@ -10,6 +10,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from whale.autopilot import slurm
 from whale.autopilot.decide import ACTIVE_STATES, classify, decide
 from whale.autopilot.gather import fetch, gather
 from whale.autopilot.machines import Slots, load_machines
@@ -64,9 +65,29 @@ def decide_all(states: list[StudyState], ctx: dict, machines: dict, here: str) -
             for s in states]
 
 
+def attach_queues(states: list[StudyState], machines: dict, here: str,
+                  runner: slurm.Runner | None = None) -> list[str]:
+    """Read each sbatch machine's queue once and give every study on it its jobs. Returns warnings."""
+    warnings = []
+    for m in machines.values():
+        if m.launch != "sbatch":
+            continue
+        on_it = [s for s in states if (s.machine or "").lower() == m.name.lower() and s.study_id]
+        if not on_it:
+            continue
+        q = slurm.read_queue(m.name, m.ssh_host, here=here, **({"runner": runner} if runner else {}))
+        if not q.ok:
+            warnings.append(f"could not read the {m.name} queue from {here}: {q.error}")
+        by_study = slurm.assign([s.study_id for s in on_it], q)
+        for s in on_it:
+            s.slurm_checked, s.slurm_error = q.ok, q.error
+            s.slurm_jobs = by_study.get(s.study_id, [])
+    return warnings
+
+
 def tick(repo: Path, *, dry_run: bool, remote: str = "origin", base: str = "main", do_fetch: bool = True,
          here: str | None = None, machines_path: Path | None = None,
-         alive: Callable[[int], bool] = pid_alive) -> TickResult:
+         alive: Callable[[int], bool] = pid_alive, queue_runner: slurm.Runner | None = None) -> TickResult:
     if not dry_run:
         raise AutopilotError("step A of the autopilot only has a dry run; pass --dry-run "
                              "(docs/autopilot.md: steps B-F add live transitions).")
@@ -81,6 +102,7 @@ def tick(repo: Path, *, dry_run: bool, remote: str = "origin", base: str = "main
     if not machines:
         result.warnings.append("config/autopilot.yaml has no machines; launch decisions ignore limits")
     states, ctx = gather(repo, remote=remote, base=base, alive=alive)
+    result.warnings += attach_queues(states, machines, result.here, queue_runner)
     result.states = states
     result.decisions = decide_all(states, ctx, machines, result.here)
     return result
