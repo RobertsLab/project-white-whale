@@ -210,6 +210,42 @@ def test_klone_part_worktree_and_job_name():
     assert Machine(name="raven", profile="raven").checkout("X_WGBS") is None
 
 
+MASK = "GCF_963853765.1.snpmask.v1"
+
+
+def test_launch_exports_the_snp_mask_of_the_study_assembly():
+    from whale.autopilot.machines import load_machines
+    machines = load_machines(Path(__file__).resolve().parents[1])
+    for name, folder in [("klone", f"/gscratch/srlab/$USER/whale/snp_mask/{MASK}"),
+                         ("raven", f"/home/shared/8TB_HDD_03/$USER/whale/reference/GCF_963853765.1/snp_mask/{MASK}")]:
+        s = state("fastq_staged", machine=name, profile=name, genome_assembly="GCF_963853765.1", snp_mask_id=MASK)
+        assert f"WHALE_SNP_MASK={folder}" in playbook._relaunch(s, machines[name]), name
+    # Hete has no masks: nothing exported (a missing folder would fail the run's checkIfExists).
+    s = state("fastq_staged", genome_assembly="GCF_963853765.1", snp_mask_id=MASK)
+    assert "WHALE_SNP_MASK" not in playbook._relaunch(s, machines["Hete"])
+
+
+def test_snp_mask_root_with_assembly_placeholder():
+    m = Machine(name="raven", profile="raven", snp_mask_root="/r/{assembly}/snp_mask/")
+    assert m.snp_mask(MASK, "GCF_963853765.1") == f"/r/GCF_963853765.1/snp_mask/{MASK}"
+    assert m.snp_mask(MASK, None) is None and m.snp_mask(None, "GCF_963853765.1") is None
+
+
+def test_newest_mask_per_assembly_and_study_assembly():
+    from whale.autopilot.gather import attach_masks, newest_masks
+    masks = newest_masks({"masks": [{"mask_id": "A.v1", "genome_assembly": "A"},
+                                    {"mask_id": "B.v1", "genome_assembly": "B"},
+                                    {"mask_id": "A.v2", "genome_assembly": "A"}]})
+    assert masks == {"A": "A.v2", "B": "B.v1"}
+    default = state("fastq_staged", key="TESTER2099_D_WGBS")
+    own = state("fastq_staged", key="TESTER2099_O_WGBS", config=CONFIG + "\nparams { genome_assembly = 'B' }\n")
+    none = state("fastq_staged", key="TESTER2099_N_WGBS", config=CONFIG + "\nparams { genome_assembly = 'C' }\n")
+    attach_masks([default, own, none], masks, "A")
+    assert (default.genome_assembly, default.snp_mask_id) == ("A", "A.v2")
+    assert (own.genome_assembly, own.snp_mask_id) == ("B", "B.v1")
+    assert (none.genome_assembly, none.snp_mask_id) == ("C", None)
+
+
 # --- library type and readiness ------------------------------------------------
 
 def test_nondirectional_detected_and_proposed():

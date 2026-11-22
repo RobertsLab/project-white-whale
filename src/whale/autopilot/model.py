@@ -73,6 +73,8 @@ class StudyState:
     slurm_jobs: list = field(default_factory=list)  # whale.autopilot.slurm.SlurmJob of this study
     slurm_checked: bool = False       # its machine's queue was read this tick
     slurm_error: str | None = None    # why its machine's queue could not be read
+    genome_assembly: str | None = None  # from its config, else base.config's default
+    snp_mask_id: str | None = None    # newest mask for that assembly in data/reference/snp_masks.yaml
 
     @property
     def head_jobs(self) -> list:

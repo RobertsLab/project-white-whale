@@ -21,6 +21,7 @@ import yaml
 
 from whale.autopilot.model import StudyState
 from whale.autopilot.nflog import pid_alive, read_run
+from whale.autopilot.playbook import config_string
 from whale.claims import BRANCH_PREFIX, config_name, parse_branch
 
 
@@ -111,6 +112,22 @@ def _fill_from_ref(git: Git, ref: str, s: StudyState) -> None:
     s.run_manifest = _json(git.show(ref, f"{d}/run_manifest.json"))
 
 
+def newest_masks(doc: dict | None) -> dict[str, str]:
+    """assembly -> the newest mask id in data/reference/snp_masks.yaml (masks are appended, never replaced)."""
+    out: dict[str, str] = {}
+    for m in (doc or {}).get("masks") or []:
+        if m.get("genome_assembly") and m.get("mask_id"):
+            out[m["genome_assembly"]] = m["mask_id"]
+    return out
+
+
+def attach_masks(states, masks: dict[str, str], default_assembly: str | None) -> None:
+    """Each study's genome assembly (its config, else base.config's) and the SNP mask for it."""
+    for s in states:
+        s.genome_assembly = config_string(s.config_text, "genome_assembly") or default_assembly
+        s.snp_mask_id = masks.get(s.genome_assembly) if s.genome_assembly else None
+
+
 def gather(repo: Path, *, remote: str = "origin", base: str = "main",
            alive: Callable[[int], bool] = pid_alive) -> tuple[list[StudyState], dict]:
     """Every study's state, plus context: {main_ref, main_assembly, workflows}."""
@@ -172,8 +189,11 @@ def gather(repo: Path, *, remote: str = "origin", base: str = "main",
     assemblies = [a for a in assemblies if a]
     main_assembly = max(set(assemblies), key=assemblies.count) if assemblies else None
     workflows = set(git.ls(main_ref, "workflows"))
+    masks = newest_masks(_yaml(git.show(main_ref, "data/reference/snp_masks.yaml")))
+    default_assembly = config_string(git.show(main_ref, "config/base.config"), "genome_assembly")
+    attach_masks(states.values(), masks, default_assembly)
     context = {"main_ref": main_ref, "main_assembly": main_assembly,
-               "workflows": {Path(w).name for w in workflows}}
+               "workflows": {Path(w).name for w in workflows}, "snp_masks": masks}
 
     order = {row.get("accession"): i for i, row in enumerate(backlog)}
     ordered = sorted(states.values(), key=lambda s: (order.get(s.accession, len(order)), s.key))

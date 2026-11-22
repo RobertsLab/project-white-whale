@@ -103,13 +103,22 @@ def _launch_command(s: StudyState, machine: Machine | None) -> str:
     return cmd
 
 
-def _launch_evidence(s: StudyState) -> list[str]:
+def _launch_evidence(s: StudyState, machine: Machine | None = None) -> list[str]:
+    out = []
     swapped = playbook.config_list(s.config_text, "swap_mates")
-    if not swapped:
-        return []
-    return [f"swap_mates is set ({', '.join(swapped[:4])}{', ...' if len(swapped) > 4 else ''}): if an earlier "
-            "run predates it, -resume reuses its unswapped TRIM_GALORE/BISMARK_ALIGN tasks; move those work "
-            "dirs aside first (playbook swap_mates_resume)"]
+    if swapped:
+        out.append(f"swap_mates is set ({', '.join(swapped[:4])}{', ...' if len(swapped) > 4 else ''}): if an "
+                   "earlier run predates it, -resume reuses its unswapped TRIM_GALORE/BISMARK_ALIGN tasks; move "
+                   "those work dirs aside first (playbook swap_mates_resume)")
+    # Without a SNP mask the gene tables are unmasked and the readiness check blocks the study.
+    where = machine.name if machine else (s.machine or "?")
+    if s.snp_mask_id is None:
+        out.append(f"no SNP mask recorded for assembly {s.genome_assembly or '?'} in "
+                   "data/reference/snp_masks.yaml: the run will not be SNP-masked (docs/snp_mask.md)")
+    elif machine is not None and machine.snp_mask(s.snp_mask_id, s.genome_assembly) is None:
+        out.append(f"{where} has no snp_mask_root in config/autopilot.yaml: the run will not be SNP-masked; copy "
+                   f"{s.snp_mask_id} there (or run on a machine that has it) and set snp_mask_root")
+    return out
 
 
 def decide(s: StudyState, ctx: dict, machines: dict[str, Machine], *, here: str,
@@ -178,7 +187,7 @@ def decide(s: StudyState, ctx: dict, machines: dict[str, Machine], *, here: str,
                 runs.take(name)
                 return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
                                 f"FASTQ staged and {name}'s queue has no job for it", machine=name,
-                                evidence=_launch_evidence(s))
+                                evidence=_launch_evidence(s, machine))
             # Never propose a launch that might duplicate a head job we could not see.
             why = s.slurm_error or "its queue was not read"
             return Decision(s.key, state, None, "waiting", f"read the {name} queue",
@@ -189,9 +198,9 @@ def decide(s: StudyState, ctx: dict, machines: dict[str, Machine], *, here: str,
         if s.worktree is None and (machine is None or machine.name.lower() != here.lower()):
             return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
                             f"FASTQ staged; no run visible from {here}: launch once no Nextflow is running it "
-                            f"on {name}", machine=name, evidence=_launch_evidence(s))
+                            f"on {name}", machine=name, evidence=_launch_evidence(s, machine))
         return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
-                        "FASTQ staged and nothing has run yet", machine=name, evidence=_launch_evidence(s))
+                        "FASTQ staged and nothing has run yet", machine=name, evidence=_launch_evidence(s, machine))
 
     if state == "running":
         return _decide_running(s, machine)

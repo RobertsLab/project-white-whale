@@ -51,9 +51,12 @@ def _relaunch(study: StudyState, machine: Machine | None, *, resume: bool = True
     cmd = "nextflow run workflows/methylation " + " ".join(f"-c {c}" for c in cfgs) + f" -profile {prof}"
     if resume:
         cmd += f" -resume {session}".rstrip()
+    # The SNP mask is per assembly, and each machine keeps its masks in its own place.
+    mask = machine.snp_mask(study.snp_mask_id, study.genome_assembly) if machine is not None else None
+    extra = {"WHALE_SNP_MASK": mask} if mask else {}
     if machine is not None and machine.launch == "sbatch":
-        return machine.sbatch(cmd, study_id=sid, part=part, kind="head")
-    exports = f"export {machine.exports()}; " if machine is not None and machine.env else ""
+        return machine.sbatch(cmd, study_id=sid, part=part, kind="head", env=extra)
+    exports = f"export {machine.exports(extra)}; " if machine is not None and (machine.env or extra) else ""
     return f"{exports}{cmd}"
 
 

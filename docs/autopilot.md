@@ -97,7 +97,15 @@ built like the hand-written head-job scripts: `--job-name=whale-head-<ID>`
 `checkout_root`, `--output` into `log_dir`, then in the job the whale conda
 env first on `PATH` (`path_prepend`), `setup` (`unset TMPDIR`), the
 `WHALE_*` exports and the command. The name and working directory are what
-the queue reader matches to the study. Accounts are written in full
+the queue reader matches to the study.
+
+Every launch also exports `WHALE_SNP_MASK` ([SNP mask](snp_mask.md)): the
+newest mask in `data/reference/snp_masks.yaml` for the study's genome
+assembly (its config's `genome_assembly`, else `config/base.config`'s), in
+the machine's `snp_mask_root` (`{assembly}` in it is replaced). A machine
+without `snp_mask_root` (Hete), or an assembly without a mask, gets no
+export, since a missing folder would fail the run; the decision says the
+run will not be SNP-masked, which the readiness check would block later. Accounts are written in full
 (`compute-coenv`, `cpu-g2-mem2x-srlab`, `cpu-g2-coenv`): `sbatch` also takes
 the short group name, but `scontrol` and `squeue` use the full one.
 Step A uses them only to decide what *would* be launched where. Free disk
