@@ -94,10 +94,22 @@ def _staging_command(s: StudyState, machine: Machine | None) -> str:
 
 
 def _launch_command(s: StudyState, machine: Machine | None) -> str:
-    cmd = playbook._relaunch(s, machine, resume=False)
+    # Always -resume. fastq_staged does not mean "never run": a run on another machine
+    # (klone) that failed leaves no trace the tick can read, and relaunching it without
+    # -resume would redo every library. With no earlier session -resume caches nothing.
+    cmd = playbook._relaunch(s, machine, resume=True)
     if machine is not None and machine.launch == "local":
         return f"tmux new -d -s {_sid(s)} \"{cmd}\""
     return cmd
+
+
+def _launch_evidence(s: StudyState) -> list[str]:
+    swapped = playbook.config_list(s.config_text, "swap_mates")
+    if not swapped:
+        return []
+    return [f"swap_mates is set ({', '.join(swapped[:4])}{', ...' if len(swapped) > 4 else ''}): if an earlier "
+            "run predates it, -resume reuses its unswapped TRIM_GALORE/BISMARK_ALIGN tasks; move those work "
+            "dirs aside first (playbook swap_mates_resume)"]
 
 
 def decide(s: StudyState, ctx: dict, machines: dict[str, Machine], *, here: str,
@@ -165,7 +177,8 @@ def decide(s: StudyState, ctx: dict, machines: dict[str, Machine], *, here: str,
             if s.slurm_checked:
                 runs.take(name)
                 return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
-                                f"FASTQ staged and {name}'s queue has no job for it", machine=name)
+                                f"FASTQ staged and {name}'s queue has no job for it", machine=name,
+                                evidence=_launch_evidence(s))
             # Never propose a launch that might duplicate a head job we could not see.
             why = s.slurm_error or "its queue was not read"
             return Decision(s.key, state, None, "waiting", f"read the {name} queue",
@@ -176,9 +189,9 @@ def decide(s: StudyState, ctx: dict, machines: dict[str, Machine], *, here: str,
         if s.worktree is None and (machine is None or machine.name.lower() != here.lower()):
             return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
                             f"FASTQ staged; no run visible from {here}: launch once no Nextflow is running it "
-                            f"on {name}", machine=name)
+                            f"on {name}", machine=name, evidence=_launch_evidence(s))
         return Decision(s.key, state, "running", "advance", _launch_command(s, machine),
-                        "FASTQ staged and nothing has run yet", machine=name)
+                        "FASTQ staged and nothing has run yet", machine=name, evidence=_launch_evidence(s))
 
     if state == "running":
         return _decide_running(s, machine)

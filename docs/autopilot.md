@@ -44,6 +44,14 @@ waits instead of advancing: the tick will not propose a launch that might
 duplicate a head job it could not see. For any other machine the decision
 says what to check before launching ("once no Nextflow is running it").
 
+`fastq_staged` does not mean a study has never run: a klone run that failed
+(DECICOMP2025 hit a scrubbed disk quota on 2026-11-21) leaves an empty queue
+and a log the tick cannot read. So every launch passes `-resume` (with the
+session id when this machine has the log): on a first launch it caches
+nothing, after a failure it keeps the finished work. When the config sets
+`swap_mates`, the decision also warns that `-resume` would reuse unswapped
+trim/align tasks of a run that predates it.
+
 ### The state machine
 
 ```
@@ -64,7 +72,7 @@ transition per study (`src/whale/autopilot/decide.py`):
 | free, enrichment chemistry | waiting for the enrichment workflow on main | — |
 | claimed | blocked: registration (study YAML, condition attributes) | person (step C) |
 | registered | `whale fetch-fastq --mark-staged` (sbatch on klone), after the chemistry check and the disk floor | autopilot |
-| fastq_staged | launch the run (tmux locally, `sbatch` head job on klone), if the machine has a free run slot | autopilot |
+| fastq_staged | launch the run (tmux locally, `sbatch` head job on klone) with `-resume`, if the machine has a free run slot | autopilot |
 | running, live | wait | — |
 | running, finished | `whale record-run --results …` | autopilot |
 | running, failed | the playbook's remedy, else blocked "needs diagnosis" with the evidence | autopilot / person (step C: model) |
