@@ -124,7 +124,25 @@ def test_fastq_staged_to_running_here():
     s = state("fastq_staged", worktree="/checkout")
     d = run(s)
     assert (d.state, d.next_state, d.kind) == ("fastq_staged", "running", "advance")
-    assert d.action.startswith("tmux new -d -s TESTER2099_X_WGBS") and "-resume" not in d.action
+    # Always -resume: harmless on a first launch, and keeps the work of an earlier failed run.
+    assert d.action.startswith("tmux new -d -s TESTER2099_X_WGBS") and d.action.endswith(' -resume"')
+    assert d.evidence == []
+
+
+def test_launch_resumes_the_session_seen_on_this_machine():
+    s = state("fastq_staged", worktree="/checkout",
+              run=run_of(nf_log(command="nextflow run x", complete=False), session="f97ff558-1da0"))
+    s.run.status = "unknown"
+    s.status["stage"] = "fastq_staged"
+    from whale.autopilot.decide import _launch_command
+    assert "-resume f97ff558-1da0" in _launch_command(s, MACHINES["Hete"])
+
+
+def test_launch_warns_about_swap_mates():
+    s = state("fastq_staged", worktree="/checkout",
+              config=CONFIG + "\nparams { swap_mates = ['S1', 'S2'] }\n")
+    d = run(s)
+    assert "-resume" in d.action and "swap_mates is set (S1, S2)" in d.evidence[0]
 
 
 def _job(name="whale-head-TESTER2099", state="RUNNING", workdir="/gscratch/x/white-whale-TESTER2099_X_WGBS"):
@@ -145,6 +163,8 @@ def test_fastq_staged_on_klone_empty_queue_launches():
     d = run(s)
     assert (d.kind, d.next_state) == ("advance", "running") and d.action.startswith("sbatch")
     assert "queue has no job" in d.reason
+    # An empty queue may mean the last run failed (DECICOMP2025, disk quota, 2026-11-21): never start over.
+    assert d.action.endswith(" -resume'")
 
 
 def test_fastq_staged_with_head_job_is_running():
