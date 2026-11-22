@@ -5,6 +5,7 @@ from autopilot_fakes import CONFIG, nf_log, qc_rows, run_of, state, summary
 from whale.autopilot.decide import classify, decide
 from whale.autopilot.machines import Machine, Slots
 from whale.autopilot.model import Decision, StudyState
+from whale.autopilot.slurm import SlurmJob
 
 MACHINES = {
     "Hete": Machine(name="Hete", profile="desktop", max_concurrent_runs=1, disk_floor_gb=100,
@@ -126,9 +127,42 @@ def test_fastq_staged_to_running_here():
     assert d.action.startswith("tmux new -d -s TESTER2099_X_WGBS") and "-resume" not in d.action
 
 
-def test_fastq_staged_on_klone_seen_from_elsewhere():
-    d = run(state("fastq_staged", machine="klone", profile="klone"))
-    assert d.next_state == "running" and "squeue" in d.reason and d.action.startswith("sbatch")
+def _job(name="whale-head-TESTER2099", state="RUNNING", workdir="/gscratch/x/white-whale-TESTER2099_X_WGBS"):
+    return SlurmJob("43445189", name, "compute", "compute-coenv", state, "10:17:55", workdir)
+
+
+def test_fastq_staged_on_klone_queue_unread_waits():
+    # The queue could not be read: never propose a launch that might duplicate a head job.
+    s = state("fastq_staged", machine="klone", profile="klone", slurm_error="Permission denied (publickey)")
+    d = run(s, runs={})
+    assert (d.kind, d.next_state) == ("waiting", None)
+    assert "Permission denied" in d.reason and "squeue" in d.reason
+    assert d.evidence[0].startswith("would run: sbatch")
+
+
+def test_fastq_staged_on_klone_empty_queue_launches():
+    s = state("fastq_staged", machine="klone", profile="klone", slurm_checked=True)
+    d = run(s)
+    assert (d.kind, d.next_state) == ("advance", "running") and d.action.startswith("sbatch")
+    assert "queue has no job" in d.reason
+
+
+def test_fastq_staged_with_head_job_is_running():
+    s = state("fastq_staged", machine="klone", profile="klone", slurm_checked=True, slurm_jobs=[_job()])
+    assert classify(s) == "running"
+    d = run(s)
+    assert (d.state, d.kind, d.action) == ("running", "running", "wait")
+    assert "head job 43445189 is RUNNING on klone" in d.reason
+
+
+def test_klone_head_job_takes_a_run_slot():
+    from whale.autopilot.tick import decide_all
+    running = state("fastq_staged", key="TESTER2099_A_WGBS", machine="klone", profile="klone",
+                    slurm_checked=True, slurm_jobs=[_job()])
+    other = [state("fastq_staged", key=f"TESTER2099_{x}_WGBS", machine="klone", profile="klone",
+                   slurm_checked=True) for x in "BC"]
+    kinds = [d.kind for d in decide_all([running, *other], CTX, MACHINES, "Hete")]
+    assert kinds == ["running", "advance", "waiting"]   # klone allows 2 concurrent runs
 
 
 def test_fastq_staged_waits_for_slot():

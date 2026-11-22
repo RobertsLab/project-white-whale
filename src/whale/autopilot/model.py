@@ -70,6 +70,13 @@ class StudyState:
     run_manifest: dict | None = None
     run: RunEvidence | None = None
     worktree: str | None = None       # local checkout of the branch, if on this machine
+    slurm_jobs: list = field(default_factory=list)  # whale.autopilot.slurm.SlurmJob of this study
+    slurm_checked: bool = False       # its machine's queue was read this tick
+    slurm_error: str | None = None    # why its machine's queue could not be read
+
+    @property
+    def head_jobs(self) -> list:
+        return [j for j in self.slurm_jobs if j.is_head]
 
     @property
     def stage(self) -> str | None:
