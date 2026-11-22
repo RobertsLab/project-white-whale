@@ -87,9 +87,9 @@ def _from_match(s: StudyState, state: str, m: playbook.Match, machine: Machine |
 
 def _staging_command(s: StudyState, machine: Machine | None) -> str:
     cmd = "whale fetch-fastq --mark-staged"
-    exports = f"export {machine.exports()}; " if machine is not None and machine.env else ""
     if machine is not None and machine.launch == "sbatch":
-        return f"sbatch {machine.head_job} --wrap '{exports}{cmd}'"
+        return machine.sbatch(cmd, study_id=s.study_id or s.key, part=s.part, kind="fastq")
+    exports = f"export {machine.exports()}; " if machine is not None and machine.env else ""
     return f"{exports}{cmd}"
 
 

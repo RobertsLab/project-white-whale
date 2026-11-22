@@ -1,4 +1,6 @@
 """Every playbook entry and library check, on fake logs and reports."""
+from pathlib import Path
+
 from autopilot_fakes import CONFIG, SESSION, nf_log, qc_rows, run_of, state, summary
 
 from whale.autopilot import playbook
@@ -175,8 +177,37 @@ def test_no_match_gives_diagnosis_evidence():
 def test_relaunch_on_klone_is_sbatch():
     s = state("fastq_staged", machine="klone", profile="klone", run=run_of(nf_log()), run_config_text="params {}")
     cmd = playbook._relaunch(s, KLONE)
-    assert cmd.startswith("sbatch --account=coenv --partition=compute --wrap")
+    assert cmd.startswith("sbatch --account=coenv --partition=compute --job-name=whale-head-TESTER2099_X_WGBS --wrap")
     assert "-c data/studies/TESTER2099_X_WGBS/klone.run.config" in cmd and "-profile klone" in cmd
+
+
+def test_klone_head_job_runs_in_the_worktree_with_its_tools():
+    # Like the hand-written run-DECICOMP2025.sbatch: worktree, conda env on PATH, no TMPDIR, a log.
+    from whale.autopilot.machines import load_machines
+    from whale.autopilot.slurm import Queue, SlurmJob, assign
+    klone = load_machines(Path(__file__).resolve().parents[1])["klone"]
+    s = state("fastq_staged", key="TESTER2099_X_WGBS", machine="klone", profile="klone", run_config_text="params {}")
+    cmd = playbook._relaunch(s, klone)
+    assert "--job-name=whale-head-TESTER2099_X_WGBS" in cmd
+    assert "--chdir=/gscratch/srlab/$USER/github/white-whale-TESTER2099_X_WGBS" in cmd
+    assert "--output=/gscratch/scrubbed/$USER/whale/logs/whale-head-TESTER2099_X_WGBS-%j.log" in cmd
+    wrap = cmd.split("--wrap '", 1)[1]
+    steps = wrap.rstrip("'").split("; ")
+    assert steps[0] == "export PATH=/mmfs1/gscratch/srlab/$USER/miniforge3/envs/whale/bin:$PATH"
+    assert steps[1] == "unset TMPDIR" and "WHALE_WORKDIR=/gscratch/scrubbed/$USER/whale/work" in steps[2]
+    assert steps[3].startswith("nextflow run workflows/methylation") and steps[3].endswith("-resume")
+    # The queue reader attributes the job to the study by its name and working directory.
+    job = SlurmJob("1", "whale-head-TESTER2099_X_WGBS", "compute", "compute-coenv", "RUNNING", "0:01",
+                   "/mmfs1/gscratch/srlab/sr320/github/white-whale-TESTER2099_X_WGBS")
+    assert list(assign(["TESTER2099_X_WGBS", "TESTER2099_Y_WGBS"], Queue("klone", [job]))) == ["TESTER2099_X_WGBS"]
+
+
+def test_klone_part_worktree_and_job_name():
+    m = Machine(name="klone", profile="klone", launch="sbatch", checkout_root="/g/github/")
+    assert m.checkout("X_WGBS", "gill") == "/g/github/white-whale-X_WGBS-gill"
+    assert "--job-name=whale-fastq-X_WGBS-gill --chdir=/g/github/white-whale-X_WGBS-gill" in \
+        m.sbatch("whale fetch-fastq --mark-staged", study_id="X_WGBS", part="gill", kind="fastq")
+    assert Machine(name="raven", profile="raven").checkout("X_WGBS") is None
 
 
 # --- library type and readiness ------------------------------------------------

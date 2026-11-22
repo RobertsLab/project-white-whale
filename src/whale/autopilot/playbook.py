@@ -51,9 +51,9 @@ def _relaunch(study: StudyState, machine: Machine | None, *, resume: bool = True
     cmd = "nextflow run workflows/methylation " + " ".join(f"-c {c}" for c in cfgs) + f" -profile {prof}"
     if resume:
         cmd += f" -resume {session}".rstrip()
-    exports = f"export {machine.exports()}; " if machine is not None and machine.env else ""
     if machine is not None and machine.launch == "sbatch":
-        return f"sbatch {machine.head_job or ''} --wrap '{exports}{cmd}'".replace("  ", " ")
+        return machine.sbatch(cmd, study_id=sid, part=part, kind="head")
+    exports = f"export {machine.exports()}; " if machine is not None and machine.env else ""
     return f"{exports}{cmd}"
 
 

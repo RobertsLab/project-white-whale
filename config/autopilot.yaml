@@ -16,6 +16,11 @@
 #   slurm_accounts       klone: account for each partition, in the order to try
 #   ssh_host             sbatch machines: host a tick elsewhere reads `squeue -u $USER` on (ssh BatchMode,
 #                        so it needs a live ControlMaster session; it never prompts for Duo)
+#   head_job             sbatch machines: options of a head or staging job
+#   checkout_root        sbatch machines: holds the study worktrees (white-whale-<STUDY_ID>); jobs --chdir there
+#   path_prepend         sbatch machines: put first on PATH in a job (whale, nextflow, java)
+#   setup                sbatch machines: shell run first in a job
+#   log_dir              sbatch machines: where a job's --output goes
 version: "0.1.0"
 machines:
   Hete:
@@ -55,10 +60,17 @@ machines:
     ssh_host: klone.hyak.uw.edu
     gannet_key: false
     gh: true
+    # As in the hand-written head-job scripts (e.g. run-DECICOMP2025.sbatch): run in the
+    # study worktree, with the whale conda env (whale, nextflow, java) first on PATH.
+    checkout_root: /gscratch/srlab/$USER/github
+    path_prepend: [/mmfs1/gscratch/srlab/$USER/miniforge3/envs/whale/bin]
+    setup: unset TMPDIR
+    log_dir: /gscratch/scrubbed/$USER/whale/logs
     env:
       WHALE_RAW: /gscratch/scrubbed/$USER/whale/raw
       WHALE_REFERENCE: /gscratch/scrubbed/$USER/whale/reference
       WHALE_METHYLOMES: /gscratch/scrubbed/$USER/whale/methylomes
+      WHALE_WORKDIR: /gscratch/scrubbed/$USER/whale/work
       NXF_HOME: /gscratch/scrubbed/$USER/whale/nxf-home
       NXF_TEMP: /gscratch/scrubbed/$USER/whale/tmp
     # docs/compute_profiles.md, "Choosing a partition". Each partition has its own account,
