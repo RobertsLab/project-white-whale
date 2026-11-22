@@ -3,7 +3,7 @@
 study_id: OUC2024_SEX_REVERSAL_WGBS
 accession: PRJNA917710
 part: null
-stage: claimed
+stage: registered
 profile: raven
 machine: raven
 claimed_by: Steven Roberts
@@ -15,3 +15,7 @@ history:
   date: '2026-11-21'
   machine: raven
   note: null
+- stage: registered
+  date: '2026-11-21'
+  machine: raven
+  note: YAML valid (--strict), sample sheet and manifest from ENA
