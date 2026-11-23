@@ -1,0 +1,197 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: DECICOMP2025_POMS_AGE_EMSEQ
+part: null
+generated_on: '2026-11-23'
+nextflow_run: jovial_jepsen
+commit: 7c0905b378d2d62e1b48a662e761bfd5b8bd9c26
+genome_assembly: GCF_963853765.1
+chemistry: emseq
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
+libraries: 60
+passed: 57
+failed:
+- sample_id: ERR15996549
+  reasons: conversion 97.526% < 98.0%
+- sample_id: ERR15996563
+  reasons: conversion 77.524% < 98.0%
+- sample_id: ERR15996564
+  reasons: conversion 97.541% < 98.0%
+qc:
+  mapping_pct:
+    n: 60
+    median: 49.25
+    mean: 48.83
+    min: 27.9
+    max: 55.5
+    sd: 4.87
+  duplication_pct:
+    n: 60
+    median: 12.02
+    mean: 13.61
+    min: 9.27
+    max: 20.45
+    sd: 3.34
+  conversion_pct:
+    n: 60
+    median: 99.75
+    mean: 99.29
+    min: 77.52
+    max: 99.78
+    sd: 2.89
+  cpgs_5x:
+    n: 60
+    median: 8354879.5
+    mean: 8359366.32
+    min: 7369171.0
+    max: 8756264.0
+    sd: 239122.24
+  mean_depth:
+    n: 60
+    median: 20.14
+    mean: 20.35
+    min: 12.09
+    max: 27.07
+    sd: 3.11
+cpg_methylation_pct:
+  n: 57
+  median: 12.44
+  mean: 12.53
+  min: 11.49
+  max: 14.83
+  sd: 0.64
+by_factor:
+- factor_id: cohort
+  column: cohort
+  reference_level: C3
+  levels:
+  - level: C3
+    n: 12
+    median: 12.82
+    mean: 12.85
+    min: 12.52
+    max: 13.7
+    sd: 0.3
+  - level: C7
+    n: 11
+    median: 12.38
+    mean: 12.33
+    min: 11.76
+    max: 12.72
+    sd: 0.28
+  - level: C8
+    n: 34
+    median: 12.23
+    mean: 12.48
+    min: 11.49
+    max: 14.83
+    sd: 0.76
+- factor_id: group
+  column: group
+  reference_level: T0
+  levels:
+  - level: T0
+    n: 33
+    median: 12.63
+    mean: 12.62
+    min: 11.62
+    max: 14.14
+    sd: 0.54
+  - level: S
+    n: 12
+    median: 12.32
+    mean: 12.41
+    min: 11.63
+    max: 13.54
+    sd: 0.56
+  - level: R
+    n: 12
+    median: 12.02
+    mean: 12.41
+    min: 11.49
+    max: 14.83
+    sd: 0.93
+- factor_id: family
+  column: family
+  reference_level: None
+  levels:
+  - level: F14R
+    n: 30
+    median: 12.6
+    mean: 12.66
+    min: 11.62
+    max: 14.83
+    sd: 0.67
+  - level: H2D
+    n: 27
+    median: 12.29
+    mean: 12.39
+    min: 11.49
+    max: 14.14
+    sd: 0.57
+by_condition:
+- condition: C3_T0
+  n: 12
+  median: 12.82
+  mean: 12.85
+  min: 12.52
+  max: 13.7
+  sd: 0.3
+- condition: C7_T0
+  n: 11
+  median: 12.38
+  mean: 12.33
+  min: 11.76
+  max: 12.72
+  sd: 0.28
+- condition: C8_R
+  n: 12
+  median: 12.02
+  mean: 12.41
+  min: 11.49
+  max: 14.83
+  sd: 0.93
+- condition: C8_S
+  n: 12
+  median: 12.32
+  mean: 12.41
+  min: 11.63
+  max: 13.54
+  sd: 0.56
+- condition: C8_T0
+  n: 10
+  median: 12.39
+  mean: 12.66
+  min: 11.62
+  max: 14.14
+  sd: 0.81
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 30543
+    meth_pct:
+      n: 30543
+      median: 2.94
+      mean: 19.06
+      min: 0.0
+      max: 91.18
+      sd: 24.97
+    methylated_ge_50pct: 5920
+  promoter:
+    covered_in_all: 27624
+    meth_pct:
+      n: 27624
+      median: 0.28
+      mean: 5.16
+      min: 0.0
+      max: 92.27
+      sd: 12.07
+    methylated_ge_50pct: 577
+methylomes:
+  files: 714
+  bytes: 5054224588
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/DECICOMP2025_POMS_AGE_EMSEQ/
