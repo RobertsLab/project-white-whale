@@ -127,7 +127,17 @@ def test_fastq_staged_to_running_here():
     assert (d.state, d.next_state, d.kind) == ("fastq_staged", "running", "advance")
     # Always -resume: harmless on a first launch, and keeps the work of an earlier failed run.
     assert d.action.startswith("tmux new -d -s TESTER2099_X_WGBS") and d.action.endswith(' -resume"')
-    assert d.evidence == []
+    assert not any("swap_mates" in e for e in d.evidence)
+
+
+def test_launch_says_when_the_run_will_not_be_snp_masked():
+    # No mask recorded for the assembly.
+    d = run(state("fastq_staged", worktree="/checkout", genome_assembly="GCF_X"))
+    assert "no SNP mask recorded for assembly GCF_X" in d.evidence[-1]
+    # A mask exists, but this machine (Hete here) has none.
+    d = run(state("fastq_staged", worktree="/checkout", genome_assembly="GCF_963853765.1",
+                  snp_mask_id="GCF_963853765.1.snpmask.v1"))
+    assert "Hete has no snp_mask_root" in d.evidence[-1] and "WHALE_SNP_MASK" not in d.action
 
 
 def test_launch_resumes_the_session_seen_on_this_machine():

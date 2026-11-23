@@ -21,6 +21,10 @@
 #   path_prepend         sbatch machines: put first on PATH in a job (whale, nextflow, java)
 #   setup                sbatch machines: shell run first in a job
 #   log_dir              sbatch machines: where a job's --output goes
+#   snp_mask_root        folder holding the C/T SNP masks, <root>/<MASK_ID>, `{assembly}` replaced by the
+#                        study's genome assembly (docs/snp_mask.md, `<WHALE_REFERENCE>/<ASSEMBLY>/snp_mask`); a launch
+#                        exports WHALE_SNP_MASK for the newest mask of the study's assembly
+#                        (data/reference/snp_masks.yaml). Unset: no masks there, and the launch says so
 version: "0.1.0"
 machines:
   Hete:
@@ -46,6 +50,7 @@ machines:
     launch: local
     gannet_key: true
     gh: false
+    snp_mask_root: "/home/shared/8TB_HDD_03/$USER/whale/reference/{assembly}/snp_mask"
     env:
       WHALE_RAW: /home/shared/8TB_HDD_03/$USER/whale/raw
       WHALE_REFERENCE: /home/shared/8TB_HDD_03/$USER/whale/reference
@@ -66,6 +71,7 @@ machines:
     path_prepend: [/mmfs1/gscratch/srlab/$USER/miniforge3/envs/whale/bin]
     setup: unset TMPDIR
     log_dir: /gscratch/scrubbed/$USER/whale/logs
+    snp_mask_root: /gscratch/srlab/$USER/whale/snp_mask
     env:
       WHALE_RAW: /gscratch/scrubbed/$USER/whale/raw
       WHALE_REFERENCE: /gscratch/scrubbed/$USER/whale/reference

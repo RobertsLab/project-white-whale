@@ -30,9 +30,21 @@ class Machine:
     path_prepend: list = field(default_factory=list)  # put first on PATH in a job (whale, nextflow, java)
     setup: str | None = None          # shell run first in a job, e.g. "unset TMPDIR"
     log_dir: str | None = None        # sbatch machines: where a job's --output goes
+    snp_mask_root: str | None = None  # C/T SNP mask folders, <root>/<MASK_ID>; may contain {assembly}; unset: none
 
-    def exports(self) -> str:
-        return " ".join(f"{k}={v}" for k, v in self.env.items())
+    def exports(self, extra: dict | None = None) -> str:
+        return " ".join(f"{k}={v}" for k, v in {**self.env, **(extra or {})}.items())
+
+    def snp_mask(self, mask_id: str | None, assembly: str | None = None) -> str | None:
+        """The mask folder to pass as WHALE_SNP_MASK, or None when this machine has no masks."""
+        if not mask_id or not self.snp_mask_root:
+            return None
+        root = self.snp_mask_root
+        if "{assembly}" in root:
+            if not assembly:
+                return None
+            root = root.replace("{assembly}", assembly)
+        return f"{root.rstrip('/')}/{mask_id}"
 
     def checkout(self, study_id: str, part: str | None = None) -> str | None:
         """The study's worktree on this machine (as `whale start-study` names it), if checkout_root is set."""
@@ -40,7 +52,8 @@ class Machine:
             return None
         return f"{self.checkout_root.rstrip('/')}/white-whale-{study_id}{f'-{part}' if part else ''}"
 
-    def sbatch(self, cmd: str, *, study_id: str, part: str | None = None, kind: str = "head") -> str:
+    def sbatch(self, cmd: str, *, study_id: str, part: str | None = None, kind: str = "head",
+               env: dict | None = None) -> str:
         """`sbatch ... --wrap` that runs cmd in the study's worktree with this machine's PATH and env.
 
         The job is named whale-<kind>-<STUDY_ID>[-<PART>] and runs with --chdir in the worktree,
@@ -58,8 +71,8 @@ class Machine:
             steps.append("export PATH=" + ":".join(self.path_prepend) + ":$PATH")
         if self.setup:
             steps.append(self.setup)
-        if self.env:
-            steps.append(f"export {self.exports()}")
+        if self.env or env:
+            steps.append(f"export {self.exports(env)}")
         steps.append(cmd)
         return "sbatch " + " ".join(o for o in opts if o) + " --wrap '" + "; ".join(steps) + "'"
 
