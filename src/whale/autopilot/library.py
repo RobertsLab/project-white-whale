@@ -35,7 +35,7 @@ TAIL_MIN_FRACTION = 0.8
 TAIL_MAX_SPREAD = 2.5
 MIN_PASS_FRACTION = 0.75
 
-BASE_RESOLUTION = {"wgbs", "emseq", "pbat", "rrbs"}
+BASE_RESOLUTION = {"wgbs", "emseq", "pbat", "rrbs", "bs_capture"}
 
 
 @dataclass

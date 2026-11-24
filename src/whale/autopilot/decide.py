@@ -156,7 +156,7 @@ def decide(s: StudyState, ctx: dict, machines: dict[str, Machine], *, here: str,
         if chem:
             if (s.study_yaml or {}).get("chemistry") is None:
                 return Decision(s.key, state, None, "blocked", chem.remedy, chem.title,
-                                question=f"What assay chemistry is {sid} (wgbs, emseq, pbat, rrbs)?",
+                                question=f"What assay chemistry is {sid} (wgbs, emseq, pbat, rrbs, bs_capture)?",
                                 machine=s.machine, playbook=chem.entry, evidence=chem.evidence)
             return _from_match(s, state, chem, machine, state)
 

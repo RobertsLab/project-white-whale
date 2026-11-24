@@ -47,6 +47,9 @@ def test_pooling_must_be_flagged(repo_root, filled_study):
 def test_enrichment_and_rrbs_must_be_flagged(repo_root, filled_study):
     assert any("enrichment_assay" in e for e in _errors(repo_root, filled_study, chemistry="medip"))
     assert any("rrbs_subset" in e for e in _errors(repo_root, filled_study, chemistry="rrbs"))
+    assert any("capture_subset" in e for e in _errors(repo_root, filled_study, chemistry="bs_capture"))
+    assert not any("capture_subset" in e for e in _errors(repo_root, filled_study, chemistry="bs_capture",
+                                                          quality_flags=["capture_subset"]))
 
 
 def test_goal_2_needs_rnaseq(repo_root, filled_study):
