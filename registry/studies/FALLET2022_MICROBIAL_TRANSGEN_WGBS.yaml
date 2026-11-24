@@ -1,9 +1,13 @@
-# Study registration template. `whale start-study` copies this to
-# registry/studies/<STUDY_ID>.yaml on the study branch and fills study_id, the
-# accession and provenance. Fill the rest from the deposit (ENA/SRA metadata)
-# first and the paper second; leave a value null when neither states it.
-# Check with `whale validate-study registry/studies/<STUDY_ID>.yaml`.
-# See docs/adding_a_study.md.
+# WGBS arm of IHPE / Ifremer's early-life microbial exposure experiment.
+# Larvae were raised for their first 10 days in seawater flowing past
+# pathogen-free donor oysters (NSI spat) held in the Rade de Brest, or in
+# UV-treated control seawater; exposed oysters, and the unexposed offspring of
+# exposed parents, survived POMS better. Pooled whole larvae (day 10) and
+# pooled whole juveniles (day 120, before the POMS challenge) of the F1 and F2
+# generations.
+#
+# The paper describes one family (Fa.32). The deposit also has family 11
+# (F11), 23 libraries the paper's text does not mention.
 
 study_id: FALLET2022_MICROBIAL_TRANSGEN_WGBS
 aree_study_id: null
@@ -13,50 +17,104 @@ accessions:
   sra: null
   ena: null
   geo: null
-  doi: null
-  pmid: null
-  other: null
+  doi: "10.1186/s40168-022-01280-5"
+  pmid: "35659369"
+  other: "Paper code: github.com/IHPE/DMRseq_wrapper. The paper's text names no accession; PRJNA609264 matches on title, design and labels."
 
-citation: null
+citation: "Fallet M, Montagnani C, Petton B, Dantan L, de Lorgeril J, Comarmond S, Chaparro C, Toulza E, Boitard S, Escoubas JM, Vergnes A, Le Grand J, Bulla I, Gueguen Y, Vidal-Dupiol J, Grunau C, Mitta G, Cosseau C (2022). Early life microbial exposures shape the Crassostrea gigas immune system for lifelong and intergenerational disease protection. Microbiome 10:85."
 species: "Magallana gigas"
-population: null
-original_assembly: null
+population: "Ifremer hatchery lines (Argenton and Bouin, bio-secured). Per the paper: F0 is one biparental family, Fa.32, from wild genitors of the Vidourle river delta, chosen for intermediate POMS susceptibility; F1 (March 2016) and F2 (March 2017) are multiparental crosses of about 100 full-sib genitors. The deposit (BioSample isolate) also has Family_11, which the paper's text does not describe."
+original_assembly: "C. gigas genome version 9 (oyster_v9)"
 
-chemistry: null          # assay_chemistry.yaml: wgbs | emseq | pbat | rrbs | medip | mbd
-library_layout: null     # paired | single | mixed
-platform: null
+chemistry: wgbs
+library_layout: paired
+platform: "Illumina HiSeq X Ten, 2 x 150 bp. Bisulfite conversion and libraries by Genome Quebec (McGill); kit, directionality and spike-in not stated. 47 libraries, 67-161 M read pairs each."
 
 samples:
-  n_runs: null
-  n_libraries: null
-  sample_unit: null      # sample_unit.yaml
-  pool_size: null
-  tissues: []            # tissue.yaml
-  life_stages: []        # life_stage.yaml
-  sexes_recorded: null
-  ploidy: []
+  n_runs: 47
+  n_libraries: 47
+  sample_unit: pool
+  pool_size: null        # larvae 10,000-20,000 per pool; juveniles not stated in the text
+  tissues: [whole_body]
+  life_stages: [d_larva, juvenile]
+  sexes_recorded: false
+  ploidy: []             # not stated
 
 paired_rnaseq:
-  relationship: unknown  # rnaseq_relationship.yaml
-  bioproject: null
-  notes: null
+  relationship: same_animals
+  bioproject: "PRJNA609264"
+  notes: "Same BioProject: 119 RNA-Seq runs (HiSeq 4000; NEB stranded mRNA). 35 of the 47 WGBS libraries share their BioSample with RNA-seq runs, i.e. the same pools; the other 12 have no RNA-seq of the same BioSample. Also in the project, not processed: 222 16S amplicon runs and 3 WGS runs (pools of 30 day-120 juveniles, used by the paper to rule out selection)."
 
-# One entry per design factor; factor_standardized is a stressor.yaml term.
-factors: []
+# 2 families x 2 treatments x 2 generations x 2 stages x 3 pools = 48; 47
+# deposited (Exposed_F2_Larvae has 5: F11-J10-F2-NSI-3 has no WGBS run).
+# condition = isolation_source x generation x dev_stage; family is carried as
+# `isolate` and not modeled.
+factors:
+  - factor_id: isolation_source
+    factor_original: "Seawater of the first 10 days of larval life: 'UV' = filtered, UV-treated hatchery seawater (label C); 'Exposed' = microorganism-enriched seawater flowing past NSI donor spat from the Rade de Brest, donors replaced on days 0, 3 and 7 (label NSI). F2 animals were not exposed themselves: 'Exposed' F2 are offspring of exposed F1."
+    factor_standardized: transgenerational
+    levels: ["UV", "Exposed"]
+    reference_level: "UV"
+  - factor_id: generation
+    factor_original: "F1 (spawned March 2016, exposed as larvae) or F2 (spawned March 2017 from F1 genitors of the same line, not exposed)."
+    factor_standardized: transgenerational
+    levels: ["F1", "F2"]
+    reference_level: "F1"
+  - factor_id: dev_stage
+    factor_original: "Larvae = day 10 (label J10, last day of exposure); Juvenile = day 120 (label EMP-H0, BioSample age '4 months'), sampled just before the POMS challenge."
+    factor_standardized: development
+    levels: ["Larvae", "Juvenile"]
+    reference_level: "Larvae"
+  - factor_id: isolate
+    factor_original: "Family_11 or Family_32 (BioSample isolate; label prefix F11 / F32). The paper describes only Fa.32."
+    factor_standardized: genotype_or_population
+    levels: ["Family_11", "Family_32"]
+    reference_level: null
 
-goals: []
+goals: [1, 2]
 
 data_availability:
-  raw_data_available: null
-  fastq_size_gb: null
-  published_dml_dmr_tables: null
-  access_notes: null
+  raw_data_available: true
+  fastq_size_gb: 856.6
+  published_dml_dmr_tables: true
+  access_notes: "Raw paired-end FASTQ public in SRA/ENA under PRJNA609264 (first public 2023-01-11), all on the gannet mirror. The paper's DMR, DMG and DMP tables (DMRseq, Fa.32, v9 assembly) are in its Additional file 9; per-sample QC in Additional file 2."
 
-quality_flags: []        # quality_flags.yaml
-limitations: null
+quality_flags:
+  - pooled_libraries
+  - confounded_design
+  - sex_unknown
+
+limitations: >
+  (1) Pools, not individuals: 10,000-20,000 larvae, or ground juveniles, per
+  library; replicates are breeding pipes within one exposure system per
+  treatment. (2) Treatment is confounded with lineage in F2: exposed and
+  control F2 descend from separate F1 parent pools of about 100 genitors, so
+  F2 differences can be inherited genetic as well as epigenetic; the paper's
+  pooled WGS found no selection. (3) Generation is confounded with year (2016
+  vs 2017) and with sequencing batch. (4) Family 11 (23 of 47 libraries) is
+  in the deposit but not in the paper's text; its rearing and exposure are
+  assumed to match Fa.32's from the labels and BioSample attributes only.
+  (5) Larvae and juveniles differ in tissue composition; the paper reports
+  that methylation clusters by stage, not treatment. (6) One library missing
+  (F11-J10-F2-NSI-3: RNA-seq only). (7) Spike-in and library kit not stated;
+  conversion is estimated from non-CpG context. (8) The backlog listed 625 GB;
+  ENA reports 856.6 GB (916.3 GB on the mirror).
 
 provenance:
   registered_by: "STEVEN"
   date_registered: "2026-11-23"
-  curation_notes: null
-  source_links: []
+  curation_notes: >
+    Claimed with `whale start-study --accession PRJNA609264 --study-id
+    FALLET2022_MICROBIAL_TRANSGEN_WGBS --profile klone --machine klone`.
+    Sample sheet and FASTQ manifest from live ENA metadata (2026-11-23) with
+    `whale fetch-samplesheet --bioproject PRJNA609264 --condition-attribute
+    isolation_source --condition-attribute generation --condition-attribute
+    dev_stage --attribute isolate --attribute replicate --attribute age`:
+    47 runs, 47 libraries, 47 BioSamples, 6 per group except
+    Exposed_F2_Larvae (5). Labels (C/NSI, J10/EMP-H0, F1/F2, F11/F32) agree
+    with the BioSample isolation_source, dev_stage/age, generation and
+    isolate. Design details from the paper's main text (PMC9167547); its
+    supplements were not read.
+  source_links:
+    - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA609264"
+    - "https://doi.org/10.1186/s40168-022-01280-5"
