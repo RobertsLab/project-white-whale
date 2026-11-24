@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gene Methylation Classes</title>
+<meta name="description" content="Pacific oyster genes that are methylated in every study, unmethylated in every study, or vary between studies, on one reference.">
+<link rel="stylesheet" href="atlas.css">
+<style>
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button { font: inherit; font-size: 13px; padding: 6px 12px; border: 0; background: var(--surface-1); color: var(--text-secondary); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+  .tile .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .tile.on { outline: 2px solid var(--line); outline-offset: -1px; }
+  .tile { cursor: pointer; font: inherit; text-align: left; color: inherit; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: baseline; margin-right: 6px; }
+  .bars { display: grid; grid-template-columns: minmax(140px, max-content) 1fr; gap: 6px 12px; align-items: center; font-size: 13px; }
+  .bar { display: flex; height: 18px; border-radius: 3px; overflow: hidden; background: var(--grid); }
+  .bar span { display: block; height: 100%; }
+  .bar span + span { border-left: 2px solid var(--surface-1); }
+  input[type="search"] { font: inherit; font-size: 14px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-1); color: var(--text-primary); min-width: 240px; }
+  .genes td.desc { white-space: normal; min-width: 200px; color: var(--text-secondary); }
+  .genes td.v { text-align: center; font-variant-numeric: tabular-nums; font-size: 12px; padding: 6px 4px; min-width: 52px; }
+  .genes th.v { text-align: center; padding: 8px 4px; }
+  .genes .gid { font-size: 12px; color: var(--text-muted); }
+  .flag { font-size: 11px; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; margin-left: 6px; }
+  @media (max-width: 600px) { input[type="search"] { min-width: 0; width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+  <nav><a href="../index.html">Dashboard</a><a href="landscape.html">Landscape</a><a href="concordance.html">Concordance</a><a href="genes.html" aria-current="page">Gene classes</a></nav>
+  <header>
+    <h1>Gene methylation classes</h1>
+    <p>Which genes are methylated in every study, unmethylated in every study, and which change from study to study.</p>
+    <div class="updated" id="updated"></div>
+  </header>
+
+  <section aria-labelledby="h-summary">
+    <h2 id="h-summary">Summary</h2>
+    <div class="card pad">
+      <ul class="headline" id="headline"></ul>
+      <ul class="caveats" id="caveats"></ul>
+      <p class="meta" id="excluded"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-classes">
+    <h2 id="h-classes">Four classes</h2>
+    <p class="lede" id="classes-lede"></p>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Feature">
+        <button type="button" data-cls="gene_body" aria-pressed="true">Gene body</button>
+        <button type="button" data-cls="promoter" aria-pressed="false">Promoter</button>
+      </div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section aria-labelledby="h-per-study">
+    <h2 id="h-per-study">Each study on its own</h2>
+    <p class="lede" id="per-study-lede"></p>
+    <div class="card pad">
+      <ul class="legend" id="bar-legend" style="margin:0 0 12px"></ul>
+      <div class="bars" id="bars"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-drivers">
+    <h2 id="h-drivers">Where the variable genes differ</h2>
+    <p class="lede" id="drivers-lede"></p>
+    <div class="card scroll"><table id="drivers"></table></div>
+  </section>
+
+  <section aria-labelledby="h-genes">
+    <h2 id="h-genes">Genes</h2>
+    <p class="lede" id="genes-lede"></p>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Class" id="class-seg"></div>
+      <input type="search" id="filter" placeholder="Filter by symbol, ID or description" aria-label="Filter genes">
+    </div>
+    <ul class="legend" style="margin:0 0 8px"><li><span>0%</span><span class="ramp"></span><span>100%</span></li><li class="muted">each cell: the study's mean % methylation</li></ul>
+    <div class="card scroll"><table class="genes" id="gene-table"></table></div>
+    <p class="meta" id="gene-count"></p>
+  </section>
+
+  <section aria-labelledby="h-dl">
+    <h2 id="h-dl">Pooled tables</h2>
+    <p class="lede">Every gene's class, spread and per-study mean is in <code>gene_body.gene_classes.tsv.gz</code> and <code>promoter.gene_classes.tsv.gz</code>.</p>
+    <div class="card pad" id="downloads"></div>
+  </section>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script type="module">
+import { $, esc, fmt, pct, num, load, frame, seq, showTip, hideTip, fail } from "./atlas.js";
+
+const CLASS = {
+  methylated: { label: "Always methylated", t: 0.95 },
+  unmethylated: { label: "Always unmethylated", t: 0.12 },
+  variable: { label: "Variable between studies", t: null },
+  intermediate: { label: "Intermediate", t: 0.5 },
+};
+const state = { cls: "gene_body", kind: "methylated", q: "" };
+
+// Short column labels: the study id's first part when that is unique.
+function shortNames(sids) {
+  const first = sids.map((s) => s.split("_")[0]);
+  return sids.map((s, i) => (first.filter((f) => f === first[i]).length === 1 ? first[i] : s));
+}
+// Readable text on a ramp cell: dark ink on light cells, light ink on dark ones.
+function ink(bg) {
+  const [r, g, b] = bg.match(/\d+/g).map(Number);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? "#0b0b0b" : "#fcfcfb";
+}
+
+function render(data) {
+  const gc = data.gene_classes, c = gc.classes[state.cls];
+  const label = state.cls === "gene_body" ? "gene-body" : "promoter";
+  const n = data.studies.length;
+  $("classes-lede").textContent = `Each study's value for a gene is the mean over its samples, kept where at least half of them have ${data.min_cpgs}+ covered CpGs. A gene is classed when ${gc.min_studies} or more of the ${n} studies measure it (${fmt(c.measured)} genes for ${label} methylation). Always methylated: ≥${data.high}% in every one of those studies. Always unmethylated: under ${data.low}% in every one. Variable: the highest and lowest study differ by ${gc.var_range} points or more. Intermediate: the rest, mostly genes between ${data.low}% and ${data.high}% with a narrower spread. Click a class to list its genes.`;
+
+  $("tiles").innerHTML = Object.entries(CLASS).map(([k, v]) => {
+    const cnt = c.counts[k] ?? 0;
+    const sub = k === "variable" ? `${fmt(c.counts.switch)} switch: under ${data.low}% in one study, ≥${data.high}% in another` : `${pct(cnt / (c.measured || 1), 1)} of classed genes`;
+    return `<button type="button" class="card tile${k === state.kind ? " on" : ""}" data-kind="${k}" aria-pressed="${k === state.kind}">
+      <div class="label">${swatch(k)}${esc(v.label)}</div><div class="value">${fmt(cnt)}</div><div class="sub">${sub}</div></button>`;
+  }).join("");
+  for (const t of $("tiles").querySelectorAll(".tile")) t.addEventListener("click", () => { state.kind = t.dataset.kind; render(data); });
+
+  // Each study's own composition over the classed genes.
+  $("per-study-lede").textContent = `Over the same ${fmt(c.measured)} genes, the share each study alone places under ${data.low}%, in between, and at ${data.high}% or more. The always-methylated and always-unmethylated genes are where every bar agrees; the rest is where they differ.`;
+  const parts = [["low", `under ${data.low}%`, 0.12], ["mid", `${data.low}–${data.high}%`, 0.5], ["high", `≥${data.high}%`, 0.95]];
+  $("bar-legend").innerHTML = parts.map(([, l, t]) => `<li><span class="swatch" style="background:${seq(t)}"></span>${l}</li>`).join("");
+  const tis = Object.fromEntries(data.studies.map((s) => [s.study_id, s]));
+  $("bars").innerHTML = c.per_study.map((s) => {
+    const st = tis[s.study_id];
+    const segs = parts.map(([k, l, t]) => `<span style="width:${(100 * s[k] / (s.genes || 1)).toFixed(2)}%;background:${seq(t)}" data-k="${k}" data-l="${esc(l)}" data-n="${s[k]}"></span>`).join("");
+    return `<div title="${esc(st.tissues.join(", "))}">${esc(s.study_id)}<div class="meta">${fmt(st.units)} samples · ${esc(st.tissues.join(", "))}${st.life_stages.filter(Boolean).length ? " · " + esc(st.life_stages.filter(Boolean).join(", ")) : ""}</div></div>
+      <div class="bar" data-study="${esc(s.study_id)}" data-genes="${s.genes}">${segs}</div>`;
+  }).join("");
+  for (const bar of $("bars").querySelectorAll(".bar")) {
+    bar.addEventListener("mousemove", (e) => {
+      const sp = e.target.closest("span");
+      if (!sp) return hideTip();
+      showTip(e, `<b>${esc(bar.dataset.study)}</b>${fmt(+sp.dataset.n)} genes ${esc(sp.dataset.l)} (${pct(sp.dataset.n / bar.dataset.genes, 1)})`);
+    });
+    bar.addEventListener("mouseleave", hideTip);
+  }
+
+  // Which study sits at the top or bottom for the variable genes.
+  $("drivers-lede").textContent = `For the ${fmt(c.counts.variable)} variable genes, how often each study has the highest and the lowest mean. A study that is often the extreme carries much of the variation; read it with its tissue, life stage and chemistry, which cannot yet be separated from the study itself. Studies with few samples have noisier means and reach the extremes more easily.`;
+  const nv = c.counts.variable || 1;
+  $("drivers").innerHTML = `<thead><tr><th>Study</th><th>Tissue</th><th>Life stage</th><th>Chemistry</th><th class="num">Samples</th><th class="num">Highest in</th><th class="num">Lowest in</th></tr></thead><tbody>` +
+    [...c.extremes].sort((a, b) => (b.highest + b.lowest) - (a.highest + a.lowest)).map((x) => {
+      const st = tis[x.study_id];
+      return `<tr><td>${esc(x.study_id)}</td><td>${esc(st.tissues.join(", "))}</td><td>${esc(st.life_stages.filter(Boolean).join(", ") || "–")}</td>
+        <td>${esc(st.chemistry)}</td><td class="num">${fmt(st.units)}</td>
+        <td class="num">${fmt(x.highest)} <span class="muted">(${pct(x.highest / nv)})</span></td>
+        <td class="num">${fmt(x.lowest)} <span class="muted">(${pct(x.lowest / nv)})</span></td></tr>`;
+    }).join("") + "</tbody>";
+
+  $("class-seg").innerHTML = Object.entries(CLASS).map(([k, v]) =>
+    `<button type="button" data-kind="${k}" aria-pressed="${k === state.kind}">${esc(v.label.replace(" between studies", ""))}</button>`).join("");
+  for (const b of $("class-seg").querySelectorAll("button")) b.addEventListener("click", () => { state.kind = b.dataset.kind; render(data); });
+  genes(data);
+}
+
+function swatch(k) {
+  const t = CLASS[k].t;
+  const bg = t == null ? `linear-gradient(90deg, ${seq(0.12)}, ${seq(0.95)})` : seq(t);
+  return `<span class="swatch" style="background:${bg}"></span>`;
+}
+
+function genes(data) {
+  const gc = data.gene_classes, c = gc.classes[state.cls], sids = gc.studies;
+  const names = shortNames(sids);
+  const list = c.genes[state.kind] || [];
+  const order = {
+    methylated: "measured in the most studies first, then by the lowest study mean (most robust first)",
+    unmethylated: "measured in the most studies first, then by the highest study mean (most robust first)",
+    variable: "largest spread between studies first",
+    intermediate: "measured in the most studies first, then by the narrowest spread",
+  }[state.kind];
+  $("genes-lede").textContent = `The top ${fmt(gc.top)} genes of each class for ${state.cls === "gene_body" ? "gene-body" : "promoter"} methylation, ${order}. A dash is a study that does not measure the gene. The full list is in the downloadable table below.`;
+  const q = state.q.trim().toLowerCase();
+  const rows = q ? list.filter((g) => `${g.symbol} ${g.gene_id} ${g.description}`.toLowerCase().includes(q)) : list;
+  $("gene-table").innerHTML = `<thead><tr><th>Gene</th><th>Description</th>` +
+    names.map((s, i) => `<th class="v" title="${esc(sids[i])}">${esc(s)}</th>`).join("") +
+    `<th class="num">Spread</th></tr></thead><tbody>` +
+    rows.map((g) => `<tr><td>${esc(g.symbol || g.gene_id)}${g.switch ? `<span class="flag" title="Under ${data.low}% in one study, ≥${data.high}% in another">switch</span>` : ""}<div class="gid">${esc(g.gene_id)}</div></td>
+      <td class="desc">${esc(g.description)}</td>` +
+      g.values.map((v, i) => {
+        if (v == null) return `<td class="v muted" data-i="${i}">–</td>`;
+        const bg = seq(v / 100);
+        return `<td class="v" data-i="${i}" style="background:${bg};color:${ink(bg)}">${num(v, 0)}</td>`;
+      }).join("") +
+      `<td class="num">${num(g.range, 1)}</td></tr>`).join("") + "</tbody>";
+  $("gene-count").textContent = q ? `${fmt(rows.length)} of ${fmt(list.length)} listed genes match.` : `${fmt(list.length)} of ${fmt(c.counts[state.kind])} genes in this class listed.`;
+  if (!rows.length) $("gene-table").insertAdjacentHTML("beforeend", `<tbody><tr><td class="muted" colspan="${sids.length + 3}">No listed gene matches.</td></tr></tbody>`);
+}
+
+load().then((data) => {
+  frame(data);
+  $("headline").innerHTML = data.headline.map((h) => `<li>${esc(h)}</li>`).join("");
+  $("caveats").innerHTML = data.design.caveats.map((c) => `<li>${esc(c)}</li>`).join("");
+  if (!data.studies.length || !data.gene_classes) {
+    $("tiles").innerHTML = `<div class="card empty">Gene classes appear once studies are pooled.</div>`;
+    return;
+  }
+  if (data.studies.length < 2) $("caveats").insertAdjacentHTML("beforeend", `<li>Only one study is pooled, so "every study" means that one.</li>`);
+  render(data);
+  for (const b of document.querySelectorAll(".seg[aria-label='Feature'] button")) {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".seg[aria-label='Feature'] button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+      state.cls = b.dataset.cls;
+      render(data);
+    });
+  }
+  $("filter").addEventListener("input", (e) => { state.q = e.target.value; genes(data); });
+  $("gene-table").addEventListener("mousemove", (e) => {
+    const td = e.target.closest("td.v");
+    if (!td) return hideTip();
+    const g = data.gene_classes.studies[+td.dataset.i], st = data.studies.find((s) => s.study_id === g);
+    showTip(e, `<b>${esc(g)}</b>${td.textContent === "–" ? "not measured" : `${esc(td.textContent)}% mean methylation`}<br>${fmt(st.units)} samples · ${esc(st.tissues.join(", "))}`);
+  });
+  $("gene-table").addEventListener("mouseleave", hideTip);
+}).catch(fail);
+</script>
+</body>
+</html>

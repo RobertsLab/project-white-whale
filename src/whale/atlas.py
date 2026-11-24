@@ -31,6 +31,7 @@ from __future__ import annotations
 import csv
 import gzip
 import io
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -39,12 +40,16 @@ import numpy as np
 from whale.curation import UNKNOWN, read_curation
 from whale.dashboard import GENE_MIN_CPGS, HIST_BIN, _git, summaries_on_main
 from whale.enrichment import is_enrichment
+from whale.reference import gene_info_path, read_gene_info
 from whale.registry import load_studies
 
 CLASSES = [("gene_body", "Gene body"), ("promoter", "Promoter")]
 METRICS = ("meth", "calls", "cpgs")
 LOW, HIGH = 10, 50          # % methylation: a gene under LOW is "unmethylated", at or over HIGH "methylated"
 DENSITY_BINS = 25           # study-vs-study density grid, 4% cells
+VAR_RANGE = 25              # points between the highest and lowest study mean for a "variable" gene
+TOP_GENES = 200             # genes of each class listed on the gene-classes page
+GENE_CLASSES = ("methylated", "unmethylated", "variable", "intermediate")
 
 # sample_metadata.tsv columns, in order
 METADATA_COLUMNS = ["library_id", "unit_id", "study_id", "part", "bioproject", "chemistry", "tissue",
@@ -390,6 +395,91 @@ def concordance(pooled: dict, u: dict) -> dict:
             "blocks": blocks, "study_pairs": pairs}
 
 
+def _min_studies(n_studies: int) -> int:
+    """Studies a gene must be measured in to be classed: two thirds of them, at least two."""
+    return max(2, -(-2 * n_studies // 3)) if n_studies > 1 else 1
+
+
+def _gene_row(gene: str, info: dict, vals: np.ndarray) -> dict:
+    g = info.get(gene, {})
+    return {"gene_id": gene, "symbol": g.get("symbol", ""), "description": g.get("description", ""),
+            "values": [None if np.isnan(v) else round(float(v), 1) for v in vals]}
+
+
+def gene_classes(pooled: dict, u: dict, info: dict[str, dict] | None = None) -> dict:
+    """Per gene, each study's mean methylation (as in concordance), and the gene's class
+    across studies, for gene bodies and promoters:
+
+    * methylated: >= HIGH in every study that measures it;
+    * unmethylated: < LOW in every study that measures it;
+    * variable: study means span >= VAR_RANGE points ("switch" when one study is
+      < LOW and another >= HIGH);
+    * intermediate: the rest (consistently in between, or a narrower spread).
+
+    Only genes measured in at least `_min_studies` studies are classed. Returns
+    counts, each study's own composition, which study sits highest and lowest for
+    the variable genes, the top TOP_GENES of each class, and (under "_tables") the
+    full per-gene rows for the downloadable tables."""
+    info = info or {}
+    sids = [st["study_id"] for st in pooled["studies"]]
+    cols = {sid: [j for j, m in enumerate(u["units"]) if m["study_id"] == sid] for sid in sids}
+    need = _min_studies(len(sids))
+    out = {"studies": sids, "min_studies": need, "var_range": VAR_RANGE, "top": TOP_GENES, "classes": {}}
+    tables = {}
+    for c, _ in CLASSES:
+        pct = _pct(u["matrices"][(c, "meth")], u["matrices"][(c, "calls")], u["matrices"][(c, "cpgs")])
+        if not sids:
+            out["classes"][c] = {"measured": 0, "counts": {}, "per_study": [], "extremes": [], "genes": {}}
+            continue
+        mx = np.column_stack([_study_means(pct, cols[s]) for s in sids])
+        n_meas = (~np.isnan(mx)).sum(axis=1)
+        ok = n_meas >= need
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)    # all-NaN rows (genes nowhere measured)
+            hi, lo = np.nanmax(mx, axis=1), np.nanmin(mx, axis=1)
+        rng = hi - lo
+        label = np.full(len(pooled["genes"]), "", dtype=object)
+        label[ok] = "intermediate"
+        label[ok & (rng >= VAR_RANGE)] = "variable"
+        label[ok & (lo >= HIGH)] = "methylated"
+        label[ok & (hi < LOW)] = "unmethylated"
+        switch = ok & (lo < LOW) & (hi >= HIGH)
+
+        counts = {k: int((label == k).sum()) for k in GENE_CLASSES}
+        counts["switch"] = int(switch.sum())
+        per_study = []
+        for k, sid in enumerate(sids):
+            v = mx[ok, k]
+            v = v[~np.isnan(v)]
+            per_study.append({"study_id": sid, "genes": int(len(v)), "low": int((v < LOW).sum()),
+                              "mid": int(((v >= LOW) & (v < HIGH)).sum()), "high": int((v >= HIGH).sum())})
+        var = np.flatnonzero(label == "variable")
+        top_i = np.nanargmax(mx[var], axis=1) if len(var) else np.array([], dtype=int)
+        low_i = np.nanargmin(mx[var], axis=1) if len(var) else np.array([], dtype=int)
+        extremes = [{"study_id": sid, "highest": int((top_i == k).sum()), "lowest": int((low_i == k).sum())}
+                    for k, sid in enumerate(sids)]
+
+        order = {
+            # measured in the most studies, then the most robust: highest minimum / lowest maximum
+            "methylated": sorted(np.flatnonzero(label == "methylated"), key=lambda i: (-n_meas[i], -lo[i])),
+            "unmethylated": sorted(np.flatnonzero(label == "unmethylated"), key=lambda i: (-n_meas[i], hi[i])),
+            "variable": sorted(var, key=lambda i: (-rng[i], -n_meas[i])),
+            "intermediate": sorted(np.flatnonzero(label == "intermediate"), key=lambda i: (-n_meas[i], rng[i])),
+        }
+        genes = {}
+        for k, idx in order.items():
+            genes[k] = [{**_gene_row(pooled["genes"][i], info, mx[i]), "range": _r(rng[i], 1),
+                         "switch": bool(switch[i])} for i in idx[:TOP_GENES]]
+        out["classes"][c] = {"measured": int(ok.sum()), "counts": counts, "per_study": per_study,
+                             "extremes": extremes, "genes": genes}
+        tables[c] = [{**_gene_row(g, info, mx[i]), "class": label[i], "switch": bool(switch[i]),
+                      "studies": int(n_meas[i]), "min": _r(lo[i], 1) if n_meas[i] else None,
+                      "max": _r(hi[i], 1) if n_meas[i] else None, "range": _r(rng[i], 1) if n_meas[i] else None}
+                     for i, g in enumerate(pooled["genes"])]
+    out["_tables"] = tables
+    return out
+
+
 def design(pooled: dict) -> dict:
     """Which studies each tissue, life stage, chemistry and sample unit rests on, and
     the comparisons that cannot be separated from study."""
@@ -436,7 +526,21 @@ def headline(data: dict) -> list[str]:
         out.append(f"Rank agreement of gene-body methylation (mean Spearman rho between samples): "
                    f"{min(within):.2f}-{max(within):.2f} within a study, {min(between):.2f}-{max(between):.2f} "
                    f"between studies ({n_st} studies, {n_u} samples).")
+    gc = data.get("gene_classes", {}).get("classes", {}).get("gene_body")
+    if n_st > 1 and gc and gc["measured"]:
+        k, m = gc["counts"], gc["measured"]
+        out.append(f"Of {m:,} genes measured in at least {data['gene_classes']['min_studies']} of {n_st} studies, "
+                   f"{k['methylated']:,} ({100 * k['methylated'] / m:.0f}%) have gene-body methylation >= {HIGH}% in "
+                   f"every study, {k['unmethylated']:,} ({100 * k['unmethylated'] / m:.0f}%) under {LOW}% in every "
+                   f"study, and {k['variable']:,} ({100 * k['variable'] / m:.0f}%) differ by {VAR_RANGE}+ points "
+                   f"between studies.")
     return out
+
+
+def _gene_info(repo: Path, assembly: str | None) -> dict[str, dict]:
+    """Gene symbols and descriptions for the pooled assembly, when its table is committed."""
+    path = gene_info_path(repo, assembly) if assembly else None
+    return read_gene_info(path) if path and path.exists() else {}
 
 
 def build(repo: Path, *, repo_url: str = "", now: str | None = None) -> tuple[dict, dict]:
@@ -456,9 +560,12 @@ def build(repo: Path, *, repo_url: str = "", now: str | None = None) -> tuple[di
         "design": design(pooled),
         "landscape": landscape(pooled, u),
         "concordance": concordance(pooled, u),
+        "gene_classes": gene_classes(pooled, u, _gene_info(Path(repo), pooled["genome_assembly"])),
         "tables": [f"tables/{c}.{m}.tsv.gz" for c, _ in CLASSES for m in (*METRICS, "meth_pct")]
+                  + [f"tables/{c}.gene_classes.tsv.gz" for c, _ in CLASSES]
                   + ["tables/sample_metadata.tsv", "tables/sample_qc.tsv"],
     }
+    pooled["gene_class_tables"] = data["gene_classes"].pop("_tables")
     data["headline"] = headline(data)
     return data, pooled
 
@@ -481,6 +588,21 @@ def _write_matrix(path: Path, genes: list[str], libs: list[str], values: np.ndar
         text.detach()
 
 
+def _write_gene_classes(path: Path, rows: list[dict], sids: list[str]) -> None:
+    """One row per gene: its class across studies, the spread, and each study's mean %."""
+    def cell(v):
+        return "" if v is None else (str(v).lower() if isinstance(v, bool) else str(v))
+
+    cols = ["gene_id", "symbol", "description", "class", "switch", "studies", "min", "max", "range"]
+    with open(path, "wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as gz:
+        text = io.TextIOWrapper(gz, encoding="utf-8", newline="\n")
+        text.write("\t".join(cols + sids) + "\n")
+        for r in rows:
+            text.write("\t".join([cell(r[k]).replace("\t", " ") for k in cols] + [cell(v) for v in r["values"]]) + "\n")
+        text.flush()
+        text.detach()
+
+
 def write(data: dict, pooled: dict, out_dir: Path) -> Path:
     """atlas.json and tables/ under out_dir (site/atlas/data by default)."""
     import json
@@ -498,6 +620,8 @@ def write(data: dict, pooled: dict, out_dir: Path) -> Path:
             pct = 100.0 * mx[(c, "meth")] / mx[(c, "calls")]
         _write_matrix(tables / f"{c}.meth_pct.tsv.gz", pooled["genes"], libs, pct,
                       lambda v: "" if np.isnan(v) else f"{v:.3f}")
+    for c, rows in (pooled.get("gene_class_tables") or {}).items():
+        _write_gene_classes(tables / f"{c}.gene_classes.tsv.gz", rows, [s["study_id"] for s in pooled["studies"]])
     _write_tsv(tables / "sample_metadata.tsv", METADATA_COLUMNS, pooled["libraries"])
     qc_cols = list(dict.fromkeys(k for r in pooled["qc"] for k in r)) or ["study_id"]
     _write_tsv(tables / "sample_qc.tsv", qc_cols, pooled["qc"])

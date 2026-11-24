@@ -2,7 +2,7 @@
 
 The first cross-study views (PLAN.md §6.2, §7.1 items 1 and 4), built by
 `whale build-atlas` from the studies merged to `main` and published with the
-dashboard at `atlas/landscape.html` and `atlas/concordance.html`.
+dashboard at `atlas/landscape.html`, `atlas/concordance.html` and `atlas/genes.html`.
 
 ## What is pooled
 
@@ -32,6 +32,7 @@ study whose libraries share one BioSample for convenience carries the
 |---|---|
 | `tables/{gene_body,promoter}.{meth,calls,cpgs}.tsv.gz` | genes x libraries, every pooled study side by side, columns in `sample_metadata.tsv` order |
 | `tables/{gene_body,promoter}.meth_pct.tsv.gz` | methylated / all calls, % (empty: no call) |
+| `tables/{gene_body,promoter}.gene_classes.tsv.gz` | one row per gene: symbol, description, class across studies, whether it switches, studies measuring it, lowest / highest study mean and spread, then each study's mean % |
 | `tables/sample_metadata.tsv` | one row per library: unit (sample) id, study, BioProject, chemistry, tissue, life stage, sample unit, pool size, ploidy, sex, condition, factor levels, assembly, SNP mask, run |
 | `tables/sample_qc.tsv` | every library's `qc_summary.tsv` row, with its study |
 | `atlas.json` | what the pages draw |
@@ -62,6 +63,16 @@ dashboard's rule). Thresholds: "unmethylated" < 10%, "methylated" >= 50%.
   against study: each study's mean per gene (kept where at least half its
   samples measure it), their rho, a density grid, and how many genes both call
   unmethylated, both methylated, or call oppositely.
+- **Gene classes**: each study's mean per gene (as above), for gene bodies and
+  promoters. A gene measured in at least two thirds of the studies (at least two)
+  is *always methylated* when every one of them has it at >= 50%, *always
+  unmethylated* when every one has it under 10%, *variable* when the highest and
+  lowest study means differ by 25 points or more (a *switch* when one study is
+  under 10% and another >= 50%), and *intermediate* otherwise. The page shows the
+  count of each, each study's own split, which study is most often highest or
+  lowest among the variable genes, and the top 200 genes of each class; every
+  gene is in `{class}.gene_classes.tsv.gz`. Variable is between studies, so it
+  mixes tissue, life stage, chemistry and lab with whatever the study varied.
 - **Design caveats**, generated from the pooled studies: any tissue, life
   stage, chemistry or sample unit that comes from a single study is
   inseparable from that study, and a factor every study shares says nothing.
@@ -70,6 +81,6 @@ Every statement carries the number of studies and samples it rests on.
 
 ## Not yet
 
-Variance partitioning and the core / variable classification (§7.1 items 2-3)
-need more than one study per tissue and life stage; 1 kb tiles need the
+Variance partitioning (§7.1 item 2), and separating the gene classes' between-study
+variation into tissue and life stage, need more than one study per tissue and life stage; 1 kb tiles need the
 `cpg_calls` table on the data host.
