@@ -12,7 +12,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from whale.atlas import build, pool, spearman, units, write
+from whale.atlas import build, gene_classes, pool, spearman, units, write
 from whale.cli import main
 
 URL = "https://github.com/RobertsLab/project-white-whale"
@@ -177,6 +177,7 @@ def test_pages_read_every_key_they_use(repo, repo_root):
     js = (repo_root / "site" / "atlas" / "atlas.js").read_text()
     land = (repo_root / "site" / "atlas" / "landscape.html").read_text()
     conc = (repo_root / "site" / "atlas" / "concordance.html").read_text()
+    genes = (repo_root / "site" / "atlas" / "genes.html").read_text()
     for key in ("generated_at", "commit", "repo_url", "genome_assembly", "tables", "excluded"):
         assert key in data and f"data.{key}" in js, key
     for key in ("studies", "libraries", "genes", "headline", "design", "landscape", "bin", "min_cpgs", "low", "high"):
@@ -191,6 +192,15 @@ def test_pages_read_every_key_they_use(repo, repo_root):
         assert key in data["concordance"]["blocks"][0] and f"b.{key}" in conc, key
     for key in ("rho", "genes", "shared_tissue", "both_low", "both_high", "opposite", "other", "mean_abs_diff", "density"):
         assert key in data["concordance"]["study_pairs"][0] and f"p.{key}" in conc, key
+    gc = data["gene_classes"]
+    for key in ("studies", "min_studies", "var_range", "top", "classes"):
+        assert key in gc and f"gc.{key}" in genes, key
+    for key in ("measured", "counts", "per_study", "extremes", "genes"):
+        assert key in gc["classes"]["gene_body"] and f"c.{key}" in genes, key
+    for key in ("gene_id", "symbol", "description", "values", "range", "switch"):
+        assert key in gc["classes"]["gene_body"]["genes"]["methylated"][0] and f"g.{key}" in genes, key
+    for page in (land, conc, genes):
+        assert 'href="genes.html"' in page
 
 
 def test_enrichment_studies_never_enter_the_pooled_tables(repo, filled_study):
@@ -216,3 +226,48 @@ def test_enrichment_studies_never_enter_the_pooled_tables(repo, filled_study):
     assert not libs & {"E1", "E2", "F1"} and p["matrices"][("gene_body", "meth")].shape == (4, 6)
     data, pooled = build(repo, repo_url=URL, now="2026-11-21T00:00:00Z")
     assert {e["study_id"] for e in data["excluded"]} >= {"E2017_DEV_MEDIP", "F2013_GILL_MBD"}
+
+
+def test_gene_classes_on_the_fixture(repo, tmp_path):
+    """A's means: g1 5%, g2 27.5%, g3 85%; B's: g1 25%, g2 5%, g3 65%; g4 unmeasured."""
+    data, pooled = build(repo, repo_url=URL)
+    c = data["gene_classes"]["classes"]["gene_body"]
+    assert data["gene_classes"]["min_studies"] == 2 and c["measured"] == 3
+    assert c["counts"] == {"methylated": 1, "unmethylated": 0, "variable": 0, "intermediate": 2, "switch": 0}
+    assert [g["gene_id"] for g in c["genes"]["methylated"]] == ["g3"]
+    assert c["genes"]["methylated"][0]["values"] == [85.0, 65.0]
+    write(data, pooled, tmp_path / "out")
+    with gzip.open(tmp_path / "out" / "tables" / "gene_body.gene_classes.tsv.gz", "rt") as fh:
+        rows = [line.rstrip("\n").split("\t") for line in fh]
+    assert rows[0][-2:] == ["A2020_X_WGBS", "B2021_Y_WGBS"]
+    by_gene = {r[0]: r for r in rows[1:]}
+    assert by_gene["g3"][3] == "methylated" and by_gene["g4"][3] == "" and by_gene["g4"][-2:] == ["", ""]
+
+
+def test_gene_classes_rules():
+    """Three studies of one unit each; a gene needs two of them."""
+    meth = np.array([[60, 70, 80],      # methylated everywhere
+                     [1, 2, 0],         # unmethylated everywhere
+                     [2, 60, 30],       # switch (and variable)
+                     [20, 30, 35],      # intermediate: spread 15
+                     [70, 0, 0]])       # measured in one study only (cpgs below)
+    calls = np.full(meth.shape, 100)
+    cpgs = np.full(meth.shape, 9)
+    cpgs[4, 1:] = 0
+    mats = {}
+    for cls in ("gene_body", "promoter"):
+        mats.update({(cls, "meth"): meth, (cls, "calls"): calls, (cls, "cpgs"): cpgs})
+    sids = ["S1", "S2", "S3"]
+    pooled = {"genes": ["m", "u", "s", "i", "x"], "studies": [{"study_id": s} for s in sids]}
+    u = {"units": [{"unit_id": s, "study_id": s} for s in sids], "matrices": mats}
+    out = gene_classes(pooled, u, {"m": {"symbol": "ABC", "description": "a gene"}})
+    c = out["classes"]["gene_body"]
+    assert out["min_studies"] == 2 and c["measured"] == 4
+    assert c["counts"] == {"methylated": 1, "unmethylated": 1, "variable": 1, "intermediate": 1, "switch": 1}
+    assert c["genes"]["methylated"][0]["symbol"] == "ABC"
+    assert c["genes"]["variable"][0] == {"gene_id": "s", "symbol": "", "description": "", "values": [2.0, 60.0, 30.0],
+                                         "range": 58.0, "switch": True}
+    assert c["extremes"] == [{"study_id": "S1", "highest": 0, "lowest": 1}, {"study_id": "S2", "highest": 1, "lowest": 0},
+                             {"study_id": "S3", "highest": 0, "lowest": 0}]
+    assert c["per_study"][0] == {"study_id": "S1", "genes": 4, "low": 2, "mid": 1, "high": 1}
+    assert {r["gene_id"]: r["class"] for r in out["_tables"]["gene_body"]}["x"] == ""
