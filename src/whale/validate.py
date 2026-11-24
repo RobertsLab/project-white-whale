@@ -97,6 +97,8 @@ def validate_study(study: dict, repo: Path, *, filename_stem: str | None = None)
             errors.append(f"chemistry {chem} is an enrichment assay, so quality_flags must include enrichment_assay")
         if chem == "rrbs" and "rrbs_subset" not in study["quality_flags"]:
             errors.append("chemistry rrbs needs quality flag rrbs_subset")
+        if chem == "bs_capture" and "capture_subset" not in study["quality_flags"]:
+            errors.append("chemistry bs_capture needs quality flag capture_subset")
 
     rel = study["paired_rnaseq"]["relationship"]
     goals = study.get("goals") or []
