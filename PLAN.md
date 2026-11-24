@@ -134,7 +134,7 @@ project-white-whale/
 Adopt AREE's study schema and trim it to this project. Every study records:
 `study_id`, accessions (BioProject / SRA / ENA / GEO / DOI / PMID), citation,
 species name as deposited, population / line / ploidy, assay chemistry
-(`wgbs`, `emseq`, `rrbs`, `medip`, `mbd`), library layout, platform,
+(`wgbs`, `emseq`, `rrbs`, `bs_capture`, `medip`, `mbd`), library layout, platform,
 `paired_rnaseq` (BioProject + relationship: `same_animals` /
 `same_design_different_animals` / `none`), per-sample attributes
 (tissue, life stage, sex, ploidy, treatment, timepoint, pooling), data
@@ -143,7 +143,7 @@ availability, QC and processing status, quality flags, limitations, provenance.
 Two vocabularies matter more here than in AREE and are added:
 
 - `assay_chemistry` with a **quantitative-comparability tier**: base-resolution
-  (WGBS, EM-seq, RRBS-with-coverage-caveat) vs enrichment (MeDIP, MBD).
+  (WGBS, EM-seq, RRBS and bisulfite capture, each with a coverage caveat) vs enrichment (MeDIP, MBD).
   Enrichment data is processed and shown but never enters a base-resolution
   comparison.
 - `sample_unit`: individual / pool-of-N / tissue-pooled, because pooling

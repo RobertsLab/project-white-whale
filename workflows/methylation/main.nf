@@ -48,6 +48,9 @@ def chemistries() {
         emseq: [deduplicate: true,  trim: '',       align: ''],
         pbat : [deduplicate: true,  trim: '',       align: '--pbat'],
         rrbs : [deduplicate: false, trim: '--rrbs', align: ''],
+        // Capture of bisulfite-converted DNA: random-sheared, so duplicates are
+        // PCR copies and are removed; no trim or align preset.
+        bs_capture: [deduplicate: true, trim: '', align: ''],
     ]
 }
 

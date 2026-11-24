@@ -25,6 +25,11 @@ terms:
     tier: base_resolution
     deduplicate: false
     notes: MspI-anchored reads share start positions, so duplicates are not removed. Covers a biased CpG subset; flag rrbs_subset in comparisons.
+  bs_capture:
+    label: Targeted bisulfite sequencing (capture of bisulfite-converted DNA, e.g. whole-exome)
+    tier: base_resolution
+    deduplicate: true
+    notes: Probes pull down bisulfite-converted fragments of targeted regions (exome, gene panels), so only those CpGs are covered and promoters or intergenic CpGs mostly are not. Deposited as library_strategy "Bisulfite-Seq". Flag capture_subset in comparisons.
   medip:
     label: Methylated DNA immunoprecipitation sequencing
     tier: enrichment
