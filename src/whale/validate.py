@@ -13,6 +13,7 @@ from pathlib import Path
 import jsonschema
 import yaml
 
+from whale.differential import _terms
 from whale.paths import schemas_dir
 from whale.vocab import load_vocab
 
@@ -73,6 +74,16 @@ def validate_study(study: dict, repo: Path, *, filename_stem: str | None = None)
     ids = [f["factor_id"] for f in study["factors"]]
     if len(ids) != len(set(ids)):
         errors.append("factors: factor_id values must be unique")
+    diff = study.get("differential") or {}
+    names = set(ids) | ({"individual"} if diff.get("individual") else set())
+    model_ids = [m["id"] for m in diff.get("models") or []]
+    if len(model_ids) != len(set(model_ids)):
+        errors.append("differential/models: id values must be unique")
+    for m in diff.get("models") or []:
+        for t in _terms(m["formula"]) + list(m.get("within") or []):
+            if t not in names:
+                errors.append(f"differential/models/{m['id']}: {t!r} is not a factor_id"
+                              + ("" if diff.get("individual") else " (or set differential.individual)"))
 
     if samples["sample_unit"] == "pool" and samples.get("pool_size") is None:
         warnings.append("samples/sample_unit is pool but pool_size is not recorded")
@@ -132,7 +143,33 @@ def validate_study_file(path: Path, repo: Path) -> ValidationResult:
         res.errors.append("file is not a YAML mapping")
         return res
     res.errors, res.warnings = validate_study(study, repo, filename_stem=path.stem)
+    if not res.errors:
+        res.errors += config_chemistry_errors(study, repo)
     return res
+
+
+def config_chemistry_errors(study: dict, repo: Path) -> list[str]:
+    """The study's run configs (whole and parts) must set the YAML's chemistry.
+
+    `whale start-study` writes them with `chemistry = null`, and the workflow
+    refuses that only once launched, after FASTQ staging.
+    """
+    from whale.claims import config_chemistry
+
+    want = study["chemistry"]
+    if want is None:
+        return []
+    errors = []
+    sid = study["study_id"]
+    for cfg in sorted([Path(repo) / "config" / f"{sid}.config",
+                       *(Path(repo) / "config").glob(f"{sid}.part-*.config")]):
+        if not cfg.exists():
+            continue
+        got = config_chemistry(cfg.read_text())
+        if got != want:
+            errors.append(f"config/{cfg.name} sets chemistry = {got!r} but this YAML says {want!r}; "
+                          f"set chemistry = '{want}' there")
+    return errors
 
 
 def validate_status(status: dict, repo: Path) -> list[str]:

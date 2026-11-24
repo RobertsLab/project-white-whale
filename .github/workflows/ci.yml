@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,mcp]"   # mcp: so the `whale mcp` tests run rather than skip
       - name: Lint
         run: ruff check src tests
       - name: Tests
@@ -66,7 +66,60 @@ jobs:
         run: |
           test -s results/test/TEST2026_FIXTURE_WGBS/run_manifest.json
           test -s results/test/TEST2026_FIXTURE_WGBS/qc_summary.tsv
+          test -s results/test/TEST2026_FIXTURE_WGBS/features/S1.features.tsv.gz
           ls results/test/TEST2026_FIXTURE_WGBS/cpg/S1.CpG_report.merged_CpG_evidence.cov.gz
+      - name: Dropping a library from swap_mates re-runs it on -resume
+        # Before the SNP mask run: -resume picks up the last session, whatever its workflow.
+        run: |
+          echo "params.swap_mates = []" > no_swap.config
+          nextflow run workflows/methylation -profile test -stub -resume -c no_swap.config
+          nextflow log last -f name,status | tee resume.tsv
+          grep -qxP "TRIM_GALORE \(S3\)\tCOMPLETED" resume.tsv
+          grep -qxP "TRIM_GALORE \(S1\)\tCACHED" resume.tsv
+      - name: Run the SNP mask DAG on the stub BAMs
+        run: nextflow run workflows/snp_mask -profile test -stub
+      - name: Check the mask outputs
+        run: |
+          test -s results/test/snp_mask/mask_manifest.json
+          test -s results/test/snp_mask/cpg_mask.bed.gz
+      - name: Re-run the gene step with the SNP mask
+        run: |
+          nextflow run workflows/methylation -profile test -stub -resume --snp_mask results/test/snp_mask
+          python3 -c "import json,sys; m=json.load(open('results/test/TEST2026_FIXTURE_WGBS/run_manifest.json'))['params']['snp_mask']; sys.exit(0 if m and m['mask_id']=='TEST.snpmask' else 1)"
+
+  rnaseq:
+    # workflows/rnaseq: the DAG with -stub, then every tool for real in its
+    # pinned container on simulated stranded reads (tests/fixtures/
+    # make_rnaseq_fixtures.py), checked against the fragments simulated.
+    name: RNA-seq workflow (stub and real run on fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install Nextflow
+        env:
+          NXF_VER: 26.04.7
+        run: |
+          curl -s https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Run the DAG on the test fixtures
+        run: nextflow run workflows/rnaseq -profile test -stub
+      - name: Check the stub outputs
+        run: |
+          d=results/test/TEST2026_FIXTURE_WGBS/rnaseq
+          test -s $d/run_manifest.json
+          test -s $d/qc_summary.tsv
+          test -s $d/matrices/gene_tpm.tsv.gz
+          test -s $d/salmon/R1/quant.sf
+          rm -rf results work .nextflow*
+      - name: Run every step for real (Docker)
+        run: nextflow run workflows/rnaseq -profile test,docker
+      - name: Check the quantification against the simulated reads
+        run: python3 tests/check_rnaseq_run.py results/test/TEST2026_FIXTURE_WGBS/rnaseq
 
   nextflow-real:
     # The stub run checks the DAG; this runs every real command, in the pinned
@@ -91,3 +144,45 @@ jobs:
         run: nextflow run workflows/methylation -profile test,docker
       - name: Check the calls against the simulated methylation
         run: python3 tests/check_real_run.py results/test/TEST2026_FIXTURE_WGBS
+      - name: Build the SNP mask against a reference with planted C/T SNPs
+        run: |
+          python3 tests/plant_snps.py results/test/snp_reference
+          nextflow run workflows/snp_mask -profile test,docker --reference_dir results/test/snp_reference
+      - name: Check the mask finds the planted SNPs
+        run: python3 tests/plant_snps.py --check results/test/snp_reference results/test/snp_mask
+
+  nextflow-enrichment:
+    # MeDIP / MBD-seq (docs/enrichment.md): the DAG with -stub, then every real
+    # command in the pinned containers on simulated MeDIP reads, checked against
+    # how they were made (tests/fixtures/make_enrichment_fixtures.py).
+    name: Enrichment workflow (stub and real run on fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install Nextflow
+        env:
+          NXF_VER: 26.04.7
+        run: |
+          curl -s https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Run the DAG on the test fixtures
+        run: nextflow run workflows/enrichment -profile test -stub
+      - name: Check the stub outputs
+        run: |
+          test -s results/test/TEST2026_FIXTURE_MEDIP/run_manifest.json
+          test -s results/test/TEST2026_FIXTURE_MEDIP/qc_summary.tsv
+          test -s results/test/TEST2026_FIXTURE_MEDIP/features/E1.enrichment_features.tsv.gz
+          test -s results/test/TEST2026_FIXTURE_MEDIP/tiles/E2.tiles_1kb.tsv.gz
+          python3 -c "import json,sys; p=json.load(open('results/test/TEST2026_FIXTURE_MEDIP/run_manifest.json'))['params']; sys.exit(0 if p['tier']=='enrichment' and p['enrichment_method']['name'] else 1)"
+      - name: Run every step for real (Docker)
+        # The stub's empty bowtie2 index is refused by a real run, so start clean.
+        run: |
+          rm -rf results work .nextflow*
+          nextflow run workflows/enrichment -profile test,docker
+      - name: Check the counts against the simulated enrichment
+        run: python3 tests/check_enrichment_run.py results/test/TEST2026_FIXTURE_MEDIP

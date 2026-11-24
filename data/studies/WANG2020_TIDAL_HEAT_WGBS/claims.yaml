@@ -1,0 +1,224 @@
+study_id: WANG2020_TIDAL_HEAT_WGBS
+sources:
+  - id: P1
+    citation: "Wang X, Li A, Wang W, Que H, Zhang G, Li L (2021). DNA methylation mediates differentiation in thermal responses of Pacific oyster (Crassostrea gigas) derived from different tidal levels. Heredity 126:10-22."
+    doi: "10.1038/s41437-020-0351-7"
+    read: "full text (PMC7852555 HTML, incl. Table 1 and figure legends) and both supplements (ESM1 .doc: Figs S1-S7 legends only, figure images not inspected; ESM2 .pdf: Tables S1-S4 in full)"
+notes: >
+  Paper's methylation level (ML) = methylated/(methylated+unmethylated) reads,
+  computed in 10 kb bins and corrected for the lambda non-conversion rate
+  (~0.11%). DMGs = genes whose gene body (TSS-TES) or promoter (2 kb upstream
+  of TSS) overlaps >=1 bp of a DSS DMR (smoothing span 200, p < 1e-5,
+  minlen 50, minCG 3, pct.sig 0.5); no FDR. The InC vs SubC DMGs pool CG, CHG
+  and CHH contexts. Gene IDs are CGI_ (oyster_v9, Zhang et al. 2012 genome).
+  Libraries: 3 pools of 5 gill samples per group (InC, InH, SubC, SubH).
+claims:
+  - id: C1
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1a"
+    statement: "Intertidal control oysters (InC) had a mean CpG methylation level of 15.0%."
+    kind: global_level
+    check: {level_pct: 15.0, groups: {origin: In, temperature: C}, measure: "mean CpG methylation level of the 3 InC libraries (10-kb-bin ML, corrected for lambda non-conversion)"}
+  - id: C2
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1a"
+    statement: "Subtidal control oysters (SubC) had a mean CpG methylation level of 14.5%."
+    kind: global_level
+    check: {level_pct: 14.5, groups: {origin: Sub, temperature: C}, measure: "mean CpG methylation level of the 3 SubC libraries (10-kb-bin ML, corrected for lambda non-conversion)"}
+  - id: C3
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1a"
+    statement: "Heat-shocked intertidal oysters (InH) had a mean CpG methylation level of 13.4%."
+    kind: global_level
+    check: {level_pct: 13.4, groups: {origin: In, temperature: H}, measure: "mean CpG methylation level of the 3 InH libraries"}
+  - id: C4
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1a"
+    statement: "Heat-shocked subtidal oysters (SubH) had a mean CpG methylation level of 15.4%."
+    kind: global_level
+    check: {level_pct: 15.4, groups: {origin: Sub, temperature: H}, measure: "mean CpG methylation level of the 3 SubH libraries"}
+  - id: C5
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1a; Discussion para 2"
+    statement: "In intertidal oysters, heat shock significantly lowered global CpG methylation (InC 15.0% vs InH 13.4%, ANOVA P < 0.05, n = 3 pools each)."
+    kind: group_difference
+    check: {factor: temperature, higher: C, lower: H, difference_pct: 1.6, stratum: {origin: In}, significance: "P < 0.05"}
+  - id: C6
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1a; Discussion para 2"
+    statement: "In subtidal oysters, heat shock slightly raised global CpG methylation (SubC 14.5% vs SubH 15.4%); the paper calls this slight and gives no significance."
+    kind: group_difference
+    check: {factor: temperature, higher: H, lower: C, difference_pct: 0.9, stratum: {origin: Sub}, significance: "not stated"}
+  - id: C7
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1a"
+    statement: "Under control conditions intertidal oysters were marginally more methylated than subtidal oysters (15.0% vs 14.5%); no test of this difference is reported in the text."
+    kind: group_difference
+    check: {factor: origin, higher: In, lower: Sub, difference_pct: 0.5, stratum: {temperature: C}, significance: "not stated"}
+  - id: C8
+    source: P1
+    where: "Results, Global methylation pattern"
+    statement: "Non-CpG methylation was very low in control oysters: 0.20% of CHG and 0.16% of CHH sites methylated on average."
+    kind: not_testable
+    check: {reason: other_data, note: "Values are split by CHG and CHH context; our pipeline reports non-CpG methylation pooled per library, which can be compared only loosely (expect well under 1%). Our values are also uncorrected for conversion while the paper's are lambda-corrected."}
+  - id: C9
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1b"
+    statement: "Hierarchical clustering of the 12 methylomes grouped samples by tidal origin rather than by heat treatment (except two SubH samples that branched apart)."
+    kind: clustering
+    check: {factor: origin, component: "hierarchical clustering", statement: "samples cluster by origin (In vs Sub), not by temperature"}
+  - id: C10
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1c"
+    statement: "In PCA of the 12 samples, PC1 separated intertidal from subtidal oysters."
+    kind: clustering
+    check: {factor: origin, component: PC1, statement: "PC1 separates In from Sub samples"}
+  - id: C11
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1c"
+    statement: "PC2 separated heat-shocked from control samples, with the heat effect pointing in opposite directions for intertidal and subtidal oysters."
+    kind: clustering
+    check: {factor: temperature, component: PC2, statement: "PC2 separates H from C, with In and Sub shifting in opposite directions"}
+  - id: C12
+    source: P1
+    where: "Results, Global methylation pattern; Fig. 1d; Discussion para 3"
+    statement: "DAPC showed a larger heat-induced methylation shift (greater plasticity) in intertidal than subtidal oysters (MCMC P < 0.05), with intertidal shifting down and subtidal up."
+    kind: not_testable
+    check: {reason: other_data, note: "DAPC on gene methylation at common C sites with an MCMC mixed model of shift length; no comparable analysis in our outputs. The direction part overlaps C5/C6 and the per-gene direction claims C17/C19; an origin x temperature interaction is not a registered contrast."}
+  - id: C13
+    source: P1
+    where: "Results, Correlation between DNA methylation status and gene expression; Fig. 3b; Discussion para 2"
+    statement: "Methylation is concentrated in gene bodies, with other genomic regions less methylated."
+    kind: region_contrast
+    check: {higher: gene_body, lower: genome}
+  - id: C14
+    source: P1
+    where: "Results; Fig. 3a-b, Fig. S2; Abstract"
+    statement: "Gene-body methylation correlated positively with gene expression in all four groups; non-expressed genes had the lowest methylation and high/medium-expression genes the highest."
+    kind: not_testable
+    check: {reason: needs_rnaseq, note: "Uses matched RNA-seq (PRJNA407831) FPKM; no r value given in the text."}
+  - id: C15
+    source: P1
+    where: "Results, Estimation of genotypic effect; Fig. 2"
+    statement: "Libraries clustered genetically by tidal origin (SNPs from WGBS reads), but per-gene FST between InC and SubC was barely correlated with methylation difference (r = 0.02 gene body, 0.01 exon; 16,516 genes), so methylation divergence was argued to be largely independent of genotype."
+    kind: not_testable
+    check: {reason: other_data, note: "Requires SNP calling and FST per gene; not in our outputs."}
+  - id: C16
+    source: P1
+    where: "Results, DNA methylation differentiation ... in response to heat stress; Fig. 6a"
+    statement: "Heat shock in intertidal oysters gave 2137 DMGs (491 hyper, 1646 hypo in InH vs InC). The paper's Venn counts (788 shared + 1279 intertidal-unique = 2067) do not add up to this total."
+    kind: dm_count
+    check: {factor: temperature, level: H, stratum: {origin: In}, n: 2137, unit: DMGs, method: "DSS DMRs (p < 1e-5, minCG 3, minlen 50), gene body or 2-kb promoter overlapping a DMR; no FDR"}
+  - id: C17
+    source: P1
+    where: "Results; Fig. 6a; Abstract; Discussion para 4"
+    statement: "Most heat-responsive DMGs in intertidal oysters were hypomethylated (1646 of 2137, 77%)."
+    kind: dm_direction
+    check: {factor: temperature, level: H, stratum: {origin: In}, direction: hypo, share_pct: 77.0}
+  - id: C18
+    source: P1
+    where: "Results; Fig. 6a"
+    statement: "Heat shock in subtidal oysters gave 2459 DMGs (1636 hyper, 823 hypo in SubH vs SubC). The paper's Venn counts (788 shared + 1554 subtidal-unique = 2342) do not add up to this total."
+    kind: dm_count
+    check: {factor: temperature, level: H, stratum: {origin: Sub}, n: 2459, unit: DMGs, method: "DSS DMRs (p < 1e-5, minCG 3, minlen 50), gene body or 2-kb promoter overlapping a DMR; no FDR"}
+  - id: C19
+    source: P1
+    where: "Results; Fig. 6a; Abstract; Discussion para 4"
+    statement: "Most heat-responsive DMGs in subtidal oysters were hypermethylated (1636 of 2459, 66.5%), opposite to intertidal oysters."
+    kind: dm_direction
+    check: {factor: temperature, level: H, stratum: {origin: Sub}, direction: hyper, share_pct: 66.5}
+  - id: C20
+    source: P1
+    where: "Results, DNA methylation differentiation ... under temperate conditions; Fig. 4a; Fig. S3"
+    statement: "Intertidal and subtidal control oysters differed in methylation at many genes (InC vs SubC DMGs, all C contexts), but the total number of DMGs is not reported, only the 90 that were also DEGs."
+    kind: dm_count
+    check: {factor: origin, level: In, stratum: {temperature: C}, n: null, unit: DMGs, method: "DSS DMRs in CG+CHG+CHH contexts, gene body or 2-kb promoter overlap; total not given in text"}
+  - id: C21
+    source: P1
+    where: "Results; Fig. 5a-c"
+    statement: "The opposite heat responses (InH below InC, SubH above SubC) held across promoter, exon, intron and repeat regions and in DMRs, and a heatmap of all DMRs clustered samples by tidal origin."
+    kind: not_testable
+    check: {reason: needs_other_regions, note: "Exon, intron, repeat and DMR-level summaries are not available; the promoter part is only indirectly reflected in the per-gene promoter direction counts of C17/C19."}
+  - id: C22
+    source: P1
+    where: "Results; Fig. 6b-d, Fig. S6, Table S3"
+    statement: "Named genes differentially methylated and expressed after heat in intertidal oysters include HSPA12A (CGI_10004348, ML +0.26), the caspase-like gene CGI_10006605 (hypo, expression up), IAP-1 CGI_10013106 (hyper, expression down) and unannotated CGI_10002343 (ML -0.22); directions are ML differences InH minus InC from Table S3."
+    kind: dm_genes
+    check:
+      factor: temperature
+      level: H
+      stratum: {origin: In}
+      genes:
+        - {name: "heat shock 70 kDa protein 12A (HSPA12A)", published_id: CGI_10004348, direction: hyper, region: null}
+        - {name: "caspase-like protein", published_id: CGI_10006605, direction: hypo, region: null}
+        - {name: "inhibitor of apoptosis protein-1 (IAP)", published_id: CGI_10013106, direction: hyper, region: null}
+        - {name: "uncharacterized protein", published_id: CGI_10002343, direction: hypo, region: null}
+        - {name: "tripartite motif-containing protein 2 (TRIM2)", published_id: CGI_10000427, direction: hyper, region: null}
+        - {name: "heat shock protein 68", published_id: CGI_10002594, direction: hypo, region: null}
+        - {name: "heat shock protein beta-1", published_id: CGI_10019738, direction: hypo, region: null}
+        - {name: "stress-70 protein (HSPA9)", published_id: CGI_10016162, direction: hypo, region: null}
+        - {name: "solute carrier family 23 member 2", published_id: CGI_10019125, direction: hyper, region: null}
+        - {name: "protein FAM111A", published_id: CGI_10020719, direction: hypo, region: null}
+  - id: C23
+    source: P1
+    where: "Results; Fig. 6b, Fig. S6, Table S4"
+    statement: "Named genes differentially methylated and expressed after heat in subtidal oysters include HSPA12A (CGI_10004348, ML -0.06, opposite to intertidal), CGI_10002343 (ML -0.20) and oxidation-reduction / stress genes such as Nrf2, HSPA12B and ferritin; directions are ML differences SubH minus SubC from Table S4. (The BSP of 8 CpGs in HSPA12A instead showed SubH above SubC.)"
+    kind: dm_genes
+    check:
+      factor: temperature
+      level: H
+      stratum: {origin: Sub}
+      genes:
+        - {name: "heat shock 70 kDa protein 12A (HSPA12A)", published_id: CGI_10004348, direction: hypo, region: null}
+        - {name: "uncharacterized protein", published_id: CGI_10002343, direction: hypo, region: null}
+        - {name: "heat shock 70 kDa protein 12B (HSPA12B)", published_id: CGI_10013528, direction: hyper, region: null}
+        - {name: "DnaJ homolog subfamily B member 4", published_id: CGI_10009495, direction: hypo, region: null}
+        - {name: "nuclear factor erythroid 2-related factor (NFE2L2/Nrf2)", published_id: CGI_10008158, direction: hyper, region: null}
+        - {name: "ferritin, lower subunit", published_id: CGI_10023568, direction: hypo, region: null}
+        - {name: "N-acetylglucosamine-6-phosphate deacetylase", published_id: CGI_10000895, direction: hyper, region: null}
+        - {name: "location of vulva defective 1", published_id: CGI_10007022, direction: hyper, region: null}
+        - {name: "leucine-rich repeat transmembrane protein", published_id: CGI_10019148, direction: hyper, region: null}
+        - {name: "neurogenic locus notch homolog protein 1", published_id: CGI_10020352, direction: hyper, region: null}
+        - {name: "complement C1q tumor necrosis factor-related protein 3", published_id: CGI_10002389, direction: hypo, region: null}
+  - id: C24
+    source: P1
+    where: "Results, ... under temperate conditions; Fig. 4b; Table S2"
+    statement: "Among InC vs SubC DMGs that were also DEGs, six HSP70-family genes (HSPA12A/HSPA12B paralogs) differed in methylation in both directions; the largest ML differences (InC minus SubC) were in syntenin-1, plasminogen, angiopoietin-related protein 6 and N-acetylglucosamine-6-phosphate deacetylase. DMGs here pool CG, CHG and CHH contexts."
+    kind: dm_genes
+    check:
+      factor: origin
+      level: In
+      stratum: {temperature: C}
+      genes:
+        - {name: "heat shock 70 kDa protein 12A", published_id: CGI_10004348, direction: hyper, region: null}
+        - {name: "heat shock 70 kDa protein 12A", published_id: CGI_10015710, direction: hyper, region: null}
+        - {name: "heat shock 70 kDa protein 12A", published_id: CGI_10006666, direction: hyper, region: null}
+        - {name: "heat shock 70 kDa protein 12A", published_id: CGI_10004986, direction: null, region: null}
+        - {name: "heat shock 70 kDa protein 12B", published_id: CGI_10005917, direction: hypo, region: null}
+        - {name: "heat shock 70 kDa protein 12B", published_id: CGI_10013528, direction: hypo, region: null}
+        - {name: "syntenin-1", published_id: CGI_10024846, direction: hypo, region: null}
+        - {name: "plasminogen", published_id: CGI_10012598, direction: hyper, region: null}
+        - {name: "angiopoietin-related protein 6", published_id: CGI_10002369, direction: hyper, region: null}
+        - {name: "N-acetylglucosamine-6-phosphate deacetylase", published_id: CGI_10000895, direction: hyper, region: null}
+        - {name: "sodium/myo-inositol cotransporter 2", published_id: CGI_10004015, direction: hyper, region: null}
+        - {name: "protein FAM113A", published_id: CGI_10013449, direction: hyper, region: null}
+        - {name: "alpha-mannosidase 2x", published_id: CGI_10006053, direction: hypo, region: null}
+        - {name: "proto-oncogene tyrosine-protein kinase FER", published_id: CGI_10011454, direction: hypo, region: null}
+  - id: C25
+    source: P1
+    where: "Results; Fig. 4a, Fig. 6b; Abstract; Discussion para 5"
+    statement: "DMGs overlapped DEGs: 90 genes (11.46% of DEGs) for InC vs SubC, 67 (10.65%) for InH vs InC and 55 (6.88%) for SubH vs SubC; among the intertidal overlap genes 77% were hypomethylated, and 62% of subtidal overlap genes were hypermethylated with higher expression."
+    kind: not_testable
+    check: {reason: needs_rnaseq, note: "Overlap with RNA-seq DEGs from PRJNA407831."}
+  - id: C26
+    source: P1
+    where: "Results; Fig. 4c, Fig. 6b, Figs S3-S4; Abstract"
+    statement: "Heat-responsive methylation-regulated genes were enriched for apoptosis and development in intertidal oysters and for oxidation-reduction and ion homeostasis in subtidal oysters; origin-differing genes were enriched for cell adhesion, carbohydrate transport and apoptosis."
+    kind: not_testable
+    check: {reason: needs_rnaseq, note: "GO/KEGG enrichment on DMG-DEG overlap sets (GOseq, KOBAS); depends on RNA-seq and on the paper's annotation."}
+  - id: C27
+    source: P1
+    where: "Results; Fig. S7"
+    statement: "Bisulfite PCR of 8 CpGs in HSPA12A (scaffold1801:18940-19215) confirmed WGBS: InC nearly unmethylated, InH higher; SubH higher than SubC."
+    kind: not_testable
+    check: {reason: needs_coordinates, note: "Single-locus CpG validation on the oyster_v9 genome; per-CpG calls and these coordinates are not available."}

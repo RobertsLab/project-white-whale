@@ -36,6 +36,11 @@ BED files are 0-based, half-open, BED6, sorted in genome order.
 On 2026-10-23 the bundle had 29 sequences (564.0 Mb), 33,331 genes, 284,442
 exons, 249,701 introns and 27,908 intergenic intervals.
 
+The bundle itself is not committed. The one piece the dashboard needs
+without it, a table of gene names, is: `whale build-gene-info` writes
+`data/reference/gene_info/<ACCESSION>.tsv.gz` (GeneID, symbol, description,
+biotype, position) from `genomic.gtf`. Commit it again after a new annotation.
+
 ## Checks
 
 - Every download is compared with NCBI's published MD5 before use; a mismatch
@@ -67,3 +72,13 @@ moment would both write it.
 
 Not in the bundle yet: the CpG index and the C/T SNP mask (later Phase 1,
 PLAN.md §6.1).
+
+## The Salmon index
+
+`workflows/rnaseq` builds a decoy-aware Salmon index from `rna.fna` with
+`genomic.fna` appended as decoys, the first time it runs on a machine, and
+keeps it in the bundle as `salmon_index/` (or `$WHALE_SALMON_INDEX/salmon_index/`;
+`salmon_index_nodecoy/` with `--salmon_decoys false`). Its `whale_index.json`
+records the SHA-256 of both FASTA files, k and the Salmon version; if the
+bundle's files no longer match, the workflow stops and asks for the index to
+be deleted. See [rnaseq.md](rnaseq.md).

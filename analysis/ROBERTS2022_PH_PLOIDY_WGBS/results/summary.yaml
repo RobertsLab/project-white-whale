@@ -1,0 +1,38 @@
+study_id: ROBERTS2022_PH_PLOIDY_WGBS
+snp_mask: GCF_963853765.1.snpmask.v1
+dss_version: '2.58.0'
+filter: {min_cpgs: 5, min_calls: 10, all_libraries: true}
+fdr: 0.05
+min_diff_pct_points: 10
+pca: {genes: 29525, pc1_pct: 12.41, pc2_pct: 8.91}
+pca_outliers: [SRR13207055, SRR13207071]  # |z| > 3 on PC1 or PC2
+all_libraries:
+  libraries: 24
+  regions:
+    gene_body:
+      genes_in_tables: 33331
+      genes_tested: 29525
+      ploidy: {fdr_lt_0.05: 7, up: 6, down: 1, and_abs_diff_ge_10: 3, lambda: 1.030}
+      ph: {fdr_lt_0.05: 0, up: 0, down: 0, and_abs_diff_ge_10: 0, lambda: 1.006}
+      interaction: {fdr_lt_0.05: 7, lambda: 1.163}
+    promoter:
+      genes_in_tables: 33331
+      genes_tested: 25537
+      ploidy: {fdr_lt_0.05: 1, up: 1, down: 0, and_abs_diff_ge_10: 0, lambda: 0.862}
+      ph: {fdr_lt_0.05: 3, up: 3, down: 0, and_abs_diff_ge_10: 1, lambda: 0.883}
+      interaction: {fdr_lt_0.05: 2, lambda: 0.879}
+without_pca_outliers:
+  libraries: 22
+  regions:
+    gene_body:
+      genes_in_tables: 33331
+      genes_tested: 29796
+      ploidy: {fdr_lt_0.05: 5, up: 4, down: 1, and_abs_diff_ge_10: 2, lambda: 0.961}
+      ph: {fdr_lt_0.05: 0, up: 0, down: 0, and_abs_diff_ge_10: 0, lambda: 0.936}
+      interaction: {fdr_lt_0.05: 6, lambda: 1.038}
+    promoter:
+      genes_in_tables: 33331
+      genes_tested: 26168
+      ploidy: {fdr_lt_0.05: 3, up: 0, down: 3, and_abs_diff_ge_10: 1, lambda: 0.854}
+      ph: {fdr_lt_0.05: 2, up: 2, down: 0, and_abs_diff_ge_10: 1, lambda: 0.856}
+      interaction: {fdr_lt_0.05: 1, lambda: 0.866}

@@ -9,6 +9,7 @@ process MANIFEST {
     path versions, stageAs: "versions*.yml"
     path samplesheet
     path genome_fasta
+    path features
     val run_params
 
     output:
@@ -42,6 +43,7 @@ process MANIFEST {
         'inputs': {
             'samplesheet': {'name': '${samplesheet.name}', 'sha256': sha256('${samplesheet}')},
             'genome_fasta': {'name': '${genome_fasta.name}', 'sha256': sha256('${genome_fasta}')},
+            'features': {p.name: sha256(p) for p in sorted(pathlib.Path('${features}').glob('*.bed'))},
         },
     }
     pathlib.Path('run_manifest.json').write_text(json.dumps(manifest, indent=2) + '\\n')

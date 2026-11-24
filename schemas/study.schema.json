@@ -89,6 +89,35 @@
         }
       }
     },
+    "differential": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional: the models `whale differential` fits (PLAN.md §6.3). Omitted, it fits one additive model over every factor with a reference level, plus their interaction when exactly two are testable and fully crossed. Name models here when animals were sampled more than once or the design is nested.",
+      "properties": {
+        "individual": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"},
+          "description": "Sample-sheet columns that together name one animal; a model may then use the term `individual` (a fixed effect per animal, for within-animal contrasts)."
+        },
+        "models": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "formula"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+              "formula": {"type": "string", "pattern": "^~", "description": "An R formula over factor ids (and `individual`), e.g. '~ population + phenotype_class'."},
+              "within": {"type": "array", "items": {"type": "string"}, "description": "Factor ids: fit the model separately within each combination of their levels."},
+              "test": {"type": "array", "items": {"type": "string"}, "description": "Terms to test, e.g. ['time'] or ['a:b']. Default: every factor in the formula with a reference level, and its interactions."},
+              "note": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
     "goals": {
       "type": "array",
       "items": {"type": "integer", "enum": [1, 2]},

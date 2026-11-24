@@ -1,0 +1,95 @@
+# Methyl-seq of pooled embryos and larvae from the PESTO project (Ifremer):
+# early exposure to an environmentally realistic 18-pesticide mixture, in the
+# exposed generation (F0, Sol Dourdin et al. 2023) and in the offspring of
+# exposed and control parents (F1, Sol Dourdin et al. 2024).
+#
+# Registered as a stub on 2026-10-23; filled in on 2026-11-21 from the
+# independent double curation of the deposit and both papers
+# (data/studies/PESTO2022_METHYLSEQ_WGBS/sample_curation.tsv,
+# docs/sample_curation.md).
+
+study_id: PESTO2022_METHYLSEQ_WGBS
+aree_study_id: null
+
+accessions:
+  bioproject: "PRJEB58545"
+  sra: "ERR10683997-ERR10684020 (F0), ERR12308505-ERR12308528 (F1)"
+  ena: "PRJEB58545"
+  geo: null
+  doi: "10.1016/j.envpol.2023.121472"
+  pmid: "36965683"
+  other: "F1 runs: Sol Dourdin et al. 2024, Environ Sci Technol 58:1865-1876, doi 10.1021/acs.est.3c08201; its SI workbook (figshare 24994504) lists every F1 library with its group."
+
+citation: "Sol Dourdin T, Riviere G, Cormier A, Di Poi C, Guyomard K, Rabiller M, Akcha F, Bah TS, Le Monier P, Sussarellu R (2023). Molecular and phenotypic effects of early exposure to an environmentally relevant pesticide mixture in the Pacific oyster, Crassostrea gigas. Environmental Pollution 326:121472 (F0 libraries). Sol Dourdin T, Guyomard K, Rabiller M, Houssais N, Cormier A, Le Monier P, Sussarellu R, Riviere G (2024). Ancestors' gift: parental early exposure to the environmentally realistic pesticide mixture drives offspring phenotype in a larger extent than direct exposure in the Pacific oyster, Crassostrea gigas. Environmental Science & Technology 58:1865-1876 (F1 libraries)."
+species: "Magallana gigas"
+population: "Progeny of Ifremer standardized broodstock (3-year-old; one fertilization pool, gametes pooled by sex) reared at Ifremer Argenton/Bouin. F1: one pooled cross per F0 lineage (control parents 13 males x 6 females; exposed parents 14 males x 8 females). Ploidy not stated."
+original_assembly: null
+
+chemistry: wgbs          # assay_chemistry.yaml: wgbs | emseq | pbat | rrbs | medip | mbd
+library_layout: paired     # paired | single | mixed
+platform: "Illumina NovaSeq 6000, 2 x 150 bp, Genome Quebec. Libraries described only as 'NEBNext Methylseq' (NEBNext methyl i7/i5 indexes in the library names); whether conversion was bisulfite or enzymatic (NEBNext EM-seq) is not stated, and ENA says Bisulfite-Seq. Directional (NEBNext kit family; not stated by the authors)."
+
+samples:
+  n_runs: 48
+  n_libraries: 48
+  sample_unit: pool
+  pool_size: null        # ~50,000 embryos (gastrula) or ~1,500 larvae (pediveliger) per library; per library in sample_curation.tsv
+  tissues: [whole_body]
+  life_stages: [embryo, pediveliger]
+  sexes_recorded: false
+  ploidy: []
+
+paired_rnaseq:
+  relationship: unknown  # rnaseq_relationship.yaml
+  bioproject: "PRJEB58194"
+  notes: "RNA-seq of the same experiment, stages and tanks (both papers' data availability). RNA and DNA samples carry different IDs and counts, and whether a methylation library and an RNA library come from the same pool is not stated, so the pairing is unknown."
+
+# One entry per design factor; factor_standardized is a stressor.yaml term.
+factors: []
+
+goals: [1]
+
+data_availability:
+  raw_data_available: true
+  fastq_size_gb: 375
+  published_dml_dmr_tables: false
+  access_notes: "Raw paired FASTQ for all 48 runs public in ENA. The papers publish counts and gene lists of methylKit DMCs (F0) and DMRs (F1) on GCA_902806645.1, but no DMC/DMR coordinates in what was read; the F0 paper's supplement (tab. SM1-SM5) was not obtained."
+
+quality_flags:
+  - pooled_libraries
+  - sex_unknown
+  - excluded_samples
+limitations: >
+  (1) Few independent units: every library is a pool of whole embryos or
+  larvae, all F0 libraries come from one fertilization pool, each F1 lineage
+  from one pooled cross, and F0 gastrula libraries come in pairs from the
+  same 50 L tank. The genetic units are one (F0) and two lineages (F1), not
+  48. (2) The F0 paper analysed 10 gastrula libraries (4 control, 6
+  exposed); the deposit has 12 (6 and 6). The paper excluded control tank C1
+  for arrested development; BT1C and BT1D (ERR10684010, ERR10684012) are
+  probably that tank's (inferred from their codes) and are marked low
+  confidence in sample_curation.tsv. (3) Conversion chemistry is not stated
+  (bisulfite or NEBNext EM-seq). 35 of 48 libraries fail the 98% conversion
+  gate in run serene_ritchie, with non-CpG methylation that is flat along
+  the read. (4) The design (stage, generation, own and parental exposure) is
+  only in each run's condition string; the sample sheet has no separate
+  columns for it, so no factors are registered and the shared differential
+  model cannot run until the sample sheet is regenerated with a label
+  pattern.
+
+provenance:
+  registered_by: "STEVEN"
+  date_registered: "2026-10-23"
+  curation_notes: >
+    Filled in on 2026-11-21 from two independent curations of the deposit
+    (ENA run records, every BioSample) and both papers, including the F1
+    paper's SI workbook, settled in data/studies/PESTO2022_METHYLSEQ_WGBS/
+    sample_curation.tsv. Group codes: the deposit writes control as T
+    (temoin); in F1 codes the first letter is the parents' exposure and the
+    second the offspring's (TE = control parents, exposed offspring = the
+    paper's CE), confirmed by the F1 SI workbook.
+  source_links:
+    - "https://www.ebi.ac.uk/ena/browser/view/PRJEB58545"
+    - "https://doi.org/10.1016/j.envpol.2023.121472"
+    - "https://doi.org/10.1021/acs.est.3c08201"
+    - "https://figshare.com/articles/dataset/24994504"

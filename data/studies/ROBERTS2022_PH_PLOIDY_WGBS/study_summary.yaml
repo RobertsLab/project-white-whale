@@ -2,10 +2,14 @@
 study_id: ROBERTS2022_PH_PLOIDY_WGBS
 part: null
 generated_on: '2026-10-24'
-nextflow_run: determined_khorana
-commit: b9f6f1bdcc8271e91449f4cbfea67ecd2b6c878f
+nextflow_run: curious_mestorf
+commit: c08293ef932300062b3c8f658ac1aa6877611e49
 genome_assembly: GCF_963853765.1
 chemistry: wgbs
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
 libraries: 24
 passed: 24
 failed: []
@@ -118,8 +122,31 @@ by_condition:
   min: 10.94
   max: 12.26
   sd: 0.52
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 29961
+    meth_pct:
+      n: 29961
+      median: 2.56
+      mean: 18.26
+      min: 0.0
+      max: 93.44
+      sd: 24.5
+    methylated_ge_50pct: 5260
+  promoter:
+    covered_in_all: 26368
+    meth_pct:
+      n: 26368
+      median: 0.8
+      mean: 4.57
+      min: 0.0
+      max: 95.63
+      sd: 10.88
+    methylated_ge_50pct: 454
 methylomes:
-  files: 264
-  bytes: 1548452967
+  files: 288
+  bytes: 1587978987
   on_data_host: true
   url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/ROBERTS2022_PH_PLOIDY_WGBS/

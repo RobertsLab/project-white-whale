@@ -1,0 +1,42 @@
+# Processing status of this study on its claim branch. Update with
+# `whale set-status --stage <stage>`; read by `whale claims`.
+study_id: WANG2014_FIRST_METHYLOMES_WGBS
+accession: PRJNA173440
+part: null
+stage: summarized
+profile: raven
+machine: raven
+claimed_by: Steven Roberts
+claimed_on: '2026-10-23'
+nextflow_run: zen_jones
+notes: null
+history:
+- stage: claimed
+  date: '2026-10-23'
+  machine: raven
+  note: null
+- stage: registered
+  date: '2026-10-23'
+  machine: raven
+  note: YAML, sample sheet and manifest committed (from the Mac)
+- stage: fastq_staged
+  date: '2026-10-23'
+  machine: raven
+  note: 8 files, 39.2 GB from the gannet mirror (NCBI-converted), MD5 verified against
+    the mirror ledger
+- stage: aligned
+  date: '2026-10-25'
+  machine: raven
+  note: 4 libraries aligned; median mapping 55.65%
+- stage: called
+  date: '2026-10-25'
+  machine: raven
+  note: CpG calls for 4 libraries (run zen_jones)
+- stage: qc_passed
+  date: '2026-10-25'
+  machine: raven
+  note: 4 of 4 libraries pass the QC gate
+- stage: summarized
+  date: '2026-10-25'
+  machine: raven
+  note: summaries committed; 48 files on gannet

@@ -1,0 +1,89 @@
+# Per-machine limits for `whale autopilot tick` (docs/autopilot.md).
+#
+# Step A only reads this to decide what *would* be launched where; nothing is
+# launched. A machine is matched to a study by its status.yaml `machine`, or,
+# for a free study, by the backlog's suggested_profile.
+#
+#   profile              compute_profile.yaml term the machine runs
+#   max_concurrent_runs  studies running (staged and beyond, not yet summarized) at once
+#   disk_floor_gb        free space that must remain on disk_path after staging a study
+#   disk_path            checked only when the tick runs on that machine
+#   launch               local: `whale fetch-fastq --launch` in tmux; sbatch: a head job
+#   gannet_key           has an SSH key for the data host (record-run can upload)
+#   gh                   has the GitHub CLI; without it GitHub goes through the REST API
+#   env                  exported before any launch or -resume (cache keys depend on them)
+#   extra_configs        passed last with -c on every launch
+#   slurm_accounts       klone: account for each partition, in the order to try
+#   ssh_host             sbatch machines: host a tick elsewhere reads `squeue -u $USER` on (ssh BatchMode,
+#                        so it needs a live ControlMaster session; it never prompts for Duo)
+#   head_job             sbatch machines: options of a head or staging job
+#   checkout_root        sbatch machines: holds the study worktrees (white-whale-<STUDY_ID>); jobs --chdir there
+#   path_prepend         sbatch machines: put first on PATH in a job (whale, nextflow, java)
+#   setup                sbatch machines: shell run first in a job
+#   log_dir              sbatch machines: where a job's --output goes
+#   snp_mask_root        folder holding the C/T SNP masks, <root>/<MASK_ID>, `{assembly}` replaced by the
+#                        study's genome assembly (docs/snp_mask.md, `<WHALE_REFERENCE>/<ASSEMBLY>/snp_mask`); a launch
+#                        exports WHALE_SNP_MASK for the newest mask of the study's assembly
+#                        (data/reference/snp_masks.yaml). Unset: no masks there, and the launch says so
+version: "0.1.0"
+machines:
+  Hete:
+    profile: desktop
+    max_concurrent_runs: 1
+    disk_floor_gb: 150
+    disk_path: /Volumes/ugreen-2TB/whale
+    launch: local
+    gannet_key: false
+    gh: true
+    limits_config: /Volumes/ugreen-2TB/whale/hete-limits.config
+    extra_configs: [/Volumes/ugreen-2TB/whale/hete-limits.config]
+    env:
+      WHALE_RAW: /Volumes/ugreen-2TB/whale/raw
+      WHALE_REFERENCE: /Volumes/ugreen-2TB/whale/reference
+      WHALE_METHYLOMES: /Volumes/ugreen-2TB/whale/methylomes
+      WHALE_WORKDIR: /Volumes/ugreen-2TB/whale/work
+  raven:
+    profile: raven
+    max_concurrent_runs: 2
+    disk_floor_gb: 500
+    disk_path: /home/shared/16TB_HDD_01
+    launch: local
+    gannet_key: true
+    gh: false
+    snp_mask_root: "/home/shared/8TB_HDD_03/$USER/whale/reference/{assembly}/snp_mask"
+    env:
+      WHALE_RAW: /home/shared/8TB_HDD_03/$USER/whale/raw
+      WHALE_REFERENCE: /home/shared/8TB_HDD_03/$USER/whale/reference
+      WHALE_METHYLOMES: /home/shared/8TB_HDD_03/$USER/whale/methylomes
+      WHALE_WORKDIR: /home/shared/16TB_HDD_01/$USER/whale/work
+  klone:
+    profile: klone
+    max_concurrent_runs: 2
+    disk_floor_gb: 2000
+    disk_path: /gscratch/scrubbed
+    launch: sbatch
+    ssh_host: klone.hyak.uw.edu
+    gannet_key: false
+    gh: true
+    # As in the hand-written head-job scripts (e.g. run-DECICOMP2025.sbatch): run in the
+    # study worktree, with the whale conda env (whale, nextflow, java) first on PATH.
+    checkout_root: /gscratch/srlab/$USER/github
+    path_prepend: [/mmfs1/gscratch/srlab/$USER/miniforge3/envs/whale/bin]
+    setup: unset TMPDIR
+    log_dir: /gscratch/scrubbed/$USER/whale/logs
+    snp_mask_root: /gscratch/srlab/$USER/whale/snp_mask
+    env:
+      WHALE_RAW: /gscratch/scrubbed/$USER/whale/raw
+      WHALE_REFERENCE: /gscratch/scrubbed/$USER/whale/reference
+      WHALE_METHYLOMES: /gscratch/scrubbed/$USER/whale/methylomes
+      WHALE_WORKDIR: /gscratch/scrubbed/$USER/whale/work
+      NXF_HOME: /gscratch/scrubbed/$USER/whale/nxf-home
+      NXF_TEMP: /gscratch/scrubbed/$USER/whale/tmp
+    # docs/compute_profiles.md, "Choosing a partition". Each partition has its own account,
+    # named <partition>-<group> (`sacctmgr show assoc user=$USER`). sbatch also accepts the
+    # short group name, but scontrol and squeue use the full one, so write the full one.
+    slurm_accounts:
+      - {partition: compute, account: compute-coenv}
+      - {partition: cpu-g2-mem2x, account: cpu-g2-mem2x-srlab}
+      - {partition: cpu-g2, account: cpu-g2-coenv}
+    head_job: "--account=compute-coenv --partition=compute --cpus-per-task=2 --mem=8G --time=4-00:00:00"

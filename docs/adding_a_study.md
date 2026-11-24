@@ -81,26 +81,52 @@
    the machine and the date (committed). `--jobs` sets parallel downloads
    (default 2), `--run` limits it to some runs, `--source ena|mirror` forces
    one source. It refuses to start if free space is short, and refuses a
-   second downloader into the same directory. On klone, run it as a job, not
-   on a login node.
+   second downloader into the same directory. On klone, run it as an
+   `sbatch` job on the first non-preemptible partition with room, not on
+   `ckpt-all` and not on a login node
+   ([choosing a partition](compute_profiles.md#choosing-a-partition)).
 
    If a study is not mirrored yet, mirror it from raven first
    (`whale mirror-fastq --accession <PRJ…>`): ENA is slow from most machines
    ([speeds](compute_profiles.md#where-fastq-comes-from-and-how-fast)).
-7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML and
-   run the workflow with the profile you claimed, from the study's worktree,
+7. **Set `chemistry`** in `config/<STUDY_ID>.config` to match the YAML
+   (`start-study` writes it as `null`; `whale validate-study` fails while a
+   filled-in YAML and its config disagree) and
+   run the workflow with the profile you claimed, from the study's worktree
+   (`workflows/methylation`; MeDIP and MBD studies use `workflows/enrichment`,
+   see [enrichment tier](enrichment.md)),
    with `whale` on the head job's `PATH` (or `WHALE_CMD` set to it).
    On a desktop or raven, `whale fetch-fastq --launch` does steps 6 and 7 in
    one go: it stages and marks the FASTQ as in step 6, then starts
    `nextflow run` for the claimed profile in the foreground (run it under
    `tmux` or `screen`), and exits with the run's status. It checks that it
-   is in the study's worktree, that `nextflow` is on `PATH` and that every
-   file will be staged (no `--run`) before it downloads anything. Set
-   `chemistry` first. On klone, submit the run as an `sbatch` head job
+   is in the study's worktree, that `nextflow` is on `PATH`, that the config
+   sets the YAML's `chemistry` and that every file will be staged (no
+   `--run`) before it downloads anything. On klone, submit the run as an `sbatch` head job
    instead ([compute profiles](compute_profiles.md)).
+
+   **Check the library type after the first run** (or on one library first,
+   for a deep study): the library kit is rarely in the deposit, and two kinds
+   need a setting in the study config.
+   - *Non-directional* (Zymo Pico Methyl-Seq and similar). FastQC's per-base
+     content shows read 1 with as much C as G (~9% each); a directional
+     library has under 1% C in read 1. Directional mode maps only half of
+     such a library's pairs (ROBERTS2022: 30%). Add `--non_directional` to
+     `bismark_align_args`.
+   - *A synthetic tail on read 2* (adaptase-based kits). The M-bias table
+     (`<sample>.dedup.M-bias.txt`) shows the first ~15 positions of read 2
+     highly methylated in CpG **and** CHH context, and non-CpG methylation
+     of 2-4% that looks like poor conversion (WANG2023). Clip it with
+     `trim_args` (`--clip_r2 18 --three_prime_clip_r1 18`); do not lower
+     `qc_min_conversion` for it.
+
+   Every paired library also reads low at the first two bases of read 2
+   (end repair); the workflow leaves them out of the calls
+   (`params.ignore_r2 = 2`).
 8. **Nothing to record by hand.** When the run succeeds it calls `whale
    record-run`, which commits `qc_summary.tsv`, `run_manifest.json`,
-   `methylome_manifest.tsv` and `study_summary.yaml` under
+   `methylome_manifest.tsv`, `study_summary.yaml` and the gene x sample
+   matrices (`genes/`, [gene-level methylation](gene_methylation.md)) under
    `data/studies/<STUDY_ID>/`, uploads the per-sample methylomes to the data
    host, moves `status.yaml` through `aligned`, `called`, `qc_passed` and
    `summarized`, pushes, and marks the PR ready. The dashboard shows the

@@ -1,0 +1,222 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: PESTO2022_METHYLSEQ_WGBS
+part: null
+generated_on: '2026-10-31'
+nextflow_run: serene_ritchie
+commit: 87e31cf286922decccd67ef49b30198d5591ae81
+genome_assembly: GCF_963853765.1
+chemistry: wgbs
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
+libraries: 48
+passed: 13
+failed:
+- sample_id: ERR10683998
+  reasons: conversion 93.964% < 98.0%
+- sample_id: ERR10683999
+  reasons: conversion 97.164% < 98.0%
+- sample_id: ERR10684000
+  reasons: conversion 92.224% < 98.0%
+- sample_id: ERR10684001
+  reasons: conversion 90.83% < 98.0%
+- sample_id: ERR10684002
+  reasons: conversion 97.961% < 98.0%
+- sample_id: ERR10684003
+  reasons: conversion 94.831% < 98.0%
+- sample_id: ERR10684004
+  reasons: conversion 96.715% < 98.0%
+- sample_id: ERR10684005
+  reasons: conversion 91.984% < 98.0%
+- sample_id: ERR10684006
+  reasons: conversion 97.218% < 98.0%
+- sample_id: ERR10684007
+  reasons: conversion 91.713% < 98.0%
+- sample_id: ERR10684008
+  reasons: conversion 94.527% < 98.0%
+- sample_id: ERR10684011
+  reasons: conversion 90.806% < 98.0%
+- sample_id: ERR10684016
+  reasons: conversion 97.235% < 98.0%
+- sample_id: ERR10684017
+  reasons: conversion 95.534% < 98.0%
+- sample_id: ERR10684018
+  reasons: conversion 96.112% < 98.0%
+- sample_id: ERR10684019
+  reasons: conversion 97.788% < 98.0%
+- sample_id: ERR12308505
+  reasons: conversion 92.322% < 98.0%
+- sample_id: ERR12308506
+  reasons: conversion 90.899% < 98.0%
+- sample_id: ERR12308507
+  reasons: conversion 96.06% < 98.0%
+- sample_id: ERR12308508
+  reasons: conversion 94.804% < 98.0%
+- sample_id: ERR12308509
+  reasons: conversion 96.981% < 98.0%
+- sample_id: ERR12308510
+  reasons: conversion 96.871% < 98.0%
+- sample_id: ERR12308511
+  reasons: conversion 94.184% < 98.0%
+- sample_id: ERR12308512
+  reasons: conversion 94.165% < 98.0%
+- sample_id: ERR12308514
+  reasons: conversion 95.67% < 98.0%
+- sample_id: ERR12308515
+  reasons: conversion 95.274% < 98.0%
+- sample_id: ERR12308517
+  reasons: conversion 95.059% < 98.0%
+- sample_id: ERR12308518
+  reasons: mapping 18.6% < 20.0%
+- sample_id: ERR12308520
+  reasons: conversion 97.444% < 98.0%
+- sample_id: ERR12308522
+  reasons: conversion 97.034% < 98.0%
+- sample_id: ERR12308523
+  reasons: conversion 97.134% < 98.0%
+- sample_id: ERR12308524
+  reasons: conversion 97.338% < 98.0%
+- sample_id: ERR12308525
+  reasons: conversion 97.379% < 98.0%
+- sample_id: ERR12308527
+  reasons: conversion 94.548% < 98.0%
+- sample_id: ERR12308528
+  reasons: conversion 92.543% < 98.0%
+qc:
+  mapping_pct:
+    n: 48
+    median: 46.0
+    mean: 43.71
+    min: 18.6
+    max: 61.2
+    sd: 13.27
+  duplication_pct:
+    n: 48
+    median: 18.06
+    mean: 19.23
+    min: 15.78
+    max: 27.49
+    sd: 2.84
+  conversion_pct:
+    n: 48
+    median: 97.01
+    mean: 96.21
+    min: 90.81
+    max: 99.65
+    sd: 2.62
+  cpgs_5x:
+    n: 48
+    median: 7118595.0
+    mean: 6724150.85
+    min: 2999215.0
+    max: 9612204.0
+    sd: 2150882.89
+  mean_depth:
+    n: 48
+    median: 16.2
+    mean: 15.7
+    min: 7.12
+    max: 28.52
+    sd: 6.05
+cpg_methylation_pct:
+  n: 13
+  median: 15.92
+  mean: 16.07
+  min: 12.97
+  max: 20.4
+  sd: 2.15
+by_factor: []
+by_condition:
+- condition: Gastrula_DNA_F0_E
+  n: 4
+  median: 15.8
+  mean: 15.8
+  min: 15.14
+  max: 16.45
+  sd: 0.54
+- condition: Gastrula_DNA_F0_T
+  n: 3
+  median: 17.11
+  mean: 17.2
+  min: 16.11
+  max: 18.39
+  sd: 1.14
+- condition: Gastrula_DNA_F1_EE
+  n: 0
+- condition: Gastrula_DNA_F1_ET
+  n: 0
+- condition: Gastrula_DNA_F1_TE
+  n: 1
+  median: 20.4
+  mean: 20.4
+  min: 20.4
+  max: 20.4
+  sd: null
+- condition: Gastrula_DNA_F1_TT
+  n: 1
+  median: 12.97
+  mean: 12.97
+  min: 12.97
+  max: 12.97
+  sd: null
+- condition: Metamorphosis_DNA_F0_E
+  n: 0
+- condition: Metamorphosis_DNA_F0_T
+  n: 1
+  median: 15.2
+  mean: 15.2
+  min: 15.2
+  max: 15.2
+  sd: null
+- condition: Metamorphosis_DNA_F1_EE
+  n: 1
+  median: 18.43
+  mean: 18.43
+  min: 18.43
+  max: 18.43
+  sd: null
+- condition: Metamorphosis_DNA_F1_ET
+  n: 1
+  median: 13.94
+  mean: 13.94
+  min: 13.94
+  max: 13.94
+  sd: null
+- condition: Metamorphosis_DNA_F1_TE
+  n: 0
+- condition: Metamorphosis_DNA_F1_TT
+  n: 1
+  median: 13.15
+  mean: 13.15
+  min: 13.15
+  max: 13.15
+  sd: null
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 31670
+    meth_pct:
+      n: 31670
+      median: 4.05
+      mean: 20.88
+      min: 0.0
+      max: 91.7
+      sd: 26.93
+    methylated_ge_50pct: 7034
+  promoter:
+    covered_in_all: 30271
+    meth_pct:
+      n: 30271
+      median: 0.87
+      mean: 6.35
+      min: 0.0
+      max: 93.44
+      sd: 13.81
+    methylated_ge_50pct: 870
+methylomes:
+  files: 576
+  bytes: 4096204669
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/PESTO2022_METHYLSEQ_WGBS/

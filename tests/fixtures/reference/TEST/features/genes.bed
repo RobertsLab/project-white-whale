@@ -1,0 +1,4 @@
+chr1	2000	8000	G1	protein_coding	+
+chr1	12000	15000	G2	protein_coding	-
+chr2	1000	6000	G3	protein_coding	+
+chr2	9000	9500	G4	lncRNA	+

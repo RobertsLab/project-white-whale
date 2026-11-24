@@ -1,0 +1,50 @@
+{
+  "study_id": "WANG2014_FIRST_METHYLOMES_WGBS",
+  "bioproject": "PRJNA173440",
+  "date_generated": "2026-10-23",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA173440&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "individual type"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 4
+  },
+  "n_runs": 4,
+  "n_libraries": 4,
+  "n_biosamples": 2,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "Illumina HiSeq 2000"
+  ],
+  "group_sizes_runs": {
+    "inbred": 2,
+    "wild": 2
+  },
+  "group_sizes_libraries": {
+    "inbred": 2,
+    "wild": 2
+  },
+  "min_group_libraries": 2,
+  "total_fastq_bytes": 36392635708,
+  "fastq_sources": {
+    "fastq_ftp": 4,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/WANG2014_FIRST_METHYLOMES_WGBS/samplesheet.tsv": "1019888a18e7fc0c58418d7fc851b0f41b3f283b752160ebdcc6acc982c0f4ca",
+    "data/studies/WANG2014_FIRST_METHYLOMES_WGBS/fastq_manifest.tsv": "2888a0796a21ccac8a62c6cff8cee9b39d7f6c64a1cedaea60948b3bcd196c14"
+  },
+  "biosamples_with_several_libraries": {
+    "SAMN01125790": 2,
+    "SAMN01125791": 2
+  }
+}

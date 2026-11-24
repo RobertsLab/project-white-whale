@@ -1,0 +1,102 @@
+/* Shared by the atlas pages (landscape.html, concordance.html); tokens as in ../index.html. */
+:root {
+  color-scheme: light;
+  --surface-0: #f6f5f2;
+  --surface-1: #fcfcfb;
+  --border: #e3e1db;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #77756f;
+  --grid: #e6e4de;
+  --line: #2a78d6;          /* sequential 450 */
+  --ref: #77756f;           /* reference line: muted ink */
+  --link: #1c5cab;
+  --seq-0: #cde2fb;         /* sequential 100 */
+  --seq-1: #104281;         /* sequential 650 */
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --border: #2e2e2c;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #9a988f;
+    --grid: #383835;
+    --line: #3987e5;
+    --ref: #9a988f;
+    --link: #86b6ef;
+    --seq-0: #184f95;
+    --seq-1: #cde2fb;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-0: #121211;
+  --surface-1: #1a1a19;
+  --border: #2e2e2c;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --text-muted: #9a988f;
+  --grid: #383835;
+  --line: #3987e5;
+  --ref: #9a988f;
+  --link: #86b6ef;
+  --seq-0: #184f95;
+  --seq-1: #cde2fb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--link); }
+main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+header h1 { margin: 0; font-size: 28px; letter-spacing: -0.01em; }
+header p { margin: 4px 0 0; color: var(--text-secondary); }
+nav { font-size: 14px; margin-bottom: 12px; display: flex; gap: 16px; flex-wrap: wrap; }
+nav a[aria-current] { color: var(--text-primary); font-weight: 600; text-decoration: none; }
+.updated { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+section { margin-top: 32px; }
+h2 { font-size: 17px; margin: 0 0 4px; }
+h3 { font-size: 15px; margin: 0; }
+.lede { margin: 0 0 12px; color: var(--text-secondary); font-size: 14px; max-width: 760px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; }
+.pad { padding: 16px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { padding: 16px; }
+.tile .label { font-size: 13px; color: var(--text-secondary); }
+.tile .value { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.headline { margin: 0; padding-left: 18px; color: var(--text-primary); }
+.headline li { margin: 4px 0; }
+.caveats { margin: 8px 0 0; padding-left: 18px; color: var(--text-secondary); font-size: 14px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.muted { color: var(--text-muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--text-secondary); margin: 8px 0 0; padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.key-line { width: 18px; height: 0; border-top: 2px solid var(--line); }
+.key-ref { width: 18px; height: 0; border-top: 2px dashed var(--ref); }
+.ramp { width: 120px; height: 10px; border-radius: 2px; background: linear-gradient(90deg, var(--seq-0), var(--seq-1)); }
+svg text { fill: var(--text-muted); font-size: 11px; }
+svg .axis { stroke: var(--border); }
+svg .gridline { stroke: var(--grid); }
+canvas { display: block; max-width: 100%; }
+.tip {
+  position: fixed; pointer-events: none; z-index: 10; max-width: 300px;
+  background: var(--surface-1); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: none;
+}
+.tip b { display: block; margin-bottom: 2px; }
+details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px; }
+.empty { padding: 20px 16px; color: var(--text-secondary); }

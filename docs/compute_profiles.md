@@ -10,7 +10,9 @@ variables instead.
 | `WHALE_RAW` | directory holding `<STUDY_ID>/` FASTQ folders | `data/raw` |
 | `WHALE_REFERENCE` | directory holding `<ASSEMBLY>/genomic.fna` etc. | `data/reference` |
 | `WHALE_BISMARK_INDEX` | directory holding the cached `bismark_genome/` index | the reference bundle |
-| `WHALE_METHYLOMES` | where per-sample outputs are published | `data/methylomes` |
+| `WHALE_SALMON_INDEX` | directory holding the cached `salmon_index/` (workflows/rnaseq) | the reference bundle |
+| `WHALE_BOWTIE2_INDEX` | directory holding the cached `bowtie2_genome/` index ([enrichment tier](enrichment.md)) | the reference bundle |
+| `WHALE_METHYLOMES` | where per-sample outputs are published (RNA-seq under `<STUDY_ID>/rnaseq/`) | `data/methylomes` |
 | `WHALE_WORKDIR` | Nextflow work directory, on fast local disk | `work` (klone: scrubbed) |
 | `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` | local executor limits (desktop, raven) | 10 / 28 GB; 32 / 120 GB |
 | `WHALE_SLURM_ACCOUNT`, `WHALE_SLURM_QUEUE` | klone | `srlab`, `ckpt-all` |
@@ -127,7 +129,8 @@ Apptainer is enabled by the profile. Lessons carried from AREE
   full. Check `hyakstorage /gscratch/scrubbed` first; copy what you keep.
 - Read-sized intermediates go to the node's `/scr`.
 - ENA downloads through the cluster proxy ran at ~12 MB/s aggregate in
-  October 2026: plan ~15 h per 600 GB, as a job.
+  October 2026: plan ~15 h per 600 GB, as a job on a non-preemptible
+  partition (the first with room, as for the head job), not `ckpt-all`.
 - Select a subset of libraries with a directory of links, not a brace pattern
   in a glob.
 - Put Klone-only settings (e.g. chunk size, once chunked alignment lands) in a
@@ -142,6 +145,15 @@ export WHALE_RAW=/gscratch/scrubbed/$USER/whale/raw
 export WHALE_REFERENCE=/gscratch/scrubbed/$USER/whale/reference
 export WHALE_METHYLOMES=/gscratch/scrubbed/$USER/whale/methylomes
 nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile klone
+```
+
+Stage the FASTQ beforehand the same way, as its own job on the first
+partition with room, with `--time` sized from the rate above:
+
+```bash
+#SBATCH --account=coenv --partition=compute --cpus-per-task=2 --mem=8G --time=1-00:00:00
+export WHALE_RAW=/gscratch/scrubbed/$USER/whale/raw
+whale fetch-fastq --mark-staged
 ```
 
 ### Choosing a partition
@@ -173,7 +185,8 @@ must fit inside them alongside other lab work.
 | FastQC, trimming, chunked alignment, extraction: every task that finishes in 4.5 h | `ckpt-all` (profile default) |
 | Nextflow head job (2 CPUs, 8 GB, days; a preempted head job stops the run) | first partition in the order above with room |
 | A task that cannot finish in 4.5 h | first partition with room, as a per-process override |
-| `fetch-fastq` downloads, interactive tests | `ckpt-all` via `sbatch` / `salloc`, never a login node |
+| `fetch-fastq` downloads (hours to days; on `ckpt-all` they hit the window or are preempted mid-file) | first partition in the order above with room, via `sbatch`, never a login node |
+| Interactive tests | `ckpt-all` via `salloc`, never a login node |
 
 Before moving a task off `ckpt-all`, try splitting it (as alignment is
 chunked) so it fits the window. Signs that a task needs to move:

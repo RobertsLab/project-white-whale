@@ -1,0 +1,36 @@
+# C/T SNP masks (PLAN.md §6.1, docs/snp_mask.md), written by `whale record-mask`.
+# Each lists the reference CpGs on a SNP called from pooled WGBS libraries.
+masks:
+- mask_id: GCF_963853765.1.snpmask.v1
+  genome_assembly: GCF_963853765.1
+  recorded_on: '2026-10-24'
+  studies:
+  - ROBERTS2022_PH_PLOIDY_WGBS
+  libraries: 24
+  thresholds:
+    min_alt_reads: 3
+    min_alt_frac: 0.02
+    min_mapq: 40
+    min_baseq: 20
+  tool_versions:
+    biscuit: 1.10.2
+  commit: d03ebbd6dedaec5eb53b53548de982f9621d7c3c
+  counts:
+    snps: 8102210
+    snps_per_kb: 14.366
+    cpgs: 11429464
+    cpgs_masked: 628253
+    cpgs_masked_frac: 0.054968
+  files:
+  - file: cpg_mask.bed.gz
+    bytes: 5939506
+    sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+    url: https://gannet.fish.washington.edu/v1_web/project-white-whale/reference/GCF_963853765.1/snp_mask/GCF_963853765.1.snpmask.v1/cpg_mask.bed.gz
+  - file: snps.tsv.gz
+    bytes: 74114515
+    sha256: 81b552d5b2f811fee4139ceb72db968d3077b591b281002aab0b660d5fd2f83c
+    url: https://gannet.fish.washington.edu/v1_web/project-white-whale/reference/GCF_963853765.1/snp_mask/GCF_963853765.1.snpmask.v1/snps.tsv.gz
+  - file: mask_manifest.json
+    bytes: 9289
+    sha256: 29d207bf136a7ec1e9156eace9ad4e52ea3c52c139c41c7becb428dc783963a9
+    url: https://gannet.fish.washington.edu/v1_web/project-white-whale/reference/GCF_963853765.1/snp_mask/GCF_963853765.1.snpmask.v1/mask_manifest.json

@@ -3,10 +3,11 @@
  * White Whale :: methylation workflow — FASTQ in, per-sample methylome out.
  *
  * Still to come (PLAN.md §5): the C/T SNP mask, chunked alignment for klone,
- * per-sample feature summaries and the study report.
+ * 1 kb tiles and the study report.
  *
  *   FASTQC -> TRIM_GALORE -> BISMARK_ALIGN -> BISMARK_DEDUPLICATE (not RRBS)
- *     -> BISMARK_METHYLATION_EXTRACTOR -> CPG_SUMMARY -> QC_GATE -> MANIFEST
+ *     -> BISMARK_METHYLATION_EXTRACTOR -> CPG_SUMMARY -> QC_GATE
+ *                                      -> FEATURE_SUMMARY (genes) -> MANIFEST
  *
  * When a run on a study branch succeeds, it records itself: `whale
  * record-run` commits qc_summary.tsv, run_manifest.json, the methylome
@@ -18,6 +19,9 @@
  * The sample sheet (data/studies/<STUDY_ID>/samplesheet.tsv) has columns
  * sample_id, run_accession, fastq_1, fastq_2 (empty for single-end). FASTQ
  * paths are relative to ${params.raw_dir}/<STUDY_ID>/ unless absolute.
+ * Libraries in params.swap_mates were deposited with read 1 and read 2
+ * exchanged; their fastq_2 is used as read 1 (the samplesheet stays as ENA
+ * has it).
  *
  *   nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile raven,docker
  *   nextflow run workflows/methylation -profile test -stub        # smoke test
@@ -34,6 +38,7 @@ include { BISMARK_DEDUPLICATE }           from '../../modules/methylation/bismar
 include { BISMARK_METHYLATION_EXTRACTOR } from '../../modules/methylation/bismark.nf'
 include { CPG_SUMMARY }                   from '../../modules/methylation/qc.nf'
 include { QC_GATE }                       from '../../modules/methylation/qc.nf'
+include { FEATURE_SUMMARY }               from '../../modules/methylation/features.nf'
 include { MANIFEST }                      from '../../modules/methylation/manifest.nf'
 
 // Mirrors registry/controlled_vocabularies/assay_chemistry.yaml (base-resolution terms).
@@ -51,6 +56,18 @@ def resolveFastq(String p) {
     def f = p.startsWith('/') ? file(p) : file("${params.raw_dir}/${params.study_id}/${p}")
     if (!f.exists()) error "FASTQ not found: ${f}"
     return f
+}
+
+// A library in params.swap_mates, read 1 and read 2 exchanged. Nextflow's task
+// hash does not see the order of a task's input files, so the pair is linked
+// under its own names (work/swap_mates/<id>/<id>_swapped_{1,2}.fastq.gz): its
+// tasks then miss the -resume cache of a run that read it unswapped.
+def swapMates(String sample_id, List reads) {
+    def dir = file("${workflow.workDir}/swap_mates/${sample_id}")
+    dir.mkdirs()
+    return [reads[1], reads[0]].withIndex().collect { f, i ->
+        f.mklink(dir.resolve("${sample_id}_swapped_${i + 1}.fastq.gz"), overwrite: true)
+    }
 }
 
 // A cached Bismark index must have been built from the bundle's current
@@ -113,6 +130,22 @@ workflow {
     def genome_fasta = file("${params.reference_dir}/${params.genome_assembly}/genomic.fna", checkIfExists: true)
     checkCachedIndex()
     def samplesheet  = file(params.samplesheet, checkIfExists: true)
+    def features     = file("${params.reference_dir}/${params.genome_assembly}/features", checkIfExists: true)
+    // C/T SNP mask (docs/snp_mask.md): a mask folder with cpg_mask.bed.gz and mask_manifest.json.
+    def snp_mask = null
+    def mask_bed = []
+    if (params.snp_mask) {
+        mask_bed = file("${params.snp_mask}/cpg_mask.bed.gz", checkIfExists: true)
+        def mm = new groovy.json.JsonSlurper().parse(file("${params.snp_mask}/mask_manifest.json", checkIfExists: true).toFile())
+        if (mm.params.genome_assembly != params.genome_assembly) {
+            error "SNP mask ${mm.params.mask_id} is for ${mm.params.genome_assembly}, not ${params.genome_assembly}"
+        }
+        snp_mask = [mask_id: mm.params.mask_id, sha256: mm.outputs['cpg_mask.bed.gz'], cpgs_masked: mm.counts.cpgs_masked]
+    }
+
+    def sample_ids = samplesheet.splitCsv(header: true, sep: '\t')*.sample_id
+    def unknown = params.swap_mates.findAll { !(it in sample_ids) }
+    if (unknown) error "swap_mates lists samples not in the sample sheet: ${unknown}"
 
     reads_ch = Channel
         .fromPath(samplesheet)
@@ -120,6 +153,10 @@ workflow {
         .map { row ->
             def reads = [resolveFastq(row.fastq_1), resolveFastq(row.fastq_2)].findAll { it != null }
             if (!reads) error "no FASTQ for sample ${row.sample_id}"
+            if (row.sample_id in params.swap_mates) {
+                if (reads.size() != 2) error "swap_mates lists ${row.sample_id}, which is not paired-end"
+                reads = swapMates(row.sample_id, reads)
+            }
             tuple(row.sample_id, reads)
         }
 
@@ -149,6 +186,7 @@ workflow {
              CPG_SUMMARY.out.summary)
         .collect()
     QC_GATE(qc_inputs, samplesheet)
+    FEATURE_SUMMARY(BISMARK_METHYLATION_EXTRACTOR.out.cpg, features, mask_bed)
 
     versions_ch = FASTQC.out.versions
         .mix(TRIM_GALORE.out.versions, BISMARK_ALIGN.out.versions, BISMARK_METHYLATION_EXTRACTOR.out.versions)
@@ -158,14 +196,15 @@ workflow {
         study_id: params.study_id, part: params.part, chemistry: params.chemistry,
         genome_assembly: params.genome_assembly, bismark_align_args: params.bismark_align_args,
         chemistry_align_args: chem.align,
-        extractor_args: params.extractor_args, trim_args: params.trim_args,
+        extractor_args: params.extractor_args, ignore_r2: params.ignore_r2, trim_args: params.trim_args,
+        swap_mates: params.swap_mates,
         qc_min_mapping: params.qc_min_mapping, qc_min_conversion: params.qc_min_conversion,
-        qc_min_cpgs_5x: params.qc_min_cpgs_5x,
+        qc_min_cpgs_5x: params.qc_min_cpgs_5x, snp_mask: snp_mask,
         deduplicate: chem.deduplicate, profile: workflow.profile,
         nextflow_version: nextflow.version.toString(), run_name: workflow.runName,
         commit: workflow.commitId ?: gitCommit(), session: workflow.sessionId.toString(),
     ])
-    MANIFEST(versions_ch, samplesheet, genome_fasta, run_params)
+    MANIFEST(versions_ch, samplesheet, genome_fasta, features, run_params)
 
     onComplete:
     if (workflow.success && params.record_status && !workflow.stubRun) {

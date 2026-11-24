@@ -1,0 +1,57 @@
+{
+  "params": {
+    "study_id": "WANG2020_TIDAL_HEAT_WGBS",
+    "part": null,
+    "chemistry": "wgbs",
+    "genome_assembly": "GCF_963853765.1",
+    "bismark_align_args": "--score_min L,0,-0.6",
+    "chemistry_align_args": "",
+    "extractor_args": "",
+    "trim_args": "",
+    "qc_min_mapping": 20.0,
+    "qc_min_conversion": 98.0,
+    "qc_min_cpgs_5x": 1000000,
+    "snp_mask": {
+      "mask_id": "GCF_963853765.1.snpmask.v1",
+      "sha256": "3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895",
+      "cpgs_masked": 628253
+    },
+    "deduplicate": true,
+    "profile": "klone",
+    "nextflow_version": "26.04.7",
+    "run_name": "elegant_rubens",
+    "commit": "b5c89bbe46c3142bf759186f0b42d0809df50024",
+    "session": "7f70f895-ccee-4227-bff8-cfcf7b112c97"
+  },
+  "tool_versions": {
+    "FASTQC": {
+      "fastqc": "0.12.1"
+    },
+    "TRIM_GALORE": {
+      "trim_galore": "0.6.10"
+    },
+    "BISMARK_ALIGN": {
+      "bismark": "v0.24.2"
+    },
+    "BISMARK_METHYLATION_EXTRACTOR": {
+      "bismark": "v0.24.2"
+    }
+  },
+  "inputs": {
+    "samplesheet": {
+      "name": "samplesheet.tsv",
+      "sha256": "cd3905b7f9c4ea2b5a2aae65ddd7124a5423a94952da2673c8bc29c5a2fd7ada"
+    },
+    "genome_fasta": {
+      "name": "genomic.fna",
+      "sha256": "64cbe0d84cb24a3f190cfc2cfbe856eb5c3a4697cd8c2605fc48fdf80814cf02"
+    },
+    "features": {
+      "exons.bed": "4a8421a67815726bb4506c90c3b75b00186aeab853972c3ded6c8daf853ba916",
+      "genes.bed": "62561759a62cc440ac74277c71abd54a1f9059bb438bd811ee66324088f512cd",
+      "intergenic.bed": "f60656a47505d5dbdd422cab1caf4e6d4ab6cbabc200acb49b836ce641ec1dad",
+      "introns.bed": "a564b3a31a97aa802d0607de3447d7418dee589c692d89f723d78f90f7672216",
+      "promoters.bed": "a0ec018df2274812da9491dc11bc8d659cbdb3f378f51e68cc31bd6fd28b71ae"
+    }
+  }
+}

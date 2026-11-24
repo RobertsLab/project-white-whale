@@ -1,0 +1,13 @@
+sample_id	run_accession	fastq_1	fastq_2	library_id	label	sample_accession	sample_alias	condition	origin	temperature	replicate	tissue	library_strategy	library_layout	instrument_model	read_count
+SRR10065364	SRR10065364	SRR10065364_1.fastq.gz	SRR10065364_2.fastq.gz	SRX6799168	SubH_1	SAMN12651045	gill tissue from Crassostrea gigas	Sub_H	Sub	H	1	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	79818903
+SRR10065365	SRR10065365	SRR10065365_1.fastq.gz	SRR10065365_2.fastq.gz	SRX6799167	SubC_3	SAMN12651045	gill tissue from Crassostrea gigas	Sub_C	Sub	C	3	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	70095226
+SRR10065366	SRR10065366	SRR10065366_1.fastq.gz	SRR10065366_2.fastq.gz	SRX6799166	SubC_2	SAMN12651045	gill tissue from Crassostrea gigas	Sub_C	Sub	C	2	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	81490382
+SRR10065367	SRR10065367	SRR10065367_1.fastq.gz	SRR10065367_2.fastq.gz	SRX6799165	SubC_1	SAMN12651045	gill tissue from Crassostrea gigas	Sub_C	Sub	C	1	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	74770544
+SRR10065368	SRR10065368	SRR10065368_1.fastq.gz	SRR10065368_2.fastq.gz	SRX6799164	InH_3	SAMN12651045	gill tissue from Crassostrea gigas	In_H	In	H	3	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	65976313
+SRR10065369	SRR10065369	SRR10065369_1.fastq.gz	SRR10065369_2.fastq.gz	SRX6799163	InH_2	SAMN12651045	gill tissue from Crassostrea gigas	In_H	In	H	2	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	70186712
+SRR10065370	SRR10065370	SRR10065370_1.fastq.gz	SRR10065370_2.fastq.gz	SRX6799162	InH_1	SAMN12651045	gill tissue from Crassostrea gigas	In_H	In	H	1	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	73706359
+SRR10065371	SRR10065371	SRR10065371_1.fastq.gz	SRR10065371_2.fastq.gz	SRX6799161	InC_3	SAMN12651045	gill tissue from Crassostrea gigas	In_C	In	C	3	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	91076777
+SRR10065372	SRR10065372	SRR10065372_1.fastq.gz	SRR10065372_2.fastq.gz	SRX6799160	SubH_3	SAMN12651045	gill tissue from Crassostrea gigas	Sub_H	Sub	H	3	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	74905667
+SRR10065373	SRR10065373	SRR10065373_1.fastq.gz	SRR10065373_2.fastq.gz	SRX6799159	SubH_2	SAMN12651045	gill tissue from Crassostrea gigas	Sub_H	Sub	H	2	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	84868974
+SRR10065374	SRR10065374	SRR10065374_1.fastq.gz	SRR10065374_2.fastq.gz	SRX6799158	InC_2	SAMN12651045	gill tissue from Crassostrea gigas	In_C	In	C	2	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	76534362
+SRR10065375	SRR10065375	SRR10065375_1.fastq.gz	SRR10065375_2.fastq.gz	SRX6799157	InC_1	SAMN12651045	gill tissue from Crassostrea gigas	In_C	In	C	1	gill	Bisulfite-Seq	PAIRED	HiSeq X Ten	81453846

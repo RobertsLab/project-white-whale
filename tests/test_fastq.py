@@ -283,10 +283,36 @@ def _claimed_worktree(claim_env, server, monkeypatch, profile):
     return wt, log
 
 
+def _set_config_chemistry(wt, value):
+    cfg = wt / "config" / f"{LAUNCH_SID}.config"
+    text = cfg.read_text()
+    assert "chemistry    = null" in text
+    cfg.write_text(text.replace("chemistry    = null", f"chemistry    = {value}"))
+
+
+def test_cli_launch_refuses_a_config_without_the_yaml_chemistry(claim_env, server, monkeypatch):
+    import yaml
+
+    wt, log = _claimed_worktree(claim_env, server, monkeypatch, "desktop")
+    # As start-study writes it: chemistry = null.
+    res = CliRunner().invoke(main, ["fetch-fastq", "--source", "ena", "--launch"])
+    assert res.exit_code != 0 and "sets no chemistry" in res.output, res.output
+
+    yml = wt / "registry" / "studies" / f"{LAUNCH_SID}.yaml"
+    study = yaml.safe_load(yml.read_text())
+    study["chemistry"] = "wgbs"
+    yml.write_text(yaml.safe_dump(study, sort_keys=False))
+    _set_config_chemistry(wt, "'rrbs'")
+    res = CliRunner().invoke(main, ["fetch-fastq", "--source", "ena", "--launch"])
+    assert res.exit_code != 0 and "the study YAML says 'wgbs'" in res.output, res.output
+    assert not (claim_env["tmp"] / "raw").exists() and not log.exists()
+
+
 def test_cli_launch_stages_then_runs_nextflow(claim_env, server, monkeypatch):
     import yaml
 
     wt, log = _claimed_worktree(claim_env, server, monkeypatch, "desktop")
+    _set_config_chemistry(wt, "'wgbs'")
     res = CliRunner().invoke(main, ["fetch-fastq", "--source", "ena", "--launch", "--dry-run"])
     assert res.exit_code == 0, res.output
     assert "Would then launch: nextflow run" in res.output and not log.exists()

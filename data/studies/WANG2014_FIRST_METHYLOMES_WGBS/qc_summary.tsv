@@ -1,0 +1,5 @@
+sample_id	condition	pairs_or_reads	mapping_pct	duplication_pct	cpg_meth_pct	non_cpg_meth_pct	conversion_pct	cpgs_1x	cpgs_5x	cpgs_10x	mean_depth	cpg_meth_mean_5x_pct	qc_pass	qc_reasons
+SRR546471	inbred	70322784	55.5	2.22	11.519	0.465	99.535	9243152	7428428	5798220	15.392	11.527	true	
+SRR546472	inbred	67603212	57.1	0.92	10.761	0.465	99.535	9189715	7525560	6056419	14.793	11.229	true	
+SRR546473	wild	78285679	55.0	2.26	10.684	0.464	99.536	9478062	7828874	6314328	15.72	11.124	true	
+SRR546474	wild	76205076	55.8	1.12	10.55	0.464	99.536	9419227	7824768	6365231	15.634	11.068	true	

@@ -194,10 +194,56 @@ def config_name(study_id: str, part: str | None = None) -> str:
     return f"config/{study_id}.part-{part}.config" if part else f"config/{study_id}.config"
 
 
-def nextflow_command(study_id: str, profile: str, part: str | None = None) -> list[str]:
+def study_workflow(repo: Path | None, study_id: str, part: str | None = None) -> str:
+    """workflows/enrichment for an enrichment-tier chemistry (MeDIP, MBD) in the study config, else
+    workflows/methylation."""
+    if repo is not None:
+        cfg = Path(repo) / config_name(study_id, part)
+        chem = config_chemistry(cfg.read_text()) if cfg.exists() else None
+        if chem:
+            from whale.vocab import load_vocab
+
+            if (load_vocab(Path(repo), "assay_chemistry").get(chem) or {}).get("tier") == "enrichment":
+                return "workflows/enrichment"
+    return "workflows/methylation"
+
+
+def nextflow_command(study_id: str, profile: str, part: str | None = None, repo: Path | None = None) -> list[str]:
     """The `nextflow run` that processes a claimed study, from the root of its worktree."""
-    return ["nextflow", "run", "workflows/methylation", "-c", config_name(study_id, part),
+    return ["nextflow", "run", study_workflow(repo, study_id, part), "-c", config_name(study_id, part),
             "-profile", f"{profile},docker" if profile == "desktop" else profile]
+
+
+_CONFIG_CHEMISTRY = re.compile(r"""^\s*chemistry\s*=\s*(?:'([^']*)'|"([^"]*)"|null\b)""", re.M)
+
+
+def config_chemistry(text: str) -> str | None:
+    """The `chemistry` a study config sets in its params block; None when null or absent."""
+    m = _CONFIG_CHEMISTRY.search(text)
+    return (m.group(1) or m.group(2) or None) if m else None
+
+
+def config_chemistry_problem(repo: Path, study_id: str, part: str | None = None,
+                             *, require: bool = False) -> str | None:
+    """Why the study's run config would start the workflow with the wrong chemistry, or None.
+
+    `start_study` writes the config with `chemistry = null`, and filling in the
+    study YAML does not change it; Nextflow only refuses it after FASTQ staging.
+    A config that disagrees with a filled-in YAML is always a problem; with
+    `require`, so is a null one (the run cannot start without it).
+    """
+    name = config_name(study_id, part)
+    cfg = Path(repo) / name
+    if not cfg.exists():
+        return f"{name} is missing" if require else None
+    chem = config_chemistry(cfg.read_text())
+    yml = Path(repo) / "registry" / "studies" / f"{study_id}.yaml"
+    want = (yaml.safe_load(yml.read_text()) or {}).get("chemistry") if yml.exists() else None
+    if want is not None and chem != want:
+        return f"{name} sets chemistry = {chem!r} but the study YAML says {want!r}; set chemistry = '{want}'"
+    if chem is None and require:
+        return f"{name} sets no chemistry; set chemistry = '<term>' to match the study YAML"
+    return None
 
 
 def render_config(study_id: str, accession: str, profile: str, part: str | None = None) -> str:

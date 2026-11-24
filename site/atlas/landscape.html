@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Methylation Landscape</title>
+<meta name="description" content="How gene-body and promoter CpG methylation is distributed in every pooled Pacific oyster sample, study by study.">
+<link rel="stylesheet" href="atlas.css">
+<style>
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+  .seg button { font: inherit; font-size: 13px; padding: 6px 12px; border: 0; background: var(--surface-1); color: var(--text-secondary); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); }
+  .panel svg { width: 100%; height: auto; display: block; margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <nav><a href="../index.html">Dashboard</a><a href="landscape.html" aria-current="page">Landscape</a><a href="concordance.html">Concordance</a></nav>
+  <header>
+    <h1>Methylation landscape</h1>
+    <p>How CpG methylation is distributed over genes in every pooled sample, on one reference and one SNP mask.</p>
+    <div class="updated" id="updated"></div>
+  </header>
+
+  <section aria-labelledby="h-pooled">
+    <h2 id="h-pooled">What is pooled</h2>
+    <p class="lede">Every study merged to main whose gene tables are SNP-masked. Technical replicates of one animal (same BioSample) are merged into one sample before anything is compared.</p>
+    <div class="tiles" id="tiles"></div>
+    <div class="card pad" style="margin-top:12px">
+      <ul class="headline" id="headline"></ul>
+      <ul class="caveats" id="caveats"></ul>
+      <p class="meta" id="excluded"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-dist">
+    <h2 id="h-dist">Distribution over genes</h2>
+    <p class="lede" id="dist-lede"></p>
+    <div class="seg" role="group" aria-label="Feature">
+      <button type="button" data-cls="gene_body" aria-pressed="true">Gene body</button>
+      <button type="button" data-cls="promoter" aria-pressed="false">Promoter</button>
+    </div>
+    <ul class="legend"><li><span class="key-line"></span>one sample</li><li><span class="key-ref"></span>median of all pooled samples</li></ul>
+    <div class="grid" id="panels" style="margin-top:12px"></div>
+  </section>
+
+  <section aria-labelledby="h-studies">
+    <h2 id="h-studies">By study</h2>
+    <p class="lede" id="studies-lede"></p>
+    <div class="card scroll"><table id="study-table"></table></div>
+  </section>
+
+  <section aria-labelledby="h-samples">
+    <details>
+      <summary id="h-samples">Every sample</summary>
+      <div class="card scroll" style="margin-top:8px"><table id="unit-table"></table></div>
+    </details>
+  </section>
+
+  <section aria-labelledby="h-dl">
+    <h2 id="h-dl">Pooled tables</h2>
+    <p class="lede">Genes × libraries for every pooled study (empty % = no call), the harmonized sample metadata and the QC of every library. Choose a coverage cut-off from <code>cpgs</code> and <code>calls</code>.</p>
+    <div class="card pad" id="downloads"></div>
+  </section>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script type="module">
+import { $, esc, fmt, pct, num, load, frame, showTip, hideTip, fail } from "./atlas.js";
+
+const W = 340, H = 190, M = { l: 40, r: 16, t: 8, b: 26 };
+const FLOOR = 1e-4;   // log scale floor: fraction of genes per bin
+
+function frac(bins) {
+  const n = bins.reduce((a, b) => a + b, 0) || 1;
+  return bins.map((b) => b / n);
+}
+function median(xs) {
+  const s = [...xs].sort((a, b) => a - b), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function render(data, cls) {
+  const units = data.landscape.units.filter((u) => u[cls] && u[cls].genes);
+  const nb = 100 / data.bin;
+  const curves = new Map(units.map((u) => [u.unit_id + "|" + u.study_id, frac(u[cls].bins)]));
+  const all = [...curves.values()];
+  const ref = Array.from({ length: nb }, (_, i) => median(all.map((c) => c[i])));
+  const x = (i) => M.l + ((i + 0.5) / nb) * (W - M.l - M.r);
+  const ly = (v) => Math.log10(Math.max(v, FLOOR));
+  const y = (v) => M.t + (1 - (ly(v) - Math.log10(FLOOR)) / -Math.log10(FLOOR)) * (H - M.t - M.b);
+  const path = (c) => c.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const label = cls === "gene_body" ? "gene-body" : "promoter";
+
+  $("dist-lede").textContent = `Share of genes in each ${data.bin}% bin of ${label} methylation (log scale), over the genes with at least ${data.min_cpgs} covered CpGs in that sample. One panel per study; the dashed line repeats in every panel so studies can be compared against the same reference.`;
+
+  $("panels").innerHTML = data.studies.map((st) => {
+    const own = units.filter((u) => u.study_id === st.study_id);
+    let g = "";
+    for (const t of [1, 1e-1, 1e-2, 1e-3, 1e-4]) {
+      g += `<line class="gridline" x1="${M.l}" x2="${W - M.r}" y1="${y(t)}" y2="${y(t)}"/>` +
+           `<text x="${M.l - 4}" y="${y(t) + 4}" text-anchor="end">${t >= 0.01 ? t * 100 + "%" : t * 100 + "%"}</text>`;
+    }
+    for (const p of [0, 25, 50, 75, 100]) {
+      const px = M.l + (p / 100) * (W - M.l - M.r);
+      g += `<text x="${px}" y="${H - 8}" text-anchor="middle">${p}%</text>`;
+    }
+    const lines = own.map((u) => `<path d="${path(curves.get(u.unit_id + "|" + u.study_id))}" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-opacity="${own.length > 6 ? 0.45 : 0.8}"/>`).join("");
+    const refLine = `<path d="${path(ref)}" fill="none" stroke="var(--ref)" stroke-width="2" stroke-dasharray="4 3"/>`;
+    return `<article class="card pad panel" data-study="${esc(st.study_id)}">
+      <h3>${esc(st.study_id)}</h3>
+      <div class="meta">${fmt(own.length)} samples · ${esc(st.tissues.join(", "))} · ${esc(st.sample_unit)}${st.part ? " · part " + esc(st.part) : ""}</div>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)} methylation distribution for ${esc(st.study_id)}, ${own.length} samples">
+        ${g}<line class="axis" x1="${M.l}" x2="${W - M.r}" y1="${H - M.b}" y2="${H - M.b}"/>${lines}${refLine}
+        <line class="cross" x1="0" x2="0" y1="${M.t}" y2="${H - M.b}" stroke="var(--text-muted)" stroke-width="1" visibility="hidden"/>
+        <rect x="${M.l}" y="${M.t}" width="${W - M.l - M.r}" height="${H - M.t - M.b}" fill="transparent"/>
+      </svg></article>`;
+  }).join("");
+
+  for (const card of $("panels").querySelectorAll(".panel")) {
+    const sid = card.dataset.study;
+    const own = units.filter((u) => u.study_id === sid).map((u) => curves.get(u.unit_id + "|" + u.study_id));
+    const svg = card.querySelector("svg"), cross = svg.querySelector(".cross");
+    svg.addEventListener("mousemove", (e) => {
+      const r = svg.getBoundingClientRect();
+      const px = ((e.clientX - r.left) / r.width) * W;
+      const i = Math.floor(((px - M.l) / (W - M.l - M.r)) * nb);
+      if (i < 0 || i >= nb) { hideTip(); cross.setAttribute("visibility", "hidden"); return; }
+      cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
+      const vals = own.map((c) => c[i]);
+      showTip(e, `<b>${i * data.bin}–${(i + 1) * data.bin}% methylated</b>` +
+        `This study: ${pct(median(vals), 2)} of genes (samples ${pct(Math.min(...vals), 2)}–${pct(Math.max(...vals), 2)})<br>` +
+        `All pooled samples: ${pct(ref[i], 2)}`);
+    });
+    svg.addEventListener("mouseleave", () => { hideTip(); cross.setAttribute("visibility", "hidden"); });
+  }
+}
+
+function tables(data) {
+  $("studies-lede").textContent = `Medians over each study's samples. "Unmethylated" is under ${data.low}%, "methylated" at or over ${data.high}%. Genome-wide CpG methylation is from the QC summary (all CpGs, not only genes).`;
+  $("study-table").innerHTML = `<thead><tr><th>Study</th><th>Tissue</th><th class="num">Samples</th><th class="num">CpG meth.</th>
+    <th class="num">Gene body median</th><th class="num">&lt;${data.low}%</th><th class="num">≥${data.high}%</th>
+    <th class="num">Promoter median</th><th class="num">≥${data.high}%</th></tr></thead><tbody>` +
+    data.landscape.studies.map((s) => `<tr><td>${esc(s.study_id)}</td><td>${esc(s.tissues.join(", "))}</td>
+      <td class="num">${fmt(s.units)}</td><td class="num">${num(s.cpg_meth_pct, 1)}%</td>
+      <td class="num">${num(s.gene_body.median, 1)}%</td><td class="num">${pct(s.gene_body.low_frac)}</td><td class="num">${pct(s.gene_body.high_frac)}</td>
+      <td class="num">${num(s.promoter.median, 1)}%</td><td class="num">${pct(s.promoter.high_frac)}</td></tr>`).join("") + "</tbody>";
+
+  $("unit-table").innerHTML = `<thead><tr><th>Sample</th><th>Study</th><th>Condition</th><th class="num">Libraries</th><th class="num">CpG meth.</th>
+    <th class="num">Genes scored</th><th class="num">Gene body median</th><th class="num">≥${data.high}%</th><th class="num">Promoter median</th></tr></thead><tbody>` +
+    data.landscape.units.map((u) => `<tr><td>${esc(u.unit_id)}</td><td>${esc(u.study_id)}</td><td>${esc(u.condition)}</td>
+      <td class="num">${fmt(u.libraries)}</td><td class="num">${num(u.cpg_meth_pct, 1)}%</td><td class="num">${fmt(u.gene_body.genes)}</td>
+      <td class="num">${num(u.gene_body.median, 1)}%</td><td class="num">${pct(u.gene_body.high_frac)}</td><td class="num">${num(u.promoter.median, 1)}%</td></tr>`).join("") + "</tbody>";
+}
+
+load().then((data) => {
+  frame(data);
+  const samples = data.studies.reduce((a, s) => a + s.units, 0);
+  $("tiles").innerHTML = [["Studies", data.studies.length], ["Samples", samples], ["Libraries", data.libraries], ["Genes", data.genes]]
+    .map(([l, v]) => `<div class="card tile"><div class="label">${l}</div><div class="value">${fmt(v)}</div></div>`).join("");
+  $("headline").innerHTML = data.headline.map((h) => `<li>${esc(h)}</li>`).join("");
+  $("caveats").innerHTML = data.design.caveats.map((c) => `<li>${esc(c)}</li>`).join("");
+  if (!data.studies.length) {
+    $("panels").innerHTML = `<div class="card empty">No study is pooled yet.</div>`;
+    return;
+  }
+  render(data, "gene_body");
+  tables(data);
+  for (const b of document.querySelectorAll(".seg button")) {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".seg button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+      render(data, b.dataset.cls);
+    });
+  }
+}).catch(fail);
+</script>
+</body>
+</html>

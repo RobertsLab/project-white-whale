@@ -5,11 +5,14 @@
 Deterministic (fixed seed), so the committed files only change when this
 script does. The reads are a directional WGBS library simulated from the
 genome with known methylation, so a real (not stub) run of the workflow can
-be checked against the truth (tests/check_real_run.py):
+be checked against the truth (tests/check_real_run.py). The four genes in
+reference/TEST/features/*.bed are written by hand, not by this script.
+In the reads:
 
 * every CpG is methylated with probability CPG_METHYLATION, on both strands;
 * every other C is unmethylated, so bisulfite converts it to T;
-* S1 is paired-end, S2 single-end, matching tests/fixtures/samplesheet.tsv.
+* S1 is paired-end, S2 single-end, matching tests/fixtures/samplesheet.tsv
+  (S3 there is S1 listed read 2 first, to test params.swap_mates).
 """
 from __future__ import annotations
 

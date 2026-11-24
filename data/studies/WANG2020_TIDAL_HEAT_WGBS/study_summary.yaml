@@ -1,0 +1,152 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: WANG2020_TIDAL_HEAT_WGBS
+part: null
+generated_on: '2026-10-25'
+nextflow_run: elegant_rubens
+commit: b5c89bbe46c3142bf759186f0b42d0809df50024
+genome_assembly: GCF_963853765.1
+chemistry: wgbs
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
+libraries: 12
+passed: 12
+failed: []
+qc:
+  mapping_pct:
+    n: 12
+    median: 56.95
+    mean: 55.77
+    min: 46.9
+    max: 59.8
+    sd: 4.06
+  duplication_pct:
+    n: 12
+    median: 12.86
+    mean: 13.08
+    min: 11.73
+    max: 18.15
+    sd: 1.69
+  conversion_pct:
+    n: 12
+    median: 99.79
+    mean: 99.79
+    min: 99.77
+    max: 99.81
+    sd: 0.01
+  cpgs_5x:
+    n: 12
+    median: 8337755.0
+    mean: 8374719.0
+    min: 8065190.0
+    max: 8720416.0
+    sd: 205048.02
+  mean_depth:
+    n: 12
+    median: 17.23
+    mean: 17.24
+    min: 14.9
+    max: 19.31
+    sd: 1.36
+cpg_methylation_pct:
+  n: 12
+  median: 12.39
+  mean: 12.43
+  min: 11.12
+  max: 13.4
+  sd: 0.69
+by_factor:
+- factor_id: origin
+  column: origin
+  reference_level: Sub
+  levels:
+  - level: Sub
+    n: 6
+    median: 12.54
+    mean: 12.74
+    min: 12.33
+    max: 13.4
+    sd: 0.47
+  - level: In
+    n: 6
+    median: 12.0
+    mean: 12.12
+    min: 11.12
+    max: 13.01
+    sd: 0.76
+- factor_id: temperature
+  column: temperature
+  reference_level: C
+  levels:
+  - level: C
+    n: 6
+    median: 12.39
+    mean: 12.56
+    min: 12.23
+    max: 13.01
+    sd: 0.34
+  - level: H
+    n: 6
+    median: 12.21
+    mean: 12.3
+    min: 11.12
+    max: 13.4
+    sd: 0.94
+by_condition:
+- condition: In_C
+  n: 3
+  median: 12.98
+  mean: 12.74
+  min: 12.23
+  max: 13.01
+  sd: 0.44
+- condition: In_H
+  n: 3
+  median: 11.61
+  mean: 11.5
+  min: 11.12
+  max: 11.76
+  sd: 0.33
+- condition: Sub_C
+  n: 3
+  median: 12.35
+  mean: 12.37
+  min: 12.33
+  max: 12.43
+  sd: 0.05
+- condition: Sub_H
+  n: 3
+  median: 13.23
+  mean: 13.1
+  min: 12.66
+  max: 13.4
+  sd: 0.39
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 31918
+    meth_pct:
+      n: 31918
+      median: 3.06
+      mean: 18.19
+      min: 0.0
+      max: 89.77
+      sd: 23.97
+    methylated_ge_50pct: 5644
+  promoter:
+    covered_in_all: 31024
+    meth_pct:
+      n: 31024
+      median: 0.34
+      mean: 5.07
+      min: 0.0
+      max: 91.4
+      sd: 11.86
+    methylated_ge_50pct: 620
+methylomes:
+  files: 144
+  bytes: 1043777379
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/WANG2020_TIDAL_HEAT_WGBS/

@@ -1,0 +1,72 @@
+{
+  "study_id": "WANG2020_TIDAL_HEAT_WGBS",
+  "bioproject": "PRJNA562805",
+  "date_generated": "2026-10-24",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA562805&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "origin",
+    "temperature"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 12
+  },
+  "n_runs": 12,
+  "n_libraries": 12,
+  "n_biosamples": 1,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "HiSeq X Ten"
+  ],
+  "group_sizes_runs": {
+    "In_C": 3,
+    "In_H": 3,
+    "Sub_C": 3,
+    "Sub_H": 3
+  },
+  "group_sizes_libraries": {
+    "In_C": 3,
+    "In_H": 3,
+    "Sub_C": 3,
+    "Sub_H": 3
+  },
+  "min_group_libraries": 3,
+  "total_fastq_bytes": 140721136944,
+  "fastq_sources": {
+    "fastq_ftp": 12,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/WANG2020_TIDAL_HEAT_WGBS/samplesheet.tsv": "cd3905b7f9c4ea2b5a2aae65ddd7124a5423a94952da2673c8bc29c5a2fd7ada",
+    "data/studies/WANG2020_TIDAL_HEAT_WGBS/fastq_manifest.tsv": "10f5526e0af00181fe0d1d29a69ada057822e5f059cfd6b236d492a03b53a162"
+  },
+  "biosamples_with_several_libraries": {
+    "SAMN12651045": 12
+  },
+  "run_labels": {
+    "field": "library_name",
+    "pattern": "^(?P<origin>In|Sub)(?P<temperature>C|H)_(?P<replicate>[1-3])$",
+    "labels": {
+      "SRR10065364": "SubH_1",
+      "SRR10065365": "SubC_3",
+      "SRR10065366": "SubC_2",
+      "SRR10065367": "SubC_1",
+      "SRR10065368": "InH_3",
+      "SRR10065369": "InH_2",
+      "SRR10065370": "InH_1",
+      "SRR10065371": "InC_3",
+      "SRR10065372": "SubH_3",
+      "SRR10065373": "SubH_2",
+      "SRR10065374": "InC_2",
+      "SRR10065375": "InC_1"
+    }
+  }
+}

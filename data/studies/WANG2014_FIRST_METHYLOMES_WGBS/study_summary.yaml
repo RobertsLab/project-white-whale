@@ -1,0 +1,120 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: WANG2014_FIRST_METHYLOMES_WGBS
+part: null
+generated_on: '2026-10-25'
+nextflow_run: scruffy_colden
+commit: c9798ecd6dec7e91af5a0e47a27aaa0bef6d871f
+genome_assembly: GCF_963853765.1
+chemistry: wgbs
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
+libraries: 4
+passed: 4
+failed: []
+qc:
+  mapping_pct:
+    n: 4
+    median: 55.65
+    mean: 55.85
+    min: 55.0
+    max: 57.1
+    sd: 0.9
+  duplication_pct:
+    n: 4
+    median: 1.67
+    mean: 1.63
+    min: 0.92
+    max: 2.26
+    sd: 0.71
+  conversion_pct:
+    n: 4
+    median: 99.54
+    mean: 99.54
+    min: 99.53
+    max: 99.54
+    sd: 0.0
+  cpgs_5x:
+    n: 4
+    median: 7675164.0
+    mean: 7651907.5
+    min: 7428428.0
+    max: 7828874.0
+    sd: 205835.43
+  mean_depth:
+    n: 4
+    median: 15.51
+    mean: 15.38
+    min: 14.79
+    max: 15.72
+    sd: 0.42
+cpg_methylation_pct:
+  n: 4
+  median: 10.72
+  mean: 10.88
+  min: 10.55
+  max: 11.52
+  sd: 0.44
+by_factor:
+- factor_id: origin
+  column: condition
+  reference_level: wild
+  levels:
+  - level: wild
+    n: 2
+    median: 10.62
+    mean: 10.62
+    min: 10.55
+    max: 10.68
+    sd: 0.09
+  - level: inbred
+    n: 2
+    median: 11.14
+    mean: 11.14
+    min: 10.76
+    max: 11.52
+    sd: 0.54
+by_condition:
+- condition: inbred
+  n: 2
+  median: 11.14
+  mean: 11.14
+  min: 10.76
+  max: 11.52
+  sd: 0.54
+- condition: wild
+  n: 2
+  median: 10.62
+  mean: 10.62
+  min: 10.55
+  max: 10.68
+  sd: 0.09
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 31485
+    meth_pct:
+      n: 31485
+      median: 2.09
+      mean: 16.8
+      min: 0.0
+      max: 93.35
+      sd: 22.82
+    methylated_ge_50pct: 4655
+  promoter:
+    covered_in_all: 29919
+    meth_pct:
+      n: 29919
+      median: 0.5
+      mean: 4.46
+      min: 0.0
+      max: 95.17
+      sd: 10.86
+    methylated_ge_50pct: 487
+methylomes:
+  files: 48
+  bytes: 310970261
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/WANG2014_FIRST_METHYLOMES_WGBS/

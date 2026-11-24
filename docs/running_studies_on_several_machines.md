@@ -59,7 +59,8 @@ Progress is recorded by the commands that make it, never by hand:
   raven claims);
 * a successful workflow run calls `whale record-run` itself
   (workflows/methylation/main.nf, `onComplete`). It commits the QC table, run
-  manifest, methylome manifest and `study_summary.yaml`, uploads the
+  manifest, methylome manifest, `study_summary.yaml` and the gene x sample
+  matrices ([gene-level methylation](gene_methylation.md)), uploads the
   methylomes to the data host, and moves the study through `aligned`,
   `called`, `qc_passed` (at least one library passes the QC gate) and
   `summarized` (the methylomes are on the data host), then pushes and marks

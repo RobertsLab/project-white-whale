@@ -9,7 +9,8 @@ machine: klone
 claimed_by: Steven Roberts
 claimed_on: '2026-10-23'
 nextflow_run: determined_khorana
-notes: 'Corrected 2026-10-24: machine was recorded as klone compute nodes n3441 (aligned, called, qc_passed) and n3193 (summarized); set to klone (PR 36).'
+notes: 'Corrected 2026-10-24: machine was recorded as klone compute nodes n3441 (aligned,
+  called, qc_passed) and n3193 (summarized); set to klone (PR 36).'
 history:
 - stage: claimed
   date: '2026-10-23'

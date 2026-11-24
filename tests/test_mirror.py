@@ -123,7 +123,9 @@ def ena(monkeypatch):
 def repo(tmp_path, repo_root):
     r = tmp_path / "repo"
     shutil.copytree(repo_root / "registry", r / "registry")
-    shutil.copytree(repo_root / "data", r / "data", ignore=shutil.ignore_patterns("raw", "studies"))
+    # Not the machine-local symlinks (.gitignore): copying the reference bundle would be ~4 GB a test.
+    shutil.copytree(repo_root / "data", r / "data",
+                    ignore=shutil.ignore_patterns("raw", "studies", "methylomes", "GCF_*"))
     return r
 
 
