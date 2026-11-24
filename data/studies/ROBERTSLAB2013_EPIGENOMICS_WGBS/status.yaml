@@ -37,3 +37,9 @@ history:
   note: '1 of 14 libraries pass the QC gate; failed: SRR1693528, SRR1693531, SRR1693532,
     SRR1693534, SRR1693537, SRR1693538, SRR1696820, SRR1696826, SRR1696827, SRR1696867,
     SRR1696868, SRR1697248, SRR942533'
+- stage: qc_passed
+  date: '2026-11-23'
+  machine: Hete
+  note: 'Kept as a single-sample study: only SRR1045858 (deep male gonad, Olson &
+    Roberts 2014) passes. The 12 family/larvae libraries are too shallow (1.5-5.7M
+    pairs) and the gill library is MBD-enriched; no between-group comparison is possible.'

@@ -91,7 +91,12 @@ limitations: >
   group for gill and deep gonad, two (one per family) for the others. (5)
   Coverage of the family libraries is low (tens of millions of reads at
   most), so per-CpG calls will be sparse. (6) No unmethylated spike-in is
-  recorded; conversion has to be estimated from non-CpG context.
+  recorded; conversion has to be estimated from non-CpG context. (7) After
+  processing (run goofy_franklin, 2026-11-22) only SRR1045858, the deep male
+  gonad library, passes the QC gate (8.3M CpGs at >=5x). The 12 family and
+  larval runs have 1.5-5.7M read pairs (~1.3x, 1k-100k CpGs at >=5x) and the
+  gill library fails mapping and conversion, so the study is kept as a
+  single-sample gonad methylome: no gill, larval or family comparison.
 
 provenance:
   registered_by: "Steven Roberts"
@@ -113,7 +118,8 @@ provenance:
     120 hpf (both "D-hinge larvae"), so the run titles are used. Tissue
     "male gametes/spermatozoa" in the deposit is recorded as gonad; larval
     pools as whole_body. The two RNA-Seq runs were left out of the sheet.
-    No exclusions.
+    No exclusions. 2026-11-23: kept as a single-sample study (one library
+    passes QC; see limitations (7)) rather than closed or split by paper.
   source_links:
     - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA213124"
     - "https://www.ebi.ac.uk/ena/browser/view/PRJNA213124"
