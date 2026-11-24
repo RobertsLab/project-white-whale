@@ -1,0 +1,47 @@
+{
+  "study_id": "GAWRA2023_POMS_ADAPTATION_BSCAPTURE",
+  "bioproject": "PRJEB60400",
+  "date_generated": "2026-11-23",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB60400&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "phenotype"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 246
+  },
+  "n_runs": 246,
+  "n_libraries": 246,
+  "n_biosamples": 246,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "Illumina NovaSeq 6000",
+    "NextSeq 550"
+  ],
+  "group_sizes_runs": {
+    "resistant": 130,
+    "susceptible": 116
+  },
+  "group_sizes_libraries": {
+    "resistant": 130,
+    "susceptible": 116
+  },
+  "min_group_libraries": 116,
+  "total_fastq_bytes": 744599683544,
+  "fastq_sources": {
+    "fastq_ftp": 246,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/GAWRA2023_POMS_ADAPTATION_BSCAPTURE/samplesheet.tsv": "b9b16a8e772604025dcfa84d4d2d28d36892b8b430868fc509b0442a469c1f07",
+    "data/studies/GAWRA2023_POMS_ADAPTATION_BSCAPTURE/fastq_manifest.tsv": "1cb0cf5536117c6b162d47f3389b29c8318cbb042635a338ba320c01eb70713e"
+  }
+}
