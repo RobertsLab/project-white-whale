@@ -1,0 +1,68 @@
+{
+  "study_id": "FALLET2022_MICROBIAL_TRANSGEN_WGBS",
+  "bioproject": "PRJNA609264",
+  "date_generated": "2026-11-23",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA609264&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "isolation_source",
+    "generation",
+    "dev_stage"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "AMPLICON": 222,
+    "Bisulfite-Seq": 47,
+    "RNA-Seq": 119,
+    "WGS": 3
+  },
+  "n_runs": 47,
+  "n_libraries": 47,
+  "n_biosamples": 47,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "HiSeq X Ten"
+  ],
+  "group_sizes_runs": {
+    "Exposed_F1_Juvenile": 6,
+    "Exposed_F1_Larvae": 6,
+    "Exposed_F2_Juvenile": 6,
+    "Exposed_F2_Larvae": 5,
+    "UV_F1_Juvenile": 6,
+    "UV_F1_Larvae": 6,
+    "UV_F2_Juvenile": 6,
+    "UV_F2_Larvae": 6
+  },
+  "group_sizes_libraries": {
+    "Exposed_F1_Juvenile": 6,
+    "Exposed_F1_Larvae": 6,
+    "Exposed_F2_Juvenile": 6,
+    "Exposed_F2_Larvae": 5,
+    "UV_F1_Juvenile": 6,
+    "UV_F1_Larvae": 6,
+    "UV_F2_Juvenile": 6,
+    "UV_F2_Larvae": 6
+  },
+  "min_group_libraries": 5,
+  "total_fastq_bytes": 856562249928,
+  "fastq_sources": {
+    "fastq_ftp": 47,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/FALLET2022_MICROBIAL_TRANSGEN_WGBS/samplesheet.tsv": "f062bd3121e54fbd901f9ebd1c42bbf5834845ff2e47c0bfd2b1a9d0b0f95830",
+    "data/studies/FALLET2022_MICROBIAL_TRANSGEN_WGBS/fastq_manifest.tsv": "87ee32b9c0046f2d165260eb15eeef7cbcf35dd80f71a244d5e64895d4827fa3"
+  },
+  "runs_not_kept": {
+    "AMPLICON": 222,
+    "RNA-Seq": 119,
+    "WGS": 3
+  }
+}
