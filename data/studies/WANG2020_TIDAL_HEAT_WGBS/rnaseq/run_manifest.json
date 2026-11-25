@@ -1,0 +1,110 @@
+{
+  "params": {
+    "study_id": "WANG2020_TIDAL_HEAT_WGBS",
+    "workflow": "rnaseq",
+    "genome_assembly": "GCF_963853765.1",
+    "salmon_decoys": true,
+    "salmon_kmer": 31,
+    "salmon_index_args": "",
+    "salmon_quant_args": "",
+    "fastp_args": "",
+    "se_adapter": "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA",
+    "tag_seq": false,
+    "rnaseq_min_mapping": 30.0,
+    "rnaseq_min_mapped": 1000000,
+    "rnaseq_min_genes": 1000,
+    "profile": "klone",
+    "nextflow_version": "26.04.7",
+    "run_name": "cranky_pesquet",
+    "commit": "8ed0460933a60ec3610aaefa5dcca9b5d7d15ca3",
+    "session": "95ddb498-8972-4109-9e8b-f125503ef80a"
+  },
+  "tool_versions": {
+    "FASTQC": {
+      "fastqc": "0.12.1"
+    },
+    "SALMON_QUANT": {
+      "salmon": "1.10.3"
+    },
+    "MULTIQC": {
+      "multiqc": "1.33"
+    },
+    "FASTP": {
+      "fastp": "0.23.4"
+    },
+    "SALMON_INDEX": {
+      "salmon": "1.10.3"
+    }
+  },
+  "salmon_index": {
+    "salmon": "1.10.3",
+    "kmer": 31,
+    "decoys": true,
+    "index_args": "",
+    "transcripts": "rna.fna",
+    "transcripts_sha256": "297d49baac2fd3187db957c3dcd150e58ed2a61c3867b61dbdd83ba9b683c386",
+    "genome_sha256": "64cbe0d84cb24a3f190cfc2cfbe856eb5c3a4697cd8c2605fc48fdf80814cf02",
+    "decoy_sequences": 29
+  },
+  "matrices": {
+    "samples": [
+      "SRR6057012",
+      "SRR6058486",
+      "SRR6058506",
+      "SRR6058518",
+      "SRR6058519",
+      "SRR6058521",
+      "SRR6058526",
+      "SRR6058527",
+      "SRR6058528",
+      "SRR6058529",
+      "SRR6058530",
+      "SRR6058531",
+      "SRR6058534",
+      "SRR6058535",
+      "SRR6058536",
+      "SRR6058537",
+      "SRR6058539",
+      "SRR6058540",
+      "SRR6058609",
+      "SRR6058611",
+      "SRR6058612",
+      "SRR6058613",
+      "SRR6058614",
+      "SRR6058615",
+      "SRR6058616",
+      "SRR6058617",
+      "SRR6058618",
+      "SRR6058619",
+      "SRR6058620",
+      "SRR6058621",
+      "SRR6058622",
+      "SRR6058623",
+      "SRR6058625",
+      "SRR6058627",
+      "SRR6058629",
+      "SRR6058630"
+    ],
+    "transcripts_quantified": 60009,
+    "transcripts_in_tx2gene": 60009,
+    "transcripts_not_in_tx2gene": 0,
+    "transcripts_not_in_tx2gene_examples": [],
+    "genes": 32132,
+    "tx2gene_genes_without_quantified_transcript": 936,
+    "aggregation": "tximport countsFromAbundance='no': TPM and counts summed per gene; length = TPM-weighted mean effective length (plain mean when TPM is 0)"
+  },
+  "inputs": {
+    "samplesheet": {
+      "name": "samplesheet.tsv",
+      "sha256": "1d9efcfcc8133bc8d54c037505a7dec0c9cfa11219a0d5ddafce659593f57100"
+    },
+    "transcripts": {
+      "name": "rna.fna",
+      "sha256": "297d49baac2fd3187db957c3dcd150e58ed2a61c3867b61dbdd83ba9b683c386"
+    },
+    "tx2gene": {
+      "name": "tx2gene.tsv",
+      "sha256": "170cae75beb05c1afd9b7b3dbed4bdeb4225c16f9aab757ccc00c2b449092d18"
+    }
+  }
+}

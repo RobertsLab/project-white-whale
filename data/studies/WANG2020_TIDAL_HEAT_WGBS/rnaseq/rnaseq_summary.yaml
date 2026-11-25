@@ -1,0 +1,66 @@
+# Written by `whale record-rnaseq` from this study's RNA-seq run (workflows/rnaseq).
+study_id: WANG2020_TIDAL_HEAT_WGBS
+generated_on: '2026-11-25'
+nextflow_run: cranky_pesquet
+commit: 8ed0460933a60ec3610aaefa5dcca9b5d7d15ca3
+genome_assembly: GCF_963853765.1
+quantifier:
+  salmon: 1.10.3
+  decoys: true
+  kmer: 31
+libraries: 36
+passed: 36
+failed: []
+layouts:
+- PE
+strandedness:
+  reverse: 36
+mixed_strandedness: false
+qc:
+  reads_in:
+    n: 36
+    median: 16096865.5
+    mean: 15922032.25
+    min: 13416139.0
+    max: 16737195.0
+    sd: 731392.51
+  mapping_pct:
+    n: 36
+    median: 72.41
+    mean: 72.07
+    min: 65.64
+    max: 74.33
+    sd: 1.65
+  decoy_pct:
+    n: 36
+    median: 3.9
+    mean: 3.91
+    min: 3.32
+    max: 4.77
+    sd: 0.26
+  fragments_mapped:
+    n: 36
+    median: 11621163.0
+    mean: 11473273.0
+    min: 9544845.0
+    max: 12132240.0
+    sd: 608417.62
+  genes_tpm_ge1:
+    n: 36
+    median: 19820.0
+    mean: 19884.81
+    min: 18075.0
+    max: 20965.0
+    sd: 598.62
+genes:
+  universe: 32132
+  tpm_ge1_in_every_passing_library: 14975
+  matrices:
+  - gene_tpm.tsv.gz
+  - gene_counts.tsv.gz
+  - gene_length.tsv.gz
+files:
+  files: 400
+  bytes: 203012674
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/rnaseq/WANG2020_TIDAL_HEAT_WGBS/
