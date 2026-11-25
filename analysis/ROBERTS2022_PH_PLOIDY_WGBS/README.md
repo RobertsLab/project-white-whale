@@ -8,6 +8,12 @@ methylation differs with ploidy, with pH, or with their combination.
 (4 of them robust to dropping two outlying libraries) and none by pH. The
 sample structure is dominated by individual variation, not by either factor.
 
+> **Caveat (2026-11-25).** These results come from run `curious_mestorf`, which
+> aligned these non-directional (Zymo Pico Methyl-Seq) libraries in directional
+> mode and so used about half the read pairs (30% mapping). The study config now
+> sets `--non_directional`; re-run and re-derive before treating these numbers as
+> final (PLAN.md, next steps).
+
 ## Data and methods
 
 - **Input**: the study's committed gene tables (`data/studies/ROBERTS2022_PH_PLOIDY_WGBS/genes/`),

@@ -37,7 +37,7 @@ built by `whale build-dashboard` from the committed matrices:
 
 - histograms of gene-body and promoter methylation over the genes with
   >= 5 covered CpGs in every library (2% bins, log count scale);
-- links to the six matrices and to the per-library tables on gannet;
+- links to the eight matrices and to the per-library tables on gannet;
 - a searchable, sortable table of every gene: GeneID, symbol and
   description, gene-body and promoter methylation, the number of libraries
   each rests on, and gene-body methylation per level of each design factor.

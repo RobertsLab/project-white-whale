@@ -97,4 +97,5 @@ factor id (or `individual`).
   `confounded_design`, with one population per class, is a population
   difference and not an origin effect.
 - **Fewer than two units per level means no test.** Neither WANG2014 (one
-  animal per group) nor PESTO2022 (no factors registered yet) has a job.
+  animal per group) nor PESTO2022 (no factors registered yet) has a job. DECICOMP2025 and
+  GAWRA2023 have jobs but have not been run yet.

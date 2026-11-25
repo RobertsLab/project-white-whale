@@ -14,7 +14,7 @@ variables instead.
 | `WHALE_BOWTIE2_INDEX` | directory holding the cached `bowtie2_genome/` index ([enrichment tier](enrichment.md)) | the reference bundle |
 | `WHALE_METHYLOMES` | where per-sample outputs are published (RNA-seq under `<STUDY_ID>/rnaseq/`) | `data/methylomes` |
 | `WHALE_WORKDIR` | Nextflow work directory, on fast local disk | `work` (klone: `/gscratch/srlab/$USER/whale/work`) |
-| `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` | local executor limits (desktop, raven) | 10 / 28 GB; 32 / 120 GB |
+| `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` | local executor limits (desktop, raven) | 10 / 28 GB; 36 / 180 GB |
 | `WHALE_SLURM_ACCOUNT`, `WHALE_SLURM_QUEUE` | klone | `srlab`, `ckpt-all` |
 | `WHALE_APPTAINER_CACHEDIR` | klone | `/gscratch/scrubbed/$USER/whale/apptainer-cache` |
 

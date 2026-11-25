@@ -70,8 +70,8 @@ moment would both write it.
 `bismark_genome/` is not listed in `reference_provenance.json`, so
 `whale fetch-reference --check` ignores it.
 
-Not in the bundle yet: the CpG index and the C/T SNP mask (later Phase 1,
-PLAN.md §6.1).
+Not in the bundle yet: the CpG index (PLAN.md §6.1). C/T SNP masks are written
+inside the bundle under `snp_mask/<MASK_ID>/` ([snp_mask.md](snp_mask.md)).
 
 ## The Salmon index
 

@@ -69,8 +69,8 @@ limitations: >
   for arrested development; BT1C and BT1D (ERR10684010, ERR10684012) are
   probably that tank's (inferred from their codes) and are marked low
   confidence in sample_curation.tsv. (3) Conversion chemistry is not stated
-  (bisulfite or NEBNext EM-seq). 35 of 48 libraries fail the 98% conversion
-  gate in run serene_ritchie, with non-CpG methylation that is flat along
+  (bisulfite or NEBNext EM-seq). 34 of 48 libraries fail the 98% conversion
+  gate in run serene_ritchie (a 35th fails on mapping), with non-CpG methylation that is flat along
   the read. (4) The design (stage, generation, own and parental exposure) is
   only in each run's condition string; the sample sheet has no separate
   columns for it, so no factors are registered and the shared differential

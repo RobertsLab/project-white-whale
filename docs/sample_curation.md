@@ -41,7 +41,8 @@ pool sizes, and a source on every row.
 ploidy, sex and population from the curated table for every library that has
 a row, and records `metadata_source = curated` in `sample_metadata.tsv`
 (otherwise `deposit`, with the registry's study-level terms or the deposit's
-own columns, as before). `unknown` becomes an empty cell. Units (libraries
+own columns, as before). `unknown` becomes an empty cell, except for `sex`, which stays `unknown`
+as for uncurated libraries. Units (libraries
 summed before comparison) still come from BioSamples: `animal_id` is
 reported, not used to merge libraries, because two tissues or two time points
 of one animal are different samples.
