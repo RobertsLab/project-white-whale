@@ -1,0 +1,454 @@
+# Written by `whale record-run` from this study's qc_summary.tsv; read by the dashboard.
+study_id: GAWRA2023_POMS_ADAPTATION_BSCAPTURE
+part: null
+generated_on: '2026-11-24'
+nextflow_run: gigantic_lorenz
+commit: 80e9a00b1c47928da201089c480a794f6ead68bd
+genome_assembly: GCF_963853765.1
+chemistry: bs_capture
+snp_mask:
+  mask_id: GCF_963853765.1.snpmask.v1
+  sha256: 3d59a6b3008b1dcddb227323ab8438f88c65a39602e3d1c40d64220a4d7d8895
+  cpgs_masked: 628253
+libraries: 246
+passed: 132
+failed:
+- sample_id: ERR10960508
+  reasons: mapping 0.1% < 20.0%; conversion 2.12% < 98.0%; 1854 CpGs at >=5x < 1000000
+- sample_id: ERR10960509
+  reasons: mapping 0.1% < 20.0%; conversion 2.365% < 98.0%; 1736 CpGs at >=5x < 1000000
+- sample_id: ERR10960513
+  reasons: mapping 2.1% < 20.0%; 8942 CpGs at >=5x < 1000000
+- sample_id: ERR10960518
+  reasons: mapping 0.2% < 20.0%; conversion 2.629% < 98.0%; 731 CpGs at >=5x < 1000000
+- sample_id: ERR10960519
+  reasons: mapping 0.1% < 20.0%; conversion 2.167% < 98.0%; 936 CpGs at >=5x < 1000000
+- sample_id: ERR10960520
+  reasons: mapping 0.1% < 20.0%; conversion 2.48% < 98.0%; 1043 CpGs at >=5x < 1000000
+- sample_id: ERR10960521
+  reasons: mapping 0.1% < 20.0%; conversion 2.413% < 98.0%; 770 CpGs at >=5x < 1000000
+- sample_id: ERR10960522
+  reasons: mapping 0.1% < 20.0%; conversion 2.452% < 98.0%; 1133 CpGs at >=5x < 1000000
+- sample_id: ERR10960523
+  reasons: mapping 0.1% < 20.0%; conversion 2.335% < 98.0%; 967 CpGs at >=5x < 1000000
+- sample_id: ERR10960525
+  reasons: mapping 0.1% < 20.0%; conversion 1.917% < 98.0%; 1528 CpGs at >=5x < 1000000
+- sample_id: ERR10960531
+  reasons: mapping 0.1% < 20.0%; conversion 1.948% < 98.0%; 2864 CpGs at >=5x < 1000000
+- sample_id: ERR10960536
+  reasons: mapping 3.2% < 20.0%; 5726 CpGs at >=5x < 1000000
+- sample_id: ERR10960537
+  reasons: mapping 0.1% < 20.0%; conversion 2.454% < 98.0%; 2398 CpGs at >=5x < 1000000
+- sample_id: ERR10960538
+  reasons: mapping 0.1% < 20.0%; conversion 2.066% < 98.0%; 1860 CpGs at >=5x < 1000000
+- sample_id: ERR10960541
+  reasons: mapping 0.1% < 20.0%; conversion 1.911% < 98.0%; 1139 CpGs at >=5x < 1000000
+- sample_id: ERR10960544
+  reasons: mapping 0.1% < 20.0%; conversion 1.935% < 98.0%; 1680 CpGs at >=5x < 1000000
+- sample_id: ERR10960545
+  reasons: mapping 0.1% < 20.0%; conversion 1.966% < 98.0%; 1358 CpGs at >=5x < 1000000
+- sample_id: ERR10960547
+  reasons: mapping 0.1% < 20.0%; conversion 1.927% < 98.0%; 1046 CpGs at >=5x < 1000000
+- sample_id: ERR10960549
+  reasons: mapping 0.1% < 20.0%; conversion 2.7% < 98.0%; 714 CpGs at >=5x < 1000000
+- sample_id: ERR10960550
+  reasons: mapping 0.2% < 20.0%; conversion 2.63% < 98.0%; 732 CpGs at >=5x < 1000000
+- sample_id: ERR10960558
+  reasons: mapping 0.1% < 20.0%; conversion 1.929% < 98.0%; 2647 CpGs at >=5x < 1000000
+- sample_id: ERR10960559
+  reasons: mapping 0.1% < 20.0%; conversion 2.025% < 98.0%; 2103 CpGs at >=5x < 1000000
+- sample_id: ERR10960563
+  reasons: mapping 0.1% < 20.0%; conversion 1.978% < 98.0%; 1908 CpGs at >=5x < 1000000
+- sample_id: ERR10960567
+  reasons: mapping 0.1% < 20.0%; conversion 2.13% < 98.0%; 2392 CpGs at >=5x < 1000000
+- sample_id: ERR10960569
+  reasons: mapping 2.6% < 20.0%; 2504 CpGs at >=5x < 1000000
+- sample_id: ERR10960570
+  reasons: mapping 0.1% < 20.0%; conversion 2.009% < 98.0%; 1378 CpGs at >=5x < 1000000
+- sample_id: ERR10960571
+  reasons: mapping 0.1% < 20.0%; conversion 1.973% < 98.0%; 1954 CpGs at >=5x < 1000000
+- sample_id: ERR10960572
+  reasons: mapping 0.1% < 20.0%; conversion 1.915% < 98.0%; 953 CpGs at >=5x < 1000000
+- sample_id: ERR10960575
+  reasons: mapping 0.1% < 20.0%; conversion 1.796% < 98.0%; 1215 CpGs at >=5x < 1000000
+- sample_id: ERR10960576
+  reasons: mapping 0.1% < 20.0%; conversion 1.976% < 98.0%; 1757 CpGs at >=5x < 1000000
+- sample_id: ERR10960578
+  reasons: mapping 0.1% < 20.0%; conversion 2.045% < 98.0%; 2105 CpGs at >=5x < 1000000
+- sample_id: ERR10960579
+  reasons: mapping 0.1% < 20.0%; conversion 1.656% < 98.0%; 1140 CpGs at >=5x < 1000000
+- sample_id: ERR10960583
+  reasons: mapping 0.1% < 20.0%; conversion 1.586% < 98.0%; 1310 CpGs at >=5x < 1000000
+- sample_id: ERR10960585
+  reasons: mapping 0.1% < 20.0%; conversion 1.718% < 98.0%; 1266 CpGs at >=5x < 1000000
+- sample_id: ERR10960586
+  reasons: mapping 0.1% < 20.0%; conversion 1.656% < 98.0%; 1232 CpGs at >=5x < 1000000
+- sample_id: ERR10960587
+  reasons: mapping 0.1% < 20.0%; conversion 2.129% < 98.0%; 1432 CpGs at >=5x < 1000000
+- sample_id: ERR10960588
+  reasons: mapping 0.1% < 20.0%; conversion 2.179% < 98.0%; 1412 CpGs at >=5x < 1000000
+- sample_id: ERR10960589
+  reasons: mapping 0.2% < 20.0%; conversion 2.123% < 98.0%; 1035 CpGs at >=5x < 1000000
+- sample_id: ERR10960590
+  reasons: mapping 0.1% < 20.0%; conversion 1.804% < 98.0%; 1092 CpGs at >=5x < 1000000
+- sample_id: ERR10960592
+  reasons: mapping 0.1% < 20.0%; conversion 1.792% < 98.0%; 1024 CpGs at >=5x < 1000000
+- sample_id: ERR10960593
+  reasons: mapping 0.1% < 20.0%; conversion 2.051% < 98.0%; 1887 CpGs at >=5x < 1000000
+- sample_id: ERR10960594
+  reasons: mapping 0.2% < 20.0%; conversion 1.505% < 98.0%; 2459 CpGs at >=5x < 1000000
+- sample_id: ERR10960597
+  reasons: mapping 0.1% < 20.0%; conversion 2.048% < 98.0%; 1414 CpGs at >=5x < 1000000
+- sample_id: ERR10960598
+  reasons: mapping 0.1% < 20.0%; conversion 1.946% < 98.0%; 2080 CpGs at >=5x < 1000000
+- sample_id: ERR10960599
+  reasons: mapping 0.1% < 20.0%; conversion 1.844% < 98.0%; 1617 CpGs at >=5x < 1000000
+- sample_id: ERR10960600
+  reasons: mapping 0.1% < 20.0%; conversion 2.19% < 98.0%; 650 CpGs at >=5x < 1000000
+- sample_id: ERR10960601
+  reasons: mapping 0.1% < 20.0%; conversion 1.961% < 98.0%; 2419 CpGs at >=5x < 1000000
+- sample_id: ERR10960602
+  reasons: mapping 0.1% < 20.0%; conversion 1.506% < 98.0%; 2177 CpGs at >=5x < 1000000
+- sample_id: ERR10960604
+  reasons: mapping 0.1% < 20.0%; conversion 2.133% < 98.0%; 1295 CpGs at >=5x < 1000000
+- sample_id: ERR10960606
+  reasons: mapping 0.2% < 20.0%; conversion 2.058% < 98.0%; 936 CpGs at >=5x < 1000000
+- sample_id: ERR10960607
+  reasons: mapping 0.1% < 20.0%; conversion 2.134% < 98.0%; 1507 CpGs at >=5x < 1000000
+- sample_id: ERR10960611
+  reasons: mapping 0.2% < 20.0%; conversion 1.805% < 98.0%; 1453 CpGs at >=5x < 1000000
+- sample_id: ERR10960613
+  reasons: mapping 0.1% < 20.0%; conversion 1.486% < 98.0%; 1966 CpGs at >=5x < 1000000
+- sample_id: ERR10960615
+  reasons: mapping 0.2% < 20.0%; conversion 1.558% < 98.0%; 2501 CpGs at >=5x < 1000000
+- sample_id: ERR10960619
+  reasons: mapping 0.1% < 20.0%; conversion 1.974% < 98.0%; 1413 CpGs at >=5x < 1000000
+- sample_id: ERR10960620
+  reasons: mapping 0.1% < 20.0%; conversion 2.01% < 98.0%; 1549 CpGs at >=5x < 1000000
+- sample_id: ERR10960622
+  reasons: mapping 0.1% < 20.0%; conversion 2.165% < 98.0%; 1389 CpGs at >=5x < 1000000
+- sample_id: ERR10960623
+  reasons: mapping 0.1% < 20.0%; conversion 1.973% < 98.0%; 1750 CpGs at >=5x < 1000000
+- sample_id: ERR10960625
+  reasons: mapping 0.1% < 20.0%; conversion 2.281% < 98.0%; 1743 CpGs at >=5x < 1000000
+- sample_id: ERR10960626
+  reasons: mapping 0.2% < 20.0%; conversion 2.083% < 98.0%; 1214 CpGs at >=5x < 1000000
+- sample_id: ERR10960627
+  reasons: mapping 0.2% < 20.0%; conversion 1.498% < 98.0%; 3547 CpGs at >=5x < 1000000
+- sample_id: ERR10960629
+  reasons: mapping 0.2% < 20.0%; conversion 1.444% < 98.0%; 2921 CpGs at >=5x < 1000000
+- sample_id: ERR10960630
+  reasons: mapping 0.1% < 20.0%; conversion 2.053% < 98.0%; 2264 CpGs at >=5x < 1000000
+- sample_id: ERR10960634
+  reasons: mapping 0.1% < 20.0%; conversion 2.103% < 98.0%; 1713 CpGs at >=5x < 1000000
+- sample_id: ERR10960637
+  reasons: mapping 0.1% < 20.0%; conversion 1.291% < 98.0%; 1880 CpGs at >=5x < 1000000
+- sample_id: ERR10960638
+  reasons: mapping 0.2% < 20.0%; conversion 1.793% < 98.0%; 1747 CpGs at >=5x < 1000000
+- sample_id: ERR10960639
+  reasons: mapping 0.1% < 20.0%; conversion 1.644% < 98.0%; 1746 CpGs at >=5x < 1000000
+- sample_id: ERR10960640
+  reasons: mapping 0.6% < 20.0%; conversion 1.001% < 98.0%; 3906 CpGs at >=5x < 1000000
+- sample_id: ERR10960643
+  reasons: mapping 0.1% < 20.0%; conversion 2.077% < 98.0%; 1824 CpGs at >=5x < 1000000
+- sample_id: ERR10960644
+  reasons: mapping 0.1% < 20.0%; conversion 1.897% < 98.0%; 1197 CpGs at >=5x < 1000000
+- sample_id: ERR10960646
+  reasons: mapping 0.1% < 20.0%; conversion 1.926% < 98.0%; 2051 CpGs at >=5x < 1000000
+- sample_id: ERR10960649
+  reasons: mapping 0.1% < 20.0%; conversion 1.676% < 98.0%; 1235 CpGs at >=5x < 1000000
+- sample_id: ERR10960652
+  reasons: mapping 0.1% < 20.0%; conversion 2.16% < 98.0%; 1781 CpGs at >=5x < 1000000
+- sample_id: ERR10960655
+  reasons: mapping 0.1% < 20.0%; conversion 1.816% < 98.0%; 1243 CpGs at >=5x < 1000000
+- sample_id: ERR10960661
+  reasons: mapping 0.1% < 20.0%; conversion 1.772% < 98.0%; 2124 CpGs at >=5x < 1000000
+- sample_id: ERR10960662
+  reasons: mapping 0.2% < 20.0%; conversion 2.171% < 98.0%; 2207 CpGs at >=5x < 1000000
+- sample_id: ERR10960664
+  reasons: mapping 0.1% < 20.0%; conversion 1.892% < 98.0%; 1107 CpGs at >=5x < 1000000
+- sample_id: ERR10960666
+  reasons: mapping 0.2% < 20.0%; conversion 2.399% < 98.0%; 3623 CpGs at >=5x < 1000000
+- sample_id: ERR10960668
+  reasons: mapping 0.1% < 20.0%; conversion 1.729% < 98.0%; 1069 CpGs at >=5x < 1000000
+- sample_id: ERR10960669
+  reasons: mapping 0.1% < 20.0%; conversion 3.681% < 98.0%; 2265 CpGs at >=5x < 1000000
+- sample_id: ERR10960672
+  reasons: mapping 0.3% < 20.0%; conversion 2.043% < 98.0%; 2578 CpGs at >=5x < 1000000
+- sample_id: ERR10960677
+  reasons: mapping 0.1% < 20.0%; conversion 2.02% < 98.0%; 803 CpGs at >=5x < 1000000
+- sample_id: ERR10960684
+  reasons: mapping 0.1% < 20.0%; conversion 2.177% < 98.0%; 1994 CpGs at >=5x < 1000000
+- sample_id: ERR10960685
+  reasons: mapping 0.2% < 20.0%; conversion 1.682% < 98.0%; 1811 CpGs at >=5x < 1000000
+- sample_id: ERR10960686
+  reasons: mapping 0.1% < 20.0%; conversion 1.516% < 98.0%; 1774 CpGs at >=5x < 1000000
+- sample_id: ERR10960690
+  reasons: mapping 3.1% < 20.0%; 2928 CpGs at >=5x < 1000000
+- sample_id: ERR10960691
+  reasons: mapping 0.1% < 20.0%; conversion 2.163% < 98.0%; 887 CpGs at >=5x < 1000000
+- sample_id: ERR10960693
+  reasons: mapping 0.1% < 20.0%; conversion 2.15% < 98.0%; 2643 CpGs at >=5x < 1000000
+- sample_id: ERR10960696
+  reasons: mapping 0.1% < 20.0%; conversion 2.053% < 98.0%; 450 CpGs at >=5x < 1000000
+- sample_id: ERR10960697
+  reasons: mapping 0.1% < 20.0%; conversion 1.438% < 98.0%; 2723 CpGs at >=5x < 1000000
+- sample_id: ERR10960699
+  reasons: mapping 0.1% < 20.0%; conversion 2.104% < 98.0%; 1701 CpGs at >=5x < 1000000
+- sample_id: ERR10960702
+  reasons: mapping 0.1% < 20.0%; conversion 2.154% < 98.0%; 1615 CpGs at >=5x < 1000000
+- sample_id: ERR10960705
+  reasons: mapping 0.1% < 20.0%; conversion 2.428% < 98.0%; 1458 CpGs at >=5x < 1000000
+- sample_id: ERR10960708
+  reasons: mapping 0.1% < 20.0%; conversion 2.101% < 98.0%; 1851 CpGs at >=5x < 1000000
+- sample_id: ERR10960711
+  reasons: mapping 0.1% < 20.0%; conversion 1.799% < 98.0%; 965 CpGs at >=5x < 1000000
+- sample_id: ERR10960712
+  reasons: mapping 0.1% < 20.0%; conversion 1.386% < 98.0%; 2248 CpGs at >=5x < 1000000
+- sample_id: ERR10960713
+  reasons: mapping 0.1% < 20.0%; conversion 1.88% < 98.0%; 1552 CpGs at >=5x < 1000000
+- sample_id: ERR10960718
+  reasons: mapping 0.1% < 20.0%; conversion 2.039% < 98.0%; 2972 CpGs at >=5x < 1000000
+- sample_id: ERR10960719
+  reasons: mapping 0.1% < 20.0%; conversion 1.674% < 98.0%; 1742 CpGs at >=5x < 1000000
+- sample_id: ERR10960721
+  reasons: mapping 0.1% < 20.0%; conversion 2.267% < 98.0%; 1488 CpGs at >=5x < 1000000
+- sample_id: ERR10960723
+  reasons: mapping 0.2% < 20.0%; conversion 2.567% < 98.0%; 1292 CpGs at >=5x < 1000000
+- sample_id: ERR10960724
+  reasons: mapping 0.1% < 20.0%; conversion 1.814% < 98.0%; 1960 CpGs at >=5x < 1000000
+- sample_id: ERR10960726
+  reasons: mapping 0.1% < 20.0%; conversion 1.749% < 98.0%; 1010 CpGs at >=5x < 1000000
+- sample_id: ERR10960727
+  reasons: mapping 0.1% < 20.0%; conversion 2.27% < 98.0%; 1509 CpGs at >=5x < 1000000
+- sample_id: ERR10960731
+  reasons: mapping 0.2% < 20.0%; conversion 1.634% < 98.0%; 2230 CpGs at >=5x < 1000000
+- sample_id: ERR10960732
+  reasons: mapping 0.0% < 20.0%; conversion 21.107% < 98.0%; 1 CpGs at >=5x < 1000000
+- sample_id: ERR10960736
+  reasons: mapping 0.0% < 20.0%; conversion 19.168% < 98.0%; 0 CpGs at >=5x < 1000000
+- sample_id: ERR10960739
+  reasons: mapping 0.1% < 20.0%; conversion 1.9% < 98.0%; 2237 CpGs at >=5x < 1000000
+- sample_id: ERR10960740
+  reasons: mapping 0.1% < 20.0%; conversion 1.857% < 98.0%; 1322 CpGs at >=5x < 1000000
+- sample_id: ERR10960741
+  reasons: mapping 0.1% < 20.0%; conversion 1.711% < 98.0%; 1454 CpGs at >=5x < 1000000
+- sample_id: ERR10960745
+  reasons: mapping 0.1% < 20.0%; conversion 1.818% < 98.0%; 1090 CpGs at >=5x < 1000000
+- sample_id: ERR10960746
+  reasons: mapping 0.1% < 20.0%; conversion 1.853% < 98.0%; 856 CpGs at >=5x < 1000000
+- sample_id: ERR10960750
+  reasons: mapping 0.2% < 20.0%; conversion 1.606% < 98.0%; 1277 CpGs at >=5x < 1000000
+- sample_id: ERR10960752
+  reasons: mapping 0.1% < 20.0%; conversion 1.876% < 98.0%; 1655 CpGs at >=5x < 1000000
+qc:
+  mapping_pct:
+    n: 246
+    median: 66.8
+    mean: 37.83
+    min: 0.0
+    max: 74.9
+    sd: 35.07
+  duplication_pct:
+    n: 246
+    median: 13.58
+    mean: 16.24
+    min: 5.25
+    max: 41.89
+    sd: 7.98
+  conversion_pct:
+    n: 246
+    median: 99.53
+    mean: 56.08
+    min: 1.0
+    max: 99.66
+    sd: 48.49
+  cpgs_5x:
+    n: 246
+    median: 1401126.0
+    mean: 951553.92
+    min: 0.0
+    max: 3718475.0
+    sd: 911651.87
+  mean_depth:
+    n: 246
+    median: 11.41
+    mean: 9.82
+    min: 1.01
+    max: 27.96
+    sd: 7.8
+cpg_methylation_pct:
+  n: 132
+  median: 21.73
+  mean: 21.91
+  min: 19.37
+  max: 25.39
+  sd: 1.12
+by_factor:
+- factor_id: phenotype
+  column: phenotype
+  reference_level: susceptible
+  levels:
+  - level: susceptible
+    n: 63
+    median: 21.89
+    mean: 22.06
+    min: 19.37
+    max: 24.51
+    sd: 1.13
+  - level: resistant
+    n: 69
+    median: 21.62
+    mean: 21.77
+    min: 19.79
+    max: 25.39
+    sd: 1.11
+- factor_id: population
+  column: population
+  reference_level: None
+  levels:
+  - level: B
+    n: 19
+    median: 21.84
+    mean: 21.77
+    min: 20.15
+    max: 23.82
+    sd: 1.16
+  - level: C
+    n: 15
+    median: 21.71
+    mean: 21.85
+    min: 20.96
+    max: 24.48
+    sd: 0.85
+  - level: D
+    n: 27
+    median: 22.31
+    mean: 22.07
+    min: 19.37
+    max: 24.51
+    sd: 1.39
+  - level: E
+    n: 28
+    median: 21.77
+    mean: 21.86
+    min: 19.88
+    max: 25.39
+    sd: 1.28
+  - level: I
+    n: 23
+    median: 21.66
+    mean: 21.96
+    min: 20.6
+    max: 24.27
+    sd: 0.85
+  - level: J
+    n: 20
+    median: 21.44
+    mean: 21.86
+    min: 20.15
+    max: 23.71
+    sd: 1.02
+- factor_id: tank
+  column: tank
+  reference_level: None
+  levels:
+  - level: '1'
+    n: 18
+    median: 21.65
+    mean: 22.32
+    min: 19.88
+    max: 25.39
+    sd: 1.56
+  - level: '2'
+    n: 13
+    median: 22.01
+    mean: 21.84
+    min: 20.0
+    max: 23.56
+    sd: 1.18
+  - level: '3'
+    n: 20
+    median: 21.87
+    mean: 22.05
+    min: 20.14
+    max: 23.24
+    sd: 0.85
+  - level: '4'
+    n: 23
+    median: 21.83
+    mean: 21.85
+    min: 19.79
+    max: 24.51
+    sd: 0.92
+  - level: '5'
+    n: 15
+    median: 21.65
+    mean: 21.84
+    min: 20.15
+    max: 23.55
+    sd: 0.87
+  - level: '6'
+    n: 12
+    median: 20.99
+    mean: 21.18
+    min: 20.25
+    max: 22.37
+    sd: 0.68
+  - level: '7'
+    n: 13
+    median: 21.72
+    mean: 21.8
+    min: 20.4
+    max: 23.67
+    sd: 1.11
+  - level: '8'
+    n: 18
+    median: 21.6
+    mean: 22.08
+    min: 19.37
+    max: 24.13
+    sd: 1.41
+by_condition:
+- condition: resistant
+  n: 69
+  median: 21.62
+  mean: 21.77
+  min: 19.79
+  max: 25.39
+  sd: 1.11
+- condition: susceptible
+  n: 63
+  median: 21.89
+  mean: 22.06
+  min: 19.37
+  max: 24.51
+  sd: 1.13
+genes:
+  universe: 33331
+  min_cpgs: 5
+  gene_body:
+    covered_in_all: 23661
+    meth_pct:
+      n: 23661
+      median: 2.52
+      mean: 25.75
+      min: 0.11
+      max: 92.64
+      sd: 32.08
+    methylated_ge_50pct: 7025
+  promoter:
+    covered_in_all: 7374
+    meth_pct:
+      n: 7374
+      median: 0.44
+      mean: 6.21
+      min: 0.14
+      max: 94.81
+      sd: 16.08
+    methylated_ge_50pct: 316
+methylomes:
+  files: 2952
+  bytes: 5244162627
+  on_data_host: true
+  url: https://gannet.fish.washington.edu/v1_web/project-white-whale/methylomes/GAWRA2023_POMS_ADAPTATION_BSCAPTURE/

@@ -1,0 +1,114 @@
+# Wild ~14-month-old oysters from six Rade de Brest populations (four from
+# low-density "nonfarming" sites without POMS, two from dense "farming" sites
+# with annual POMS) were challenged together with OsHV-1 uVar by cohabitation
+# with infected donors, in eight tanks. Each oyster was phenotyped as
+# susceptible (sampled moribund) or resistant (alive at the end), and its whole
+# flesh was sequenced by exome capture of bisulfite-converted DNA for joint SNP
+# and CpG (GWA/EWA) mapping.
+
+study_id: GAWRA2023_POMS_ADAPTATION_BSCAPTURE
+aree_study_id: null
+
+accessions:
+  bioproject: "PRJEB60400"
+  sra: null
+  ena: null
+  geo: null
+  doi: "10.1126/sciadv.adh8990"
+  pmid: "37683000"
+  other: "ENA project name GEM. The paper's text names no accession; PRJEB60400 matches on title, design, counts (116 susceptible, 130 resistant) and library protocol."
+
+citation: "Gawra J, Valdivieso A, Roux F, Laporte M, de Lorgeril J, Gueguen Y, Saccas M, Escoubas JM, Montagnani C, Destoumieux-Garzon D, Lagarde F, Leroy MA, Haffner P, Petton B, Cosseau C, Morga B, Degremont L, Mitta G, Grunau C, Vidal-Dupiol J (2023). Epigenetic variations are more substantial than genetic variations in rapid adaptation of oyster to Pacific oyster mortality syndrome. Science Advances 9(36):eadh8990."
+species: "Magallana gigas"
+population: "Wild oysters (~14 months; BioSample age 10-14 months, wild origin wild raised) from six natural populations in the Rade de Brest, France, collected October 2018 (~60 per population). Per the paper, B1-B4 are low-density nonfarming sites with no POMS reported and B5-B6 dense farming-area oyster beds with annual POMS. The deposit labels populations B, C, D, E, I, J (sample_alias prefix); the paper does not give the mapping."
+original_assembly: "C. gigas genome version 9 (oyster_v9); capture probes designed on it"
+
+chemistry: bs_capture
+library_layout: paired
+platform: "Roche SeqCap Epi exome capture of bisulfite-converted libraries (sonicated to ~200 bp, methylated adapters, EZ DNA Methylation-Lightning, capture in pools of 8); probes over all v9 exons +/-100 bp. Lambda phage spike-in. 201 libraries on Illumina NovaSeq 6000 S1 (2 x 100 bp) and 45 on NextSeq 550 (2 x 150 bp)."
+
+samples:
+  n_runs: 246
+  n_libraries: 246
+  sample_unit: individual
+  pool_size: null
+  tissues: [whole_body]
+  life_stages: [juvenile]
+  sexes_recorded: false
+  ploidy: [diploid]
+
+paired_rnaseq:
+  relationship: none
+  bioproject: null
+  notes: "No RNA-seq in the project or the paper. The same exome-capture reads were used for SNP calling (GWA)."
+
+# One library per oyster. condition = phenotype; population, tank and tag are
+# parsed from the sample alias sam_<population><oyster>_<tank>_<tag>.
+factors:
+  - factor_id: phenotype
+    factor_original: "Each oyster's outcome of an OsHV-1 uVar cohabitation challenge (1:1 with injected donors, 21 C, 15 days): susceptible = moribund (valves not closed within 30 s of emersion) and sampled then; resistant = alive at the end. BioSample phenotype attribute."
+    factor_standardized: pathogen
+    levels: ["susceptible", "resistant"]
+    reference_level: "susceptible"
+  - factor_id: population
+    factor_original: "Source population in the Rade de Brest (sample_alias prefix). The paper's B5-B6 farming-area populations were >94.9% resistant; I (38 of 40) and J (33 of 35) are probably those two, but the deposit does not say."
+    factor_standardized: genotype_or_population
+    levels: ["B", "C", "D", "E", "I", "J"]
+    reference_level: null
+  - factor_id: tank
+    factor_original: "Challenge tank 1-8 (randomized complete block; every tank held donors and oysters of all six populations). Second field of sample_alias, read as the tank from its 1-8 range."
+    factor_standardized: other
+    levels: ["1", "2", "3", "4", "5", "6", "7", "8"]
+    reference_level: null
+
+goals: [1]
+
+data_availability:
+  raw_data_available: true
+  fastq_size_gb: 744.6
+  published_dml_dmr_tables: true
+  access_notes: "Raw paired-end FASTQ public in ENA under PRJEB60400 (first public 2023-03-07), all on the gannet mirror. The paper's CpGs associated with phenotype (EWA, CpGassoc, v9 assembly) are in data S8-S11; per-sample mapping and conversion in data S2."
+
+quality_flags:
+  - capture_subset
+  - confounded_design
+  - mixed_read_lengths
+  - sex_unknown
+
+limitations: >
+  (1) Exome capture: only CpGs in exons +/-100 bp are covered (the paper
+  called 3.4 M CpGs), so promoters and intergenic CpGs are mostly missing and
+  libraries may fall under the 1 M CpG gate. (2) Phenotype is confounded with
+  population: I and J are almost all resistant and B-E mostly susceptible, so
+  a resistant-vs-susceptible contrast also contrasts sites; the paper reports
+  little population structure (2.4% of epigenetic variance). (3) Phenotype is
+  confounded with sampling state and time: susceptible oysters were sampled
+  moribund during infection, resistant ones alive and later, so infection
+  itself can drive differences. (4) Platform and read length differ
+  (NovaSeq 2x100 vs NextSeq 2x150) and are unbalanced across phenotype.
+  (5) Depth is uneven, 1.2-125 M read pairs; the paper dropped six libraries
+  under 7.8 M pairs. (6) BioSample sex is 'hermaphrodite' for every animal, a
+  placeholder; sex was not determined.
+
+provenance:
+  registered_by: "STEVEN"
+  date_registered: "2026-11-23"
+  curation_notes: >
+    Claimed with `whale start-study --accession PRJEB60400 --study-id
+    GAWRA2023_POMS_ADAPTATION_BSCAPTURE --profile klone --machine klone`.
+    Sample sheet and FASTQ manifest from live ENA metadata (2026-11-23) with
+    `whale fetch-samplesheet --bioproject PRJEB60400 --label-field
+    sample_alias --label-pattern
+    '^sam_(?P<population>[A-Z])(?P<oyster>\d+)_(?P<tank>[1-8])_(?P<tag>\d+)$'
+    --condition-attribute phenotype --attribute population --attribute oyster
+    --attribute tank --attribute tag --attribute age`: 246 runs, 246
+    libraries, 246 BioSamples (130 resistant, 116 susceptible). Chemistry
+    bs_capture from the ENA library protocol ("Whole exome capture of
+    bisulfite converted library") and the paper's methods. Reading the
+    alias's second field as the tank is inferred (values 1-8, eight tanks).
+    Design details from the paper's main text (PMC10491289); its supplements
+    were not read. The backlog listed 475 GB; ENA reports 744.6 GB.
+  source_links:
+    - "https://www.ebi.ac.uk/ena/browser/view/PRJEB60400"
+    - "https://doi.org/10.1126/sciadv.adh8990"
+    - "https://pubmed.ncbi.nlm.nih.gov/37683000"
