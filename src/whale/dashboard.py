@@ -22,6 +22,7 @@ import csv
 import gzip
 import io
 import json
+import re
 import statistics
 import subprocess
 from datetime import datetime, timezone
@@ -79,6 +80,29 @@ def _pct(x) -> str:
     return "—" if x is None else f"{x:g}%"
 
 
+def _reason_kind(reason: str) -> str:
+    """One QC reason without the library's own value: "mapping 0.1% < 20.0%" -> "mapping < 20%"."""
+    r = re.sub(r"^[\d.,]+\s+", "", reason.strip())                  # "1854 CpGs at >=5x < 1000000"
+    r = re.sub(r"\s+-?[\d.,]+%?\s+(?=<)", " ", r)                    # "mapping 0.1% < 20.0%"
+    r = re.sub(r"(\d+)\.0\b", r"\1", r).replace(">=", "≥").replace("5x", "5×")
+    m = re.fullmatch(r"CpGs at (\S+) < (\d+)", r)
+    if m:
+        n = int(m.group(2))
+        return f"< {n / 1e6:g} M CpGs at {m.group(1)}" if n >= 1e6 else f"< {n:,} CpGs at {m.group(1)}"
+    return r
+
+
+def excluded_summary(failed: list[dict] | None) -> dict | None:
+    """Libraries failing the QC gate, counted by reason (a library can fail on several)."""
+    if not failed:
+        return None
+    counts: dict[str, int] = {}
+    for x in failed:
+        for kind in {_reason_kind(r) for r in str(x.get("reasons") or "").split(";") if r.strip()}:
+            counts[kind] = counts.get(kind, 0) + 1
+    return {"n": len(failed), "reasons": sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))}
+
+
 def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
     """One study's finding, stated from its study_summary.yaml and nothing else."""
     s = entry["summary"]
@@ -116,6 +140,26 @@ def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
         sentences.append(f"Gene values leave out {s['snp_mask']['cpgs_masked']:,} CpGs on C/T SNPs "
                          f"(mask {s['snp_mask']['mask_id']}).")
     sentences.append("Descriptive; no differential test yet.")
+    stats = [
+        {"label": "Passed QC", "value": f"{s['passed']} / {s['libraries']}"},
+        {"label": "Mapping", "value": _pct((qc.get("mapping_pct") or {}).get("median"))},
+        {"label": "Conversion", "value": _pct((qc.get("conversion_pct") or {}).get("median"))},
+        {"label": "CpGs ≥5×", "value": "—" if not cpgs else f"{cpgs / 1e6:.1f} M" if cpgs >= 1e5 else f"{cpgs / 1e3:.0f} k"},
+    ]
+    if meth:
+        stats.append({"label": "CpG meth. range", "value": _pct(meth["min"]) if meth["min"] == meth["max"]
+                      else f"{_pct(meth['min'])}–{_pct(meth['max'])}"})
+    details = []
+    for f in s.get("by_factor") or []:
+        details.append(f"By {f['factor_id']}: " + ", ".join(
+            f"{lv['level']} {_pct(lv.get('mean'))} (n={lv.get('n', 0)})" for lv in f["levels"]))
+    for cls, kind in (("gene_body", "Gene bodies"), ("promoter", "Promoters")):
+        c = g.get(cls)
+        if c and c.get("meth_pct"):
+            details.append(f"{kind}: median {_pct(c['meth_pct']['median'])} over {c['covered_in_all']:,} genes, "
+                           f"{c['methylated_ge_50pct']:,} at ≥50%")
+    if s.get("snp_mask"):
+        details.append(f"{s['snp_mask']['cpgs_masked']:,} CpGs on C/T SNPs masked ({s['snp_mask']['mask_id']})")
     ref = entry["ref"] or "main"
     goals = (study or {}).get("goals") or []
     return {
@@ -123,6 +167,9 @@ def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
         "title": f"{label}: median CpG methylation {_pct(meth.get('median'))} across {s['passed']} libraries"
                  if meth else f"{label}: no library passed the QC gate",
         "summary": " ".join(sentences),
+        "stats": stats,
+        "details": details,
+        "excluded": excluded_summary(s.get("failed")),
         "goal": ", ".join(str(g) for g in goals) or None,
         "studies": [s["study_id"]],
         "status": "provisional: study PR not merged" if entry["ref"] else "merged",
@@ -273,6 +320,18 @@ def _git(repo: Path, *args: str) -> str:
     return proc.stdout.strip() if proc.returncode == 0 else ""
 
 
+def open_claims(repo: Path, claims: list[dict] | None, remote: str = "origin") -> list[dict] | None:
+    """The claims still being worked on: a study branch whose tip is already in the
+    checked-out history (its PR merged, the branch kept) is no longer a claim, and the
+    study's status on main speaks for it. A branch that gained commits since is open again."""
+    if claims is None:
+        return None
+    repo = Path(repo)
+    return [c for c in claims
+            if subprocess.run(["git", "merge-base", "--is-ancestor", f"{remote}/{c['branch']}", "HEAD"],
+                              cwd=repo, capture_output=True).returncode != 0]
+
+
 def build(repo: Path, *, claims: list[dict] | None, mirrors: dict[str, dict | None] | None,
           repo_url: str, now: str | None = None, branch_summaries: list[dict] | None = None,
           remote: str = "origin") -> dict:
@@ -280,6 +339,7 @@ def build(repo: Path, *, claims: list[dict] | None, mirrors: dict[str, dict | No
     maps accession -> ledger (None if unreadable), `branch_summaries` from
     summaries_on_branches."""
     repo = Path(repo)
+    claims = open_claims(repo, claims, remote)
     stages = load_vocab(repo, "pipeline_stage")
     stage_order = [s for s, v in sorted(stages.items(), key=lambda kv: kv[1]["order"]) if s not in CLOSED_STAGES]
     registered = load_studies(repo)
@@ -301,6 +361,8 @@ def build(repo: Path, *, claims: list[dict] | None, mirrors: dict[str, dict | No
             state = "in progress"
         elif main_status:
             stage, machine, profile = main_status["stage"], main_status["machine"], main_status["profile"]
+            if stage == "summarized":  # on main with no open claim: the study PR has merged
+                stage = "merged"
             updated = (main_status.get("history") or [{}])[-1].get("date", "")
             state = "done" if stage in DONE_STAGES else ("excluded" if stage == "excluded" else "registered")
         else:
@@ -323,7 +385,8 @@ def build(repo: Path, *, claims: list[dict] | None, mirrors: dict[str, dict | No
             "profile": profile or b["suggested_profile"],
             "updated": updated,
             "parts": [c["part"] for c in held if c["part"]],
-            "branch_url": f"{repo_url}/tree/{held[0]['branch']}" if held else None,
+            "branch_url": (f"{repo_url}/tree/{held[0]['branch']}" if held
+                           else f"{repo_url}/tree/main/data/studies/{study_id}" if main_status else None),
             "mirror": mirror_summary((mirrors or {}).get(acc)),
             "notes": b["notes"],
         })

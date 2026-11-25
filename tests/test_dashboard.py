@@ -11,7 +11,7 @@ import yaml
 from click.testing import CliRunner
 
 from whale.cli import main
-from whale.dashboard import build, gene_view, mirror_summary, write
+from whale.dashboard import build, finding, gene_view, mirror_summary, write
 from whale.reference import gene_info_path, write_gene_info
 
 URL = "https://github.com/RobertsLab/project-white-whale"
@@ -80,8 +80,42 @@ def test_merged_study_reads_its_status_on_main(repo):
         "history": [{"stage": "summarized", "date": "2026-11-02", "machine": "raven"}]}))
     data = build(repo, claims=[], mirrors={}, repo_url=URL)
     r = _by_acc(data)["PRJNA562805"]
-    assert (r["state"], r["stage"], r["updated"]) == ("done", "summarized", "2026-11-02")
-    assert data["totals"]["done"] == 1
+    assert (r["state"], r["stage"], r["updated"]) == ("done", "merged", "2026-11-02")
+    assert data["totals"]["done"] == 1 and data["totals"]["by_stage"]["merged"] == 1
+    assert r["branch_url"] == f"{URL}/tree/main/data/studies/WANG2020_TIDAL_HEAT_WGBS"
+
+
+def _git_repo(repo):
+    def git(*args):
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.org", *args],
+                       cwd=repo, check=True, capture_output=True)
+    git("init", "-q", "-b", "main")
+    git("add", "-A")
+    git("commit", "-q", "-m", "main")
+    return git
+
+
+def test_a_merged_branch_left_on_the_remote_is_not_a_claim(repo):
+    """The study PR merged but its branch was kept: the study is done, not in progress."""
+    status_dir = repo / "data" / "studies" / "WANG2020_TIDAL_HEAT_WGBS"
+    status_dir.mkdir(parents=True)
+    (status_dir / "status.yaml").write_text(yaml.safe_dump({
+        "study_id": "WANG2020_TIDAL_HEAT_WGBS", "stage": "summarized", "profile": "raven", "machine": "raven",
+        "history": [{"stage": "summarized", "date": "2026-11-02", "machine": "raven"}]}))
+    git = _git_repo(repo)
+    claim = _claim("PRJNA562805", "WANG2020_TIDAL_HEAT_WGBS", "summarized")
+    git("update-ref", f"refs/remotes/origin/{claim['branch']}", "HEAD")
+    data = build(repo, claims=[claim], mirrors={}, repo_url=URL)
+    r = _by_acc(data)["PRJNA562805"]
+    assert (r["state"], r["stage"]) == ("done", "merged")
+    assert (data["totals"]["done"], data["totals"]["in_progress"]) == (1, 0)
+
+    # A re-run pushed to the same branch after the merge is a claim again.
+    git("commit", "-q", "--allow-empty", "-m", "re-run")
+    git("update-ref", f"refs/remotes/origin/{claim['branch']}", "HEAD")
+    git("reset", "-q", "--hard", "HEAD~1")
+    r = _by_acc(build(repo, claims=[claim], mirrors={}, repo_url=URL))["PRJNA562805"]
+    assert (r["state"], r["stage"]) == ("in progress", "summarized")
 
 
 def test_parts_report_the_furthest_stage(repo):
@@ -200,6 +234,19 @@ def test_study_without_gene_matrices_has_no_gene_view(repo):
     assert build(repo, claims=[], mirrors={}, repo_url=URL)["genes"] == []
 
 
+def test_finding_card_fields(repo):
+    """The page shows a few numbers, excluded libraries counted by reason, and details folded away."""
+    s = _summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01")
+    s["failed"] = [{"sample_id": "A", "reasons": "mapping 0.1% < 20.0%; conversion 2.12% < 98.0%; 1854 CpGs at >=5x < 1000000"},
+                   {"sample_id": "B", "reasons": "3511 CpGs at >=5x < 1000000"}]
+    f = finding({"summary": s, "ref": None, "path": "p"}, None, URL)
+    assert [x["label"] for x in f["stats"]][:4] == ["Passed QC", "Mapping", "Conversion", "CpGs ≥5×"]
+    assert f["excluded"] == {"n": 2, "reasons": [("< 1 M CpGs at ≥5×", 2), ("conversion < 98%", 1), ("mapping < 20%", 1)]}
+    assert all("A (" not in d for d in f["details"])
+    assert finding({"summary": _summary("WANG2020_TIDAL_HEAT_WGBS", "2026-11-01"), "ref": None, "path": "p"},
+                   None, URL)["excluded"] is None
+
+
 def test_mirror_summary_empty():
     assert mirror_summary(None) is None and mirror_summary({}) is None
 
@@ -224,7 +271,7 @@ def test_page_reads_every_key_it_uses(repo_root):
     """The page and the builder agree on field names."""
     html = (repo_root / "site" / "index.html").read_text()
     data = build(repo_root, claims=[], mirrors={}, repo_url=URL)
-    for key in ("date", "title", "summary", "goal", "studies", "status", "link"):
+    for key in ("date", "title", "goal", "status", "link", "stats", "details", "excluded"):
         assert f"f.{key}" in html, key
     for key in ("study_id", "part", "libraries", "genes", "status", "hist", "tables", "per_sample_url", "file",
                 "min_cpgs", "bin", "snp_mask"):

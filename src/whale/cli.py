@@ -612,7 +612,7 @@ def mirror_fastq_cmd(accessions, dest, staging, source, jobs, threads, tmp, rate
 def build_dashboard_cmd(out, no_claims, no_mirror, remote):
     """Write site/data.json for the GitHub Pages dashboard (site/index.html)."""
 
-    from whale.dashboard import build, summaries_on_branches, write
+    from whale.dashboard import build, open_claims, summaries_on_branches, write
     from whale.fastq import load_ledger
     from whale.mirror import LEDGER_NAME, load_data_host
 
@@ -620,7 +620,7 @@ def build_dashboard_cmd(out, no_claims, no_mirror, remote):
     claims = None
     if not no_claims:
         try:
-            claims = list_claims(repo, remote=remote)
+            claims = open_claims(repo, list_claims(repo, remote=remote), remote)
         except ClaimError as exc:
             click.echo(click.style(f"claims unavailable: {exc}", fg="yellow"), err=True)
 
