@@ -1,0 +1,83 @@
+{
+  "study_id": "ROBERTSLAB2013_EPIGENOMICS_WGBS",
+  "bioproject": "PRJNA213124",
+  "date_generated": "2026-10-23",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA213124&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "material"
+  ],
+  "library_strategies_kept": [
+    "Bisulfite-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "Bisulfite-Seq": 14,
+    "RNA-Seq": 2
+  },
+  "n_runs": 14,
+  "n_libraries": 8,
+  "n_biosamples": 8,
+  "library_layouts": [
+    "PAIRED",
+    "SINGLE"
+  ],
+  "instrument_models": [
+    "Illumina HiSeq 2000"
+  ],
+  "group_sizes_runs": {
+    "Gill": 1,
+    "gonad": 5,
+    "larvae_120": 4,
+    "larvae_72": 4
+  },
+  "group_sizes_libraries": {
+    "Gill": 1,
+    "gonad": 3,
+    "larvae_120": 2,
+    "larvae_72": 2
+  },
+  "min_group_libraries": 1,
+  "total_fastq_bytes": 32438345632,
+  "fastq_sources": {
+    "fastq_ftp": 14,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/ROBERTSLAB2013_EPIGENOMICS_WGBS/samplesheet.tsv": "710764cc4eb0296e8c0b2bcdbdfdbbbf838ccbafbd3ecf00c93639265d3d590e",
+    "data/studies/ROBERTSLAB2013_EPIGENOMICS_WGBS/fastq_manifest.tsv": "9ad2d3d89aa1f2bd834c1dff196334c627232feb700ff3a9e489621a24da34f9"
+  },
+  "libraries_with_several_runs": {
+    "SRX795174": 2,
+    "SRX795175": 2,
+    "SRX795176": 2,
+    "SRX795177": 2,
+    "SRX795178": 2,
+    "SRX795179": 2
+  },
+  "run_labels": {
+    "field": "experiment_title",
+    "pattern": "(?i)(?P<material>gill|gonad|larvae \\d+)(?:.*?Male(?: oyster)? (?P<male>\\d))?",
+    "labels": {
+      "SRR1045858": "gonad",
+      "SRR1693528": "gonad tissue (Male 1",
+      "SRR1693531": "gonad tissue (Male 3",
+      "SRR1693532": "larvae 72 hours post-fertilization (from Male oyster 1",
+      "SRR1693534": "larvae 120 hours post-fertilization (from Male oyster 1",
+      "SRR1693537": "larvae 72 hours post-fertilization (from Male oyster 3",
+      "SRR1693538": "larvae 120 hours post-fertilization (from Male oyster 3",
+      "SRR1696820": "gonad tissue (Male 1",
+      "SRR1696826": "larvae 120 hours post-fertilization (from Male oyster 1",
+      "SRR1696827": "larvae 120 hours post-fertilization (from Male oyster 3",
+      "SRR1696867": "gonad tissue (Male 3",
+      "SRR1696868": "larvae 72 hours post-fertilization (from Male oyster 3",
+      "SRR1697248": "larvae 72 hours post-fertilization (from Male oyster 1",
+      "SRR942533": "Gill"
+    }
+  },
+  "runs_not_kept": {
+    "RNA-Seq": 2
+  }
+}
