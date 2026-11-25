@@ -17,6 +17,48 @@ catalogue is the seed of the new registry (see §4).
 
 ---
 
+## Status (2026-11-25)
+
+Sections 1, 2 and 4–8 are the design. This section, §9 and §10 say how far it
+has been built; the live numbers are on the
+[dashboard](https://robertslab.github.io/project-white-whale/).
+
+- **Built and in use:** registry, claims, compute profiles (desktop, raven,
+  klone), the methylation workflow, reference bundle, C/T SNP mask v1,
+  gene-level tables, the shared DSS model, replication reports, sample
+  curation, the dashboard and three atlas pages, `whale mcp`, and the
+  autopilot's deterministic tick.
+- **Backlog:** 8 of 21 studies merged as `summarized`, 3 in flight, 10
+  unclaimed (§4.2).
+- **Goal 1:** first cross-study views are live (landscape, concordance, gene
+  methylation classes), from per-gene tables only. Per-CpG and 1 kb tile
+  tables, variance partitioning and genome tracks are not started.
+- **Goal 2:** the RNA-seq workflow is merged and tested on fixtures. No
+  study's RNA-seq has been run and no methylation × expression analysis
+  exists yet.
+
+**Needs attention, in order:**
+
+1. **Re-run two merged studies whose committed results come from flawed
+   runs.** ROBERTS2022_PH_PLOIDY_WGBS was aligned in directional mode (run
+   `curious_mestorf`, 30% mapping, about half depth); its config now has
+   `--non_directional`. WANG2023_TIDAL_TRANSGEN_WGBS was not clipped on read 2
+   (run `elated_pesquet`, CpG methylation ~1.5 points high, conversion ~97%);
+   its config now clips. Both feed the atlas, the DSS results and the
+   replication verdicts, which must be re-derived afterwards.
+2. **Decide on SNP mask v2.** Mask v1 was called from ROBERTS2022 alone, at
+   half depth. §6.1 asks for the deepest studies.
+3. **Resolve the low QC pass rates** (§10, open decision 1):
+   GAWRA2023 132 of 246, PESTO2022 13 of 48, ROBERTSLAB2013 1 of 14.
+4. **Finish the in-flight studies:** ROBERTSLAB2013 (at `qc_passed` on Hete,
+   which has no gannet key), FALLET2022 (staged on klone), OUC2024_SEX_REVERSAL
+   (registered on raven).
+5. **Start Goal 2** with WANG2020_TIDAL_HEAT_WGBS, the only merged study with
+   same-animal RNA-seq, and claim the unclaimed studies that have RNA-seq
+   partners next.
+
+---
+
 ## 1. Goals
 
 ### Goal 1 — Comparative characterization of the methylome across studies
@@ -88,42 +130,55 @@ For every dataset with matched (same animals, or same design) RNA-seq:
 
 ## 3. Repository layout
 
+As built (2026-11-25):
+
 ```
 project-white-whale/
-├── README.md, PLAN.md, LICENSE, CITATION.cff, CONTRIBUTING.md
-├── pyproject.toml, Makefile, environment.yml
-├── schemas/                      study.schema.json, sample.schema.json, methylome.schema.json
+├── README.md, PLAN.md, LICENSE, VENDORED_FROM_AREE.md
+├── pyproject.toml, Makefile
+├── schemas/                      study.schema.json, status.schema.json
 ├── registry/
+│   ├── backlog.tsv               every public study, claimed or not
 │   ├── studies/<STUDY_ID>.yaml   one per BioProject (or per coherent sub-project)
-│   ├── controlled_vocabularies/  assay_chemistry, tissue, life_stage, stressor, ploidy, sex, …
-│   ├── claims/                   (generated) who holds which study, from git branches
-│   └── study_registry.csv        (generated) index
+│   └── controlled_vocabularies/  assay_chemistry, tissue, life_stage, stressor, sample_unit,
+│                                 quality_flags, pipeline_stage, compute_profile, rnaseq_relationship
 ├── workflows/
-│   ├── methylation/              Nextflow DSL2: FASTQ → per-sample CpG calls → QC → summaries
-│   └── rnaseq/                   only for paired-expression studies (salmon → gene/transcript TPM)
+│   ├── methylation/              Nextflow DSL2: FASTQ → per-sample CpG calls → QC → gene tables
+│   ├── snp_mask/                 C/T SNP mask from pooled WGBS libraries
+│   ├── rnaseq/                   paired-expression studies (fastp → salmon → gene matrices)
+│   ├── enrichment/               MeDIP / MBD tier (bowtie2 → counts)
+│   └── differential/             dss.R, the shared model run by `whale differential`
 ├── modules/                      Nextflow processes (vendored from AREE where identical)
 ├── config/
-│   ├── base.config               profiles: desktop | raven | klone (+ docker/apptainer/conda)
+│   ├── base.config               profiles: desktop | raven | klone
+│   ├── autopilot.yaml            per-machine limits and environments for `whale autopilot`
 │   └── <STUDY_ID>.config
 ├── data/
-│   ├── reference/GCF_963853765.1/   genome, GTF, feature BEDs, CpG index, C/T SNP mask (not in git)
-│   ├── raw/                      → symlink to this machine's FASTQ drive
-│   ├── studies/<STUDY_ID>/       samplesheet.tsv, fastq_manifest.tsv, ena_provenance.json,
-│   │                             qc_summary.tsv, methylome_manifest.tsv (committed, small)
-│   └── methylomes/               → symlink; per-sample calls land here (not in git)
-├── src/whale/                    the `whale` CLI and library
-│   ├── intake/                   schema validation, ENA sample sheets, claims
-│   ├── reference/                bundle fetch, feature annotation, CpG index, SNP mask
-│   ├── qc/                       pipeline QC gates
-│   ├── atlas/                    Goal 1: matrices, variance partitioning, core/variable methylome
-│   ├── regulation/               Goal 2: methylation × expression models
-│   ├── reporting/                study pages, dashboard JSON
-│   └── query/                    (later) MCP server over the summarized tables
-├── analysis/                     Quarto notebooks for Goals 1 and 2 (rendered into docs/)
-├── docs/                         Quarto site: dashboard, study pages, atlas, regulation results, how-tos
+│   ├── data_host.yaml            gannet
+│   ├── reference/                genome_assemblies.yaml, snp_masks.yaml; the bundle itself is not in git
+│   ├── studies/<STUDY_ID>/       status.yaml, samplesheet.tsv, fastq_manifest.tsv, fastq_staged.tsv,
+│   │                             ena_provenance.json, run_manifest.json, qc_summary.tsv,
+│   │                             study_summary.yaml, methylome_manifest.tsv, genes/,
+│   │                             sample_curation.tsv, claims.yaml, replication.{md,json},
+│   │                             differential/ (committed, small)
+│   └── raw/, methylomes/         → this machine's drives (not in git)
+├── src/whale/                    the `whale` CLI and library, one module per concern:
+│   │                             cli, registry, validate, vocab, claims, scope, ena, fastq, mirror,
+│   │                             reference, snp_mask, results, curation, differential, replication,
+│   │                             rnaseq, enrichment, atlas, dashboard
+│   ├── autopilot/                tick, decide, playbook, slurm, machines, digest
+│   └── query/                    the MCP server (`whale mcp`)
+├── analysis/<STUDY_ID>/          per-study analyses (so far ROBERTS2022_PH_PLOIDY_WGBS)
+├── docs/                         how-tos and design notes, Markdown
+├── site/                         the published site: index.html (dashboard), atlas/, genes/;
+│                                 data files are generated by `whale build-dashboard` / `build-atlas`
 ├── tests/
-└── .github/workflows/            ci.yml (tests, schema validation, scope check on study PRs), pages.yml
+└── .github/workflows/            ci.yml (tests, schema validation, scope check, workflow runs on
+                                  fixtures), pages.yml (site, on push and every three hours)
 ```
+
+Not built, and still wanted: `src/whale` code for Goal 2 (§7.2), analysis
+notebooks for the pooled results, `CITATION.cff`, `CONTRIBUTING.md`.
 
 ---
 
@@ -149,39 +204,56 @@ Two vocabularies matter more here than in AREE and are added:
 - `sample_unit`: individual / pool-of-N / tissue-pooled, because pooling
   changes what variance means.
 
-### 4.2 Seed list
+### 4.2 The backlog
 
-The verified catalogue from the previous repository plus the studies AREE has
-already registered become the first registrations. Where AREE has a YAML
-(`WANG2020_TIDAL_HEAT_WGBS`, `VALDIVIESO2025_POMS_RS_EMSEQ`,
-`DECICOMP2025_POMS_AGE_EMSEQ`, `CIBNOR2021_HEAT_RRSS`), copy it and keep its
-`study_id` so the two projects can cross-reference.
+The seed catalogue from the previous repository, the studies AREE had
+registered, and two SRA/ENA sweeps (2026-08, 2026-10) are now
+[`registry/backlog.tsv`](registry/backlog.tsv): **21 studies, about 4.5 TB of
+FASTQ**. `whale backlog` prints the current state of each; the table below is
+a snapshot from 2026-11-25. Where AREE has a YAML the `study_id` is kept so
+the two projects can cross-reference.
 
-| Study (working ID) | BioProject | Chemistry | Runs | ~Size | Paired RNA-seq | Goal |
+**Merged (`summarized`), 8 studies**
+
+| Study | BioProject | Chemistry | QC pass | Machine | Paired RNA-seq | Note |
 |---|---|---|---|---|---|---|
-| POMS adaptation, Ifremer | PRJEB60400 | WGBS | 246 | 450–500 GB | check | 1 |
-| GESTINOV POMS gill/mantle (`VALDIVIESO2025_POMS_RS_EMSEQ`) | PRJEB81880 | EM-seq | 40 | 400–450 GB | same design (AREE `DECICOMP2025_POMS_AGE` RNA-seq is a sister) | 1, 2 |
-| DECICOMP aging (`DECICOMP2025_POMS_AGE_EMSEQ`) | PRJEB105019 | WGBS | 60 | 450–500 GB | yes, same project | 1, 2 |
-| PESTO methylseq | PRJEB58545 | WGBS | 48 | 350–400 GB | check | 1 |
-| Transgenerational infection resistance | PRJNA609264 | WGBS | 47 | 600–650 GB | check | 1 |
-| pH × ploidy ctenidia, Roberts Lab | PRJNA682817 | WGBS | 24 | 100–110 GB | yes, same animals | 1, 2 |
-| Tidal origin × heat (`WANG2020_TIDAL_HEAT_WGBS`) | PRJNA562805 | WGBS | 12 | 141 GB | yes, same animals (PRJNA407831) | 1, 2 |
-| Epigenomics series | PRJNA807732, PRJNA213124 | WGBS | 38 | ~190 GB | check | 1 |
-| Heat RRBS (`CIBNOR2021_HEAT_RRSS`) | PRJNA690951 | RRBS | — | — | — | 1 (RRBS tier) |
-| First oyster methylomes, Wang 2014 | PRJNA173440 | WGBS | 4 | small | developmental RNA-seq PRJNA146329 | 1, 2 |
-| Developmental methylome, Riviere 2017 | PRJNA324546 | MeDIP | 21 | 5–10 GB | yes (published) | enrichment tier |
-| Sperm methylome + RNA-seq, Olson 2014 | to verify | WGBS | — | — | same animals | 2 |
-| Gill MBD-seq + RNA-seq, Gavery 2013 | to verify | MBD | — | — | yes | enrichment tier |
+| `WANG2014_FIRST_METHYLOMES_WGBS` | PRJNA173440 | WGBS | 4 / 4 | raven | related (PRJNA146329), not one-to-one | |
+| `ROBERTS2022_PH_PLOIDY_WGBS` | PRJNA682817 | WGBS | 24 / 24 | klone | none | **re-run needed** (non-directional libraries) |
+| `WANG2020_TIDAL_HEAT_WGBS` | PRJNA562805 | WGBS | 12 / 12 | klone | same animals (PRJNA407831) | first Goal 2 study |
+| `WANG2023_TIDAL_TRANSGEN_WGBS` | PRJNA807732 | WGBS | 24 / 24 | raven | unknown | **re-run needed** (read 2 clipping) |
+| `PESTO2022_METHYLSEQ_WGBS` | PRJEB58545 | WGBS | 13 / 48 | klone | PRJEB58194, pairing unknown | conversion 90–97% in most libraries; factors not registered |
+| `VALDIVIESO2025_POMS_RS_EMSEQ` | PRJEB81880 | EM-seq | 40 / 40 | klone | none | |
+| `DECICOMP2025_POMS_AGE_EMSEQ` | PRJEB105019 | EM-seq | 57 / 60 | klone | none (metabolomics only) | |
+| `GAWRA2023_POMS_ADAPTATION_BSCAPTURE` | PRJEB60400 | bisulfite capture | 132 / 246 | klone | none | 114 libraries fail on mapping, most near 0.1% |
 
-Plus candidates to verify against SRA before registering: Li 2024 *Vibrio*
-WGBS, Sun 2022 gonad sex, Tan 2022 growth/shell colour, Wang 2023
-transgenerational tidal, Song 2017 exon methylation. The first task of Phase 1
-is a fresh `"Crassostrea gigas"[Organism] AND ("Bisulfite-Seq" OR "MeDIP-Seq"
-OR "MBD-Seq")[Strategy]` sweep to make this list complete and to find which
-BioProjects also carry RNA-seq.
+**In flight, 3 studies**
 
-Roughly **3 TB of FASTQ, ~550 runs**, of which the base-resolution set is
-~500 runs.
+| Study | BioProject | Stage | Machine | Note |
+|---|---|---|---|---|
+| `ROBERTSLAB2013_EPIGENOMICS_WGBS` | PRJNA213124 | `qc_passed` | Hete | 1 of 14 libraries passes (the deep male gonad library of Olson & Roberts 2014); kept as a single-sample study. The gill library is MBD-enriched. |
+| `FALLET2022_MICROBIAL_TRANSGEN_WGBS` | PRJNA609264 | `fastq_staged` | klone | 47 runs, 916 GB |
+| `OUC2024_SEX_REVERSAL_WGBS` | PRJNA917710 | `registered` | raven | RNA-seq partner PRJNA917707 |
+
+**Unclaimed, 10 studies**
+
+| Suggested ID | BioProject | Chemistry | Runs | GB | Paired RNA-seq |
+|---|---|---|---|---|---|
+| `OUC2023_TRIPLOID_GONAD_WGBS` | PRJNA684407 | WGBS | 18 | 94 | PRJNA690125 |
+| `OUC2025_VALGINOLYTICUS_GILL_WGBS` | PRJNA1113357 | WGBS | 9 | 110 | PRJNA830931 |
+| `OUC2024_GROWTH_STRAINS_WGBS` | PRJNA833956 | WGBS | 6 | 67 | PRJNA1113800 |
+| `PERPIGNAN2016_DIURON_PARENTAL_WGBS` | PRJNA291364 | WGBS | 6 | 89 | same project |
+| `WHOI2022_GONAD_LOWPH_WGBS` | PRJNA806944 | WGBS | 8 | 139 | check |
+| `UW2020_PLOIDY_DESICCATION_HEAT_WGBS` | PRJNA678408 | WGBS | 10 | 91 | check |
+| `IOCAS2021_WILD_TIDAL_WGBS` | PRJNA689936 | WGBS | 6 | 52 | none |
+| `CIBNOR2021_HEAT_RRSS` | PRJNA690951 | RRBS | — | — | none; import AREE's registration |
+| `CEMM2023_580SPECIES_RRBS` | PRJNA802599 | RRBS | 13 | 6 | none |
+| `RIVIERE2017_DEVELOPMENT_MEDIP` | PRJNA324546 | MeDIP | 21 | 8 | published; enrichment tier |
+
+The first four unclaimed studies have RNA-seq partners and are the priority
+for Goal 2. `backlog.tsv` itself has rows that predate what the registrations
+found (PRJEB60400 is still listed as `POMS2023_ADAPTATION_WGBS` / wgbs,
+PRJEB105019 as wgbs, several RNA-seq cells say `check`); bring it in line
+with the study YAMLs.
 
 ### 4.3 Claims — running studies on several machines
 
@@ -213,9 +285,12 @@ Additions for this project:
   `config/<ID>.config`, `data/studies/<ID>/`, `tests/test_<id>.py`); CI
   enforces it, exactly as AREE's `check-study-scope`. Studies therefore merge
   in any order.
-- Big studies (PRJEB60400, 246 runs) can be claimed as **parts**
-  (`--part gill`, `--part 1of4`) that share a study YAML; each part is its own
-  branch and status file.
+- Big studies can be claimed as **parts** (`--part gill`, `--part 1of4`) that
+  share a study YAML; each part is its own branch and status file. Not needed
+  so far: PRJEB60400 (246 runs) ran as one study.
+- A merged study's remote branch should be deleted, or `whale claims` and
+  `whale backlog` keep reporting the branch's last stage instead of
+  `summarized`.
 
 ### 4.4 Compute profiles
 
@@ -299,6 +374,12 @@ For every base-resolution sample that passed QC:
 Every row carries `study_id`, `chemistry`, and the manifest hash, so a table
 can always be filtered to "WGBS only" or "individual animals only".
 
+**Status:** `gene_features`, `sample_qc` and `sample_metadata` are built by
+`whale build-atlas` and published. `cpg_calls` and `tiles_1kb` are not built;
+per-sample calls are on gannet but not pooled. Their absence is why many
+replication claims (per-CpG counts, windowed density, DMR overlap) are
+`not_testable`.
+
 ### 6.3 Re-derived differential results
 
 For every study with a registered within-study contrast, run one shared
@@ -306,6 +387,13 @@ model (DSS or methylKit with the same cutoffs, same tile definition, same
 minimum coverage) from the harmonized calls, and store the result next to the
 authors' published DML/DMR list when one exists. This is what makes "did it
 replicate" answerable, and it feeds Goal 2's DML-vs-DEG tests.
+
+**Status:** `whale differential` runs one DSS model per gene (gene body and
+promoter). Run for ROBERTS2022, WANG2020, WANG2023 and VALDIVIESO2025; not
+yet for WANG2014 (1 vs 1), PESTO2022 (no factors registered), DECICOMP2025 or
+GAWRA2023. `whale replicate` compares each paper's claims with the result
+(docs/replication.md); six studies have a report. The model works on genes,
+not CpGs or tiles, and WANG2023's test statistics are inflated (lambda 1.9).
 
 ---
 
@@ -336,6 +424,11 @@ replicate" answerable, and it feeds Goal 2's DML-vs-DEG tests.
 6. **Genome tracks**: per-group mean bigWigs and the core/variable
    classification as a track hub for IGV / JBrowse.
 
+**Status:** live at gene resolution: 1 (landscape page), 2 (gene methylation
+classes page, genes only, no tiles) and 4 (concordance page). 5 exists per
+study as replication reports, without the cross-study overlap. Not started:
+3 (variance partitioning) and 6 (tracks).
+
 ### 7.2 Goal 2 — Methylation and expression (`src/whale/regulation`, `analysis/regulation_*.qmd`)
 
 Inputs: the `gene_features` matrix, the RNA-seq quantifications from
@@ -359,14 +452,25 @@ re-derived DML/DMR sets, and DESeq2 results for the same contrasts.
 6. Every result is reported with the number of studies it rests on and is
    never collapsed across chemistry tiers.
 
-Analyses are Quarto documents that read only the committed small tables and
-the data-host Parquet, so anyone can re-render them without the FASTQ.
+Analyses read only the committed small tables and the data-host files, so
+anyone can re-run them without the FASTQ.
+
+**Status:** none of 1–5 is started. `workflows/rnaseq` and `whale
+fetch-rnaseq-samplesheet` / `record-rnaseq` exist (docs/rnaseq.md) and pass on
+fixtures. Of the eight merged studies only WANG2020 has same-animal RNA-seq;
+PESTO2022's pairing is unknown and the rest have none, so Goal 2 depends on
+the unclaimed studies with RNA-seq partners (§4.2). A pooled estimate "across
+N studies" needs N of at least three or four.
 
 ---
 
 ## 8. Layer 5 — Outputs
 
-- **Quarto site** (GitHub Pages), regenerated on every push to `main`:
+- **Site** (GitHub Pages, static pages in `site/` over generated JSON),
+  regenerated on every push to `main` and every three hours. The dashboard,
+  per-study findings and gene sections, and three atlas pages are live;
+  regulation pages and the how-tos (which are Markdown in `docs/`) are not on
+  the site. As designed:
   - dashboard: studies registered / claimed / processed, by machine; samples
     passing QC by tissue × stage × chemistry; TB processed; what the pooled
     data currently supports and does not;
@@ -377,26 +481,59 @@ the data-host Parquet, so anyone can re-render them without the FASTQ.
     methylomes, interpreting the QC gate, interpreting variance components.
 - **Downloads**: the committed matrices, the track hub, the per-sample
   manifests.
-- **MCP server** (`whale mcp`, later): read-only tools over the summarized
-  tables, as AREE's, so Claude can answer "which genes are hypermethylated in
-  gill across every study" with study IDs cited.
+- **MCP server** (`whale mcp`, built; docs/mcp.md): read-only tools over the
+  summarized tables, as AREE's, so Claude can answer "which genes are
+  hypermethylated in gill across every study" with study IDs cited.
+- **Autopilot** (`whale autopilot`, partly built; docs/autopilot.md,
+  docs/autopilot_plan.md): a scheduled tick that moves each study one stage,
+  with a playbook for known failures. The deterministic tick, klone queue
+  visibility and launch paths are merged; the model-driven register, diagnose
+  and review steps are not.
 
 ---
 
 ## 9. Phases
 
-| Phase | Deliverable | Done when |
-|---|---|---|
-| **0. Scaffold** (weeks 1–2) | Repo layout, `whale` CLI skeleton, schemas, vocabularies, `start-study` / claims, CI with scope check, profiles, docs stubs | `whale validate-study` and `whale start-study --no-push` work on a stub; CI green |
-| **1. Registry** (weeks 2–3) | Fresh SRA/ENA sweep; every base-resolution BioProject registered with ENA-derived sample sheets and FASTQ manifests; paired RNA-seq identified; AREE YAMLs imported | Dashboard shows the full backlog with sizes and which have RNA-seq |
-| **2. Reference + pipeline** (weeks 3–6) | Reference bundle, feature BEDs, CpG index; pipeline runs end to end on the smallest WGBS set (PRJNA173440, 4 runs) on a desktop, then PRJNA682817 on raven; first SNP mask | Two studies `qc_passed`, methylomes on the data host, manifests committed |
-| **3. Klone** (weeks 5–8) | Klone profile proven on one deep study (PRJEB81880, 40 EM-seq runs); chunked alignment; download pattern | Study merged with status `summarized` |
-| **4. Backlog** (weeks 6–16, parallel across machines) | Every registered base-resolution study claimed and processed; enrichment-tier studies processed with a MeDIP/MBD branch | All studies `summarized` or explicitly `excluded` with a reason |
-| **5. Goal 1 analyses** (from week 8, as studies land) | Atlas matrices, variance partitioning, core/variable classification, track hub, atlas pages | Pages render from committed tables; findings carry study counts |
-| **6. Goal 2 analyses** (from week 10) | RNA-seq workflow on paired studies; the five regulation analyses; pooled estimates | Regulation pages render; each claim lists its supporting studies |
-| **7. Write-up** | Methods page, implementation-status table, manuscript draft from the site | — |
+The project started 2026-10-23. State as of 2026-11-25:
 
-Phases 4–6 overlap by design: analyses are re-rendered as each study merges.
+| Phase | Deliverable | Done when | State |
+|---|---|---|---|
+| **0. Scaffold** | Repo layout, `whale` CLI, schemas, vocabularies, `start-study` / claims, CI with scope check, profiles | `whale validate-study` and `whale start-study --no-push` work on a stub; CI green | **Done** |
+| **1. Registry** | SRA/ENA sweep; backlog with sizes and RNA-seq partners; AREE YAMLs imported | Dashboard shows the full backlog | **Done** (21 studies; sweeps 2026-08 and 2026-10). Repeat the sweep before write-up. |
+| **2. Reference + pipeline** | Reference bundle, feature BEDs; pipeline end to end on PRJNA173440 and PRJNA682817; first SNP mask | Two studies `qc_passed`, methylomes on the data host | **Done**, with two debts: mask v1 comes from one half-depth study, and no CpG index is published |
+| **3. Klone** | Klone profile proven on a deep study (PRJEB81880) | Study merged as `summarized` | **Done** (six studies run on klone) |
+| **4. Backlog** | Every base-resolution study processed; enrichment tier through the MeDIP/MBD workflow | All studies `summarized` or `excluded` with a reason | **In progress**: 8 merged, 3 in flight, 10 unclaimed; 2 merged studies need re-runs; no enrichment study run yet |
+| **5. Goal 1 analyses** | Atlas matrices, variance partitioning, core/variable classification, track hub, atlas pages | Pages render from committed tables; findings carry study counts | **Started**: gene-level landscape, concordance and classes are live. Tiles, per-CpG tables, variance partitioning and tracks not started |
+| **6. Goal 2 analyses** | RNA-seq on paired studies; the five regulation analyses; pooled estimates | Regulation pages render; each claim lists its supporting studies | **Workflow only**: no RNA-seq run, no analysis code |
+| **7. Write-up** | Methods page, implementation-status table, manuscript draft from the site | — | Not started |
+
+Phases 4–6 overlap by design: analyses are rebuilt as each study merges.
+
+### Next steps
+
+In this order, since each later step reuses the earlier one's output:
+
+1. Re-run ROBERTS2022 (`--non_directional`; needs a non-preemptible klone
+   partition or raven) and WANG2023 (clipped); `record-run`; re-run
+   `whale differential` and `whale replicate` for both.
+2. Build SNP mask v2 from several deep, well-mapped studies if v1 proves
+   thin, then re-mask the gene tables of every study (§10, open decision 2).
+3. Check the GAWRA2023 libraries at ~0.1% mapping against the deposit, and
+   settle the gate policy for PESTO2022 (§10, open decision 1).
+4. Finish ROBERTSLAB2013, FALLET2022 and OUC2024_SEX_REVERSAL.
+5. Run RNA-seq for WANG2020 (PRJNA407831); then claim OUC2023_TRIPLOID_GONAD,
+   OUC2025_VALGINOLYTICUS_GILL, OUC2024_GROWTH_STRAINS and
+   PERPIGNAN2016_DIURON_PARENTAL together with their RNA-seq.
+6. Register PESTO2022's stage, generation and exposure factors so its 37
+   claims become testable; run `whale differential` for DECICOMP2025 and
+   GAWRA2023.
+7. Pool 1 kb tiles and per-CpG calls on gannet (§6.2), then variance
+   partitioning (§7.1 item 3).
+8. First Goal 2 analysis (§7.2 item 1) on WANG2020, written so further
+   studies drop in.
+9. Housekeeping: delete merged study and feature branches, prune worktrees,
+   bring `backlog.tsv` in line with the registrations, remove the old
+   downloader's `code/` leftovers.
 
 ---
 
@@ -423,10 +560,39 @@ Decided 2026-10-25:
    Pages workflow from the per-study tables on `main`, since a study PR may
    only change its own files. See docs/atlas.md.
 
+Decided since, in the course of the work:
+
+5. **PRJEB60400 is one study**, `GAWRA2023_POMS_ADAPTATION_BSCAPTURE`, not
+   parts. It is exome-capture bisulfite, so `bs_capture` was added to the
+   base-resolution tier with a coverage caveat (§4.1).
+6. **The site is static pages over generated JSON**, not Quarto; docs stay
+   Markdown in `docs/`.
+7. **Differential methylation is per gene** (gene body and promoter) with one
+   DSS model, `whale differential`; each paper's claims are tested against it
+   by `whale replicate`.
+8. **Enrichment-tier data has its own workflow** (`workflows/enrichment`) and
+   is excluded from the atlas.
+9. **The backlog is driven by an autopilot** where rules suffice
+   (docs/autopilot_plan.md); judgment steps stay with a person for now.
+
 Open:
 
-5. **Study granularity for PRJEB60400** (246 runs): one study claimed in
-   parts, or split by sub-experiment once its sample metadata is read.
+1. **QC gate policy for whole-study failures.** PESTO2022 fails the 98%
+   conversion gate in 35 of 48 libraries with unstated chemistry; GAWRA2023
+   passes 132 of 246. Options: keep the single gate and pool only what
+   passes (current behaviour), or allow a recorded per-study gate with a
+   quality flag. Affects how many samples the atlas rests on.
+2. **SNP mask v2.** Which studies to call it from, and whether every merged
+   study's gene tables are re-masked when the mask changes.
+3. **Resolution of the pooled tables.** Whether to build `tiles_1kb` and
+   `cpg_calls` (§6.2) now, or stay at gene level until the backlog is done.
+   Variance partitioning, DMR replication and tracks all wait on this.
+4. **Goal 2 scope.** One same-animal study is merged. Decide whether
+   same-design, different-animal pairs (and PESTO2022's unknown pairing)
+   count for the pooled estimates, or only for per-study results.
+5. **Enrichment tier.** Whether RIVIERE2017 (MeDIP) and the MBD library in
+   PRJNA213124 are worth running now that the workflow exists.
 6. **Name.** The repository stays `project-white-whale`; the resource and CLI
-   are called `whale` here. A public-facing name (e.g. "Pacific oyster
-   methylome atlas") can be chosen when the site goes live.
+   are called `whale` here. The site is live as "Project White Whale"; a
+   descriptive public name (e.g. "Pacific oyster methylome atlas") is still
+   open.
