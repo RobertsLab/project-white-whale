@@ -63,7 +63,7 @@ machines:
     disk_path: /gscratch/scrubbed
     launch: sbatch
     ssh_host: klone.hyak.uw.edu
-    gannet_key: false
+    gannet_key: true   # ~/.ssh/klone_to_gannet (ssh config Host gannet, BatchMode); record-run uploads from klone
     gh: true
     # As in the hand-written head-job scripts (e.g. run-DECICOMP2025.sbatch): run in the
     # study worktree, with the whale conda env (whale, nextflow, java) first on PATH.

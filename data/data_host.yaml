@@ -5,7 +5,9 @@
 # Checked 2026-10-23: the directory exists (empty, world-writable, owner
 # sr320), its web listing answers at url_base, the volume has 171 TB free,
 # and raven can reach it over SSH with key auth (a lab Mac could not). Upload
-# from raven, or from any machine with a key for gannet.
+# from raven, or from any machine with a key for gannet. klone has one too
+# (~/.ssh/klone_to_gannet, checked 2026-11-25; DECICOMP2025 recorded and
+# uploaded itself from klone), so klone runs upload at the end of the run.
 version: "0.1.0"
 host: gannet
 hostname: gannet.fish.washington.edu
