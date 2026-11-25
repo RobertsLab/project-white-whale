@@ -119,7 +119,7 @@ is measured only on the machine the tick runs on.
 |---|---|---|
 | `swap_mates_resume` | a `-resume` run cached `TRIM_GALORE` / `BISMARK_ALIGN` for a library in `swap_mates` (task order is not in the hash) | cancel before record-run, move those work dirs aside (paths from the cached task hashes), relaunch. Raised even when the run succeeded |
 | `resume_env_cache_miss` | a `-resume` run that cached nothing, with a work dir inside the checkout or other than the machine's `WHALE_WORKDIR`, or earlier runs of the session | export `WHALE_RAW`, `WHALE_REFERENCE`, `WHALE_METHYLOMES`, `WHALE_WORKDIR`; relaunch with the session id |
-| `gannet_upload` | stage `qc_passed` with `methylomes.on_data_host: false`, or an SSH key error in the log | rerun `whale record-run --results …` from a machine with a gannet key (raven) |
+| `gannet_upload` | stage `qc_passed` with `methylomes.on_data_host: false`, or an SSH key error in the log | rerun `whale record-run --results …` from a machine with a gannet key (raven or klone) |
 | `raven_no_gh` | `gh: command not found` on raven | do the GitHub step through the REST/GraphQL API |
 | `klone_partition` | Slurm account/partition errors, repeated preemption, or `scontrol update … Partition=` | per-process override setting account and partition together in `klone.run.config`; never move tasks with `scontrol` |
 | `chemistry_null` | the config's `chemistry` is null or disagrees with the study YAML (checked before staging and launch too) | set it to the YAML's term; if the YAML has none either, blocked |
