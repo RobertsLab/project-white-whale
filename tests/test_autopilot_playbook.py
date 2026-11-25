@@ -190,11 +190,11 @@ def test_klone_head_job_runs_in_the_worktree_with_its_tools():
     cmd = playbook._relaunch(s, klone)
     assert "--job-name=whale-head-TESTER2099_X_WGBS" in cmd
     assert "--chdir=/gscratch/srlab/$USER/github/white-whale-TESTER2099_X_WGBS" in cmd
-    assert "--output=/gscratch/scrubbed/$USER/whale/logs/whale-head-TESTER2099_X_WGBS-%j.log" in cmd
+    assert "--output=/gscratch/srlab/$USER/whale/logs/whale-head-TESTER2099_X_WGBS-%j.log" in cmd
     wrap = cmd.split("--wrap '", 1)[1]
     steps = wrap.rstrip("'").split("; ")
     assert steps[0] == "export PATH=/mmfs1/gscratch/srlab/$USER/miniforge3/envs/whale/bin:$PATH"
-    assert steps[1] == "unset TMPDIR" and "WHALE_WORKDIR=/gscratch/scrubbed/$USER/whale/work" in steps[2]
+    assert steps[1] == "unset TMPDIR" and "WHALE_WORKDIR=/gscratch/srlab/$USER/whale/work" in steps[2]
     assert steps[3].startswith("nextflow run workflows/methylation") and steps[3].endswith("-resume")
     # The queue reader attributes the job to the study by its name and working directory.
     job = SlurmJob("1", "whale-head-TESTER2099_X_WGBS", "compute", "compute-coenv", "RUNNING", "0:01",

@@ -70,15 +70,18 @@ machines:
     checkout_root: /gscratch/srlab/$USER/github
     path_prepend: [/mmfs1/gscratch/srlab/$USER/miniforge3/envs/whale/bin]
     setup: unset TMPDIR
-    log_dir: /gscratch/scrubbed/$USER/whale/logs
+    log_dir: /gscratch/srlab/$USER/whale/logs
     snp_mask_root: /gscratch/srlab/$USER/whale/snp_mask
+    # Work, Nextflow's temp files and logs on the lab fileset: a full /gscratch/scrubbed
+    # (shared by every Hyak user) fails any write there and kills the run
+    # (config/base.config, klone profile). Staged FASTQ stays on scrubbed: it is read only.
     env:
       WHALE_RAW: /gscratch/scrubbed/$USER/whale/raw
       WHALE_REFERENCE: /gscratch/scrubbed/$USER/whale/reference
       WHALE_METHYLOMES: /gscratch/scrubbed/$USER/whale/methylomes
-      WHALE_WORKDIR: /gscratch/scrubbed/$USER/whale/work
+      WHALE_WORKDIR: /gscratch/srlab/$USER/whale/work
       NXF_HOME: /gscratch/scrubbed/$USER/whale/nxf-home
-      NXF_TEMP: /gscratch/scrubbed/$USER/whale/tmp
+      NXF_TEMP: /gscratch/srlab/$USER/whale/tmp
     # docs/compute_profiles.md, "Choosing a partition". Each partition has its own account,
     # named <partition>-<group> (`sacctmgr show assoc user=$USER`). sbatch also accepts the
     # short group name, but scontrol and squeue use the full one, so write the full one.
