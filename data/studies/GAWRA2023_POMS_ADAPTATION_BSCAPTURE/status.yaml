@@ -3,12 +3,12 @@
 study_id: GAWRA2023_POMS_ADAPTATION_BSCAPTURE
 accession: PRJEB60400
 part: null
-stage: fastq_staged
+stage: summarized
 profile: klone
 machine: klone
 claimed_by: STEVEN
 claimed_on: '2026-11-23'
-nextflow_run: gigantic_lorenz
+nextflow_run: irreverent_goldberg
 notes: null
 history:
 - stage: claimed
@@ -63,3 +63,20 @@ history:
   machine: klone
   note: 'rerun: 110 libraries added to swap_mates after gigantic_lorenz (132 of 246
     passed)'
+- stage: aligned
+  date: '2026-11-25'
+  machine: klone
+  note: 246 libraries aligned; median mapping 70.5%
+- stage: called
+  date: '2026-11-25'
+  machine: klone
+  note: CpG calls for 246 libraries (run irreverent_goldberg)
+- stage: qc_passed
+  date: '2026-11-25'
+  machine: klone
+  note: '239 of 246 libraries pass the QC gate; failed: ERR10960513, ERR10960536,
+    ERR10960569, ERR10960640, ERR10960690, ERR10960732, ERR10960736'
+- stage: summarized
+  date: '2026-11-25'
+  machine: klone
+  note: summaries committed; 3612 files on gannet
