@@ -107,9 +107,20 @@
   .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
   .findings { display: grid; gap: 12px; }
   .finding { padding: 16px; }
-  .finding h3 { margin: 0; font-size: 16px; }
+  .findings > * { min-width: 0; }
+  .findings h3 { overflow-wrap: anywhere; }
+  .finding h3 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
   .finding .meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .finding p { margin: 8px 0 0; color: var(--text-secondary); }
+  .finding .meta .prov { color: var(--text-secondary); border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; margin-left: 4px; }
+  .fstats { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 12px 0 0; }
+  .fstats div { min-width: 0; }
+  .fstats dt { font-size: 12px; color: var(--text-muted); }
+  .fstats dd { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .finding .excl { margin: 10px 0 0; font-size: 13px; color: var(--text-secondary); }
+  .finding details { margin-top: 8px; font-size: 13px; color: var(--text-secondary); }
+  .finding summary { cursor: pointer; color: var(--link); width: fit-content; }
+  .finding details ul { margin: 6px 0 0; padding-left: 18px; }
+  .finding details li { margin: 2px 0; }
   .empty { padding: 20px 16px; color: var(--text-secondary); }
   .tip {
     position: fixed; pointer-events: none; z-index: 10; max-width: 280px;
@@ -161,7 +172,7 @@
 
   <section aria-labelledby="h-studies">
     <h2 id="h-studies">Where every study is</h2>
-    <p class="lede">One row per BioProject in the backlog. The bar fills as a study moves through the pipeline; green means summarized.</p>
+    <p class="lede">One row per BioProject in the backlog. The bar fills as a study moves through the pipeline; green means merged to main.</p>
     <div class="card scroll">
       <table id="studies">
         <thead>
@@ -178,7 +189,7 @@
 
   <section aria-labelledby="h-findings">
     <h2 id="h-findings">Findings</h2>
-    <p class="lede">Written automatically from each study's committed summary once its run is recorded: QC, CpG methylation, and the same split by design factor. Provisional until the study's pull request is merged. Goal 1: the comparative methylome. Goal 2: methylation and gene expression.</p>
+    <p class="lede">One card per study, written from its committed summary. Descriptive only; no differential tests yet. Goal 1: comparative methylome · Goal 2: methylation and expression.</p>
     <div class="findings" id="findings"></div>
   </section>
 
@@ -223,7 +234,7 @@
   const tiles = [
     { label: "Studies in the backlog", value: fmt(t.backlog), sub: `${fmt(t.backlog_gb / 1000, 1)} TB of FASTQ` },
     { label: "In progress", value: fmt(t.in_progress), sub: `claimed by a machine · ${fmt(t.registered)} registered on main` },
-    { label: "Summarized", value: fmt(t.done), sub: "per-sample methylomes done" },
+    { label: "Merged", value: fmt(t.done), sub: "study PR merged to main" },
     { label: "FASTQ on gannet", value: `${fmt(t.mirrored_gb, 1)} GB`, sub: `${fmt(t.mirrored_studies)} of ${fmt(t.backlog)} studies, any part` },
     { label: "Findings", value: fmt(data.findings.length), sub: data.findings.length ? `latest ${esc(data.findings[0].date)}` : "none yet" },
   ];
@@ -282,10 +293,18 @@
     stages.map((st) => `<li title="${esc(st.label)}"><span class="sw" style="background:var(--fill)"></span>${esc(st.id.replace(/_/g, " "))} <span class="n">${t.by_stage[st.id]}</span></li>`).join("");
 
   $("findings").innerHTML = data.findings.length
-    ? data.findings.map((f) => `<article class="card finding">
+    ? data.findings.map((f) => {
+        const stats = (f.stats || []).map((x) => `<div><dt>${esc(x.label)}</dt><dd>${esc(x.value)}</dd></div>`).join("");
+        const ex = f.excluded;
+        const excl = ex ? `<p class="excl">${fmt(ex.n)} excluded: ${ex.reasons.map(([r, n]) => `${esc(r)} (${fmt(n)})`).join(" · ")}</p>` : "";
+        const det = (f.details || []).length
+          ? `<details><summary>Details</summary><ul>${f.details.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></details>` : "";
+        const prov = f.status && f.status.startsWith("provisional") ? `<span class="prov" title="${esc(f.status)}">provisional</span>` : "";
+        return `<article class="card finding">
         <h3>${f.link ? `<a href="${esc(f.link)}">${esc(f.title)}</a>` : esc(f.title)}</h3>
-        <div class="meta">${esc(f.date)}${f.goal ? " · Goal " + esc(f.goal) : ""}${f.studies.length ? " · " + f.studies.map(esc).join(", ") : ""}${f.status ? " · " + esc(f.status) : ""}</div>
-        <p>${esc(f.summary)}</p></article>`).join("")
+        <div class="meta">${esc(f.date)}${f.goal ? " · Goal " + esc(f.goal) : ""}${prov}</div>
+        <dl class="fstats">${stats}</dl>${excl}${det}</article>`;
+      }).join("")
     : `<div class="card empty">No findings yet. The first study (${esc((data.studies.find((s) => s.state === "in progress") || {}).study_id || "—")}) is being processed; a finding appears here as soon as its run is recorded.</div>`;
 
 

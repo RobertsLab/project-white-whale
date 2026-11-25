@@ -352,6 +352,20 @@ def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
     if s.get("failed"):
         sentences.append("Excluded: " + "; ".join(f"{x['sample_id']} ({x['reasons']})" for x in s["failed"]) + ".")
     sentences.append("Relative enrichment, not % methylation; kept out of the pooled atlas.")
+    from whale.dashboard import excluded_summary
+
+    stats = [
+        {"label": "Passed QC", "value": f"{s['passed']} / {s['libraries']}"},
+        {"label": "Mapping", "value": f"{_num(med('mapping_pct'))}%"},
+        {"label": "Duplication", "value": f"{_num(med('duplication_pct'))}%"},
+        {"label": "relH", "value": _num(med("relh"))},
+        {"label": "Saturation", "value": _num(med("saturation_est"))},
+    ]
+    details = [f"{chem}: relative enrichment, not % methylation; kept out of the pooled atlas"]
+    if ratio is not None:
+        details.append(f"Gene bodies {ratio:g}× as enriched per CpG as intergenic DNA")
+    if gb.get("obs_exp"):
+        details.append(f"{gb['enriched_gt_1']:,} of {gb['measured_in_all']:,} genes enriched above the genome's average CpG")
     ref = entry["ref"] or "main"
     goals = (study or {}).get("goals") or []
     return {
@@ -360,6 +374,9 @@ def finding(entry: dict, study: dict | None, repo_url: str) -> dict:
                   + (f", gene bodies {ratio:g}x intergenic" if ratio is not None else "")
                   if s.get("passed") else f"{label}: no library passed the enrichment QC gate"),
         "summary": " ".join(sentences),
+        "stats": stats,
+        "details": details,
+        "excluded": excluded_summary(s.get("failed")),
         "goal": ", ".join(str(g) for g in goals) or None,
         "studies": [s["study_id"]],
         "tier": TIER,
