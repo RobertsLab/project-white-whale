@@ -1,0 +1,55 @@
+{
+  "study_id": "WANG2020_TIDAL_HEAT_WGBS",
+  "bioproject": "PRJNA407831",
+  "date_generated": "2026-11-25",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA407831&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "isolate",
+    "temp"
+  ],
+  "library_strategies_kept": [
+    "RNA-Seq"
+  ],
+  "runs_by_strategy_in_project": {
+    "RNA-Seq": 36
+  },
+  "n_runs": 36,
+  "n_libraries": 36,
+  "n_biosamples": 36,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "Illumina HiSeq 2000"
+  ],
+  "group_sizes_runs": {
+    "BYQ_35_0": 6,
+    "BYQ_35_24": 6,
+    "BYQ_35_6": 6,
+    "LT_35_0": 6,
+    "LT_35_24": 6,
+    "LT_35_6": 6
+  },
+  "group_sizes_libraries": {
+    "BYQ_35_0": 6,
+    "BYQ_35_24": 6,
+    "BYQ_35_6": 6,
+    "LT_35_0": 6,
+    "LT_35_24": 6,
+    "LT_35_6": 6
+  },
+  "min_group_libraries": 6,
+  "total_fastq_bytes": 94094092348,
+  "fastq_sources": {
+    "fastq_ftp": 36,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/WANG2020_TIDAL_HEAT_WGBS/rnaseq/samplesheet.tsv": "1d9efcfcc8133bc8d54c037505a7dec0c9cfa11219a0d5ddafce659593f57100",
+    "data/studies/WANG2020_TIDAL_HEAT_WGBS/rnaseq/fastq_manifest.tsv": "0a31e907983a6afe32d786277eab2a042be2b06727f755fdde7954545594bcfb"
+  }
+}
