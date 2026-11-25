@@ -1,0 +1,99 @@
+# WGBS of gonad from Pacific oysters that did or did not reverse sex between
+# their first and second year. Sun et al. 2024, Int J Biol Macromol 259:128964.
+# Four sex trajectories (FF, FM, MF, MM: sex at year 1 then year 2), each
+# sampled at year 1 (a, 2021-05) and year 2 (b, 2022-05), three replicates.
+# Deposit checked 2026-11-21: 24 runs, 24 BioSamples, deposited as
+# library_strategy WGS although the reads are bisulfite-converted (read 1 is
+# ~0.6% C); design in run library_name (FFa1 ... MMb3) and the BioSample
+# attributes sex, age and isolate (Sexual reversal / Unsexual reversal).
+
+study_id: OUC2024_SEX_REVERSAL_WGBS
+aree_study_id: null
+
+accessions:
+  bioproject: "PRJNA917710"
+  sra: null
+  ena: "PRJNA917710"
+  geo: null
+  doi: "10.1016/j.ijbiomac.2023.128964"
+  pmid: "38219938"
+  other: "Deposited as library_strategy WGS; fetch-samplesheet needs --library-strategy WGS."
+
+citation: "Sun D, Yu H, Kong L, Liu S, Xu C, Li Q (2024). The role of DNA methylation reprogramming during sex determination and sex reversal in the Pacific oyster Crassostrea gigas. Int J Biol Macromol 259(Pt 2):128964. https://doi.org/10.1016/j.ijbiomac.2023.128964"
+species: "Magallana gigas"
+population: "Oysters from Weihai, China (BioSample geo_loc_name), Ocean University of China; sampled at 1 year (2021-05) and 2 years (2022-05)."
+original_assembly: null
+
+chemistry: wgbs
+library_layout: paired
+platform: "Illumina NovaSeq 6000"
+
+samples:
+  n_runs: 24
+  n_libraries: 24
+  sample_unit: unknown
+  pool_size: null
+  tissues: [gonad]
+  life_stages: [adult]
+  sexes_recorded: true
+  ploidy: [diploid]
+
+paired_rnaseq:
+  relationship: same_animals
+  bioproject: "PRJNA917707"
+  notes: "RNA-seq of gonad with the same 24 library codes (FFa1 ... MMb3), one run per code, separate BioSamples (SAMN32546944-67). Same samples inferred from the matching codes; not yet confirmed in the paper's methods."
+
+factors:
+  - factor_id: sex_trajectory
+    factor_original: "Sex at year 1 then year 2: FF and MM did not reverse; FM (female to male) and MF (male to female) reversed; run library_name and BioSample isolate"
+    factor_standardized: sex
+    levels: ["FF", "FM", "MF", "MM"]
+    reference_level: "FF"
+  - factor_id: timepoint
+    factor_original: "Sampling year: a = 1 year old (2021-05-01), b = 2 years old (2022-05-01); run library_name and BioSample age"
+    factor_standardized: age
+    levels: ["a", "b"]
+    reference_level: "a"
+
+goals: [1, 2]
+
+data_availability:
+  raw_data_available: true
+  fastq_size_gb: 171.4
+  published_dml_dmr_tables: null
+  access_notes: "Raw paired FASTQ for all 24 runs public in ENA/SRA (first public 2024-01-01). Paper methods not yet read: whether a and b are the same animals, sampling method, spike-in."
+
+quality_flags:
+  - confounded_design
+
+limitations: >
+  (1) Age and sampling year are confounded with each other and with any batch
+  between the 2021 and 2022 collections (a vs b). (2) Sex in the sex_trajectory
+  groups changes with timepoint by design (FM is female at a and male at b), so
+  sex and trajectory must be modelled together, not as independent factors.
+  (3) The paper describes FMa-to-FMb as pre- and post-reversal, which suggests
+  the same animals were sampled twice; the deposit gives every library its own
+  BioSample, so whether a and b are paired is not confirmed. (4) Deposited as
+  WGS, not Bisulfite-Seq.
+
+provenance:
+  registered_by: "Steven Roberts"
+  date_registered: "2026-11-21"
+  curation_notes: >
+    Claimed on raven with `whale start-study --accession PRJNA917710 --study-id
+    OUC2024_SEX_REVERSAL_WGBS --profile raven`. Sample sheet from ENA with
+    `whale fetch-samplesheet --bioproject PRJNA917710 --library-strategy WGS
+    --label-field library_name --label-pattern
+    '^(?P<sex_trajectory>FF|FM|MF|MM)(?P<timepoint>[ab])(?P<replicate>[0-9])$'
+    --condition-attribute sex_trajectory --condition-attribute timepoint
+    --attribute replicate --attribute sex --attribute age --attribute tissue`:
+    24 runs, 8 groups of 3. The BioSample sex, age and isolate agree with the
+    library names for every run. Registered from the deposit and the abstract;
+    the paper's methods still to be read. Diploid assumed (not stated).
+    sample_unit is unknown until the methods say whether each library is one
+    animal (the deposit has one BioSample per library).
+  source_links:
+    - "https://doi.org/10.1016/j.ijbiomac.2023.128964"
+    - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA917710"
+    - "https://www.ebi.ac.uk/ena/browser/view/PRJNA917710"
+    - "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA917707"

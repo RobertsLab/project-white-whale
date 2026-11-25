@@ -1,0 +1,89 @@
+{
+  "study_id": "OUC2024_SEX_REVERSAL_WGBS",
+  "bioproject": "PRJNA917710",
+  "date_generated": "2026-11-21",
+  "generated_by": "whale fetch-samplesheet (src/whale/ena.py)",
+  "queries": {
+    "run_report": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA917710&result=read_run&fields=run_accession%2Csample_accession%2Csample_alias%2Cexperiment_accession%2Cexperiment_title%2Clibrary_name%2Clibrary_strategy%2Clibrary_layout%2Clibrary_selection%2Cinstrument_model%2Cscientific_name%2Ctax_id%2Cread_count%2Cbase_count%2Cfastq_ftp%2Cfastq_md5%2Cfastq_bytes%2Csubmitted_ftp%2Csubmitted_md5%2Csubmitted_bytes%2Csubmitted_format&format=tsv",
+    "sample_xml": "https://www.ebi.ac.uk/ena/browser/api/xml/<sample_accessions>"
+  },
+  "condition_attributes": [
+    "sex_trajectory",
+    "timepoint"
+  ],
+  "library_strategies_kept": [
+    "WGS"
+  ],
+  "runs_by_strategy_in_project": {
+    "WGS": 24
+  },
+  "n_runs": 24,
+  "n_libraries": 24,
+  "n_biosamples": 24,
+  "library_layouts": [
+    "PAIRED"
+  ],
+  "instrument_models": [
+    "Illumina NovaSeq 6000"
+  ],
+  "group_sizes_runs": {
+    "FF_a": 3,
+    "FF_b": 3,
+    "FM_a": 3,
+    "FM_b": 3,
+    "MF_a": 3,
+    "MF_b": 3,
+    "MM_a": 3,
+    "MM_b": 3
+  },
+  "group_sizes_libraries": {
+    "FF_a": 3,
+    "FF_b": 3,
+    "FM_a": 3,
+    "FM_b": 3,
+    "MF_a": 3,
+    "MF_b": 3,
+    "MM_a": 3,
+    "MM_b": 3
+  },
+  "min_group_libraries": 3,
+  "total_fastq_bytes": 171445123728,
+  "fastq_sources": {
+    "fastq_ftp": 24,
+    "submitted_ftp": 0
+  },
+  "outputs": {
+    "data/studies/OUC2024_SEX_REVERSAL_WGBS/samplesheet.tsv": "451822ff062601f2c674ae49792ac561aeee13e8e2d3e0cfaf923a45cf0e3a6d",
+    "data/studies/OUC2024_SEX_REVERSAL_WGBS/fastq_manifest.tsv": "21ad0b0397de4f221c844047097204aa4aab133ed4041acff55530ee50edbf90"
+  },
+  "run_labels": {
+    "field": "library_name",
+    "pattern": "^(?P<sex_trajectory>FF|FM|MF|MM)(?P<timepoint>[ab])(?P<replicate>[0-9])$",
+    "labels": {
+      "SRR22963494": "MFb1",
+      "SRR22963495": "MFa3",
+      "SRR22963496": "MFa2",
+      "SRR22963497": "MFa1",
+      "SRR22963498": "FMb3",
+      "SRR22963499": "FMb2",
+      "SRR22963500": "FMb1",
+      "SRR22963501": "MMb3",
+      "SRR22963502": "MMb2",
+      "SRR22963503": "MMb1",
+      "SRR22963504": "MMa3",
+      "SRR22963505": "FMa3",
+      "SRR22963506": "MMa2",
+      "SRR22963507": "MMa1",
+      "SRR22963508": "FFb3",
+      "SRR22963509": "FFb2",
+      "SRR22963510": "FFb1",
+      "SRR22963511": "FFa3",
+      "SRR22963512": "FFa2",
+      "SRR22963513": "FFa1",
+      "SRR22963514": "MFb3",
+      "SRR22963515": "MFb2",
+      "SRR22963516": "FMa2",
+      "SRR22963517": "FMa1"
+    }
+  }
+}
