@@ -13,7 +13,7 @@ variables instead.
 | `WHALE_SALMON_INDEX` | directory holding the cached `salmon_index/` (workflows/rnaseq) | the reference bundle |
 | `WHALE_BOWTIE2_INDEX` | directory holding the cached `bowtie2_genome/` index ([enrichment tier](enrichment.md)) | the reference bundle |
 | `WHALE_METHYLOMES` | where per-sample outputs are published (RNA-seq under `<STUDY_ID>/rnaseq/`) | `data/methylomes` |
-| `WHALE_WORKDIR` | Nextflow work directory, on fast local disk | `work` (klone: scrubbed) |
+| `WHALE_WORKDIR` | Nextflow work directory, on fast local disk | `work` (klone: `/gscratch/srlab/$USER/whale/work`) |
 | `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` | local executor limits (desktop, raven) | 10 / 28 GB; 32 / 120 GB |
 | `WHALE_SLURM_ACCOUNT`, `WHALE_SLURM_QUEUE` | klone | `srlab`, `ckpt-all` |
 | `WHALE_APPTAINER_CACHEDIR` | klone | `/gscratch/scrubbed/$USER/whale/apptainer-cache` |
@@ -126,7 +126,18 @@ Apptainer is enabled by the profile. Lessons carried from AREE
 - **Do not export `TMPDIR`** in the head job; Slurm forwards it to every task
   and into containers. Use `NXF_TEMP` for Nextflow's own temporary files.
 - `/gscratch/scrubbed` deletes files untouched for 21 days and is often >97%
-  full. Check `hyakstorage /gscratch/scrubbed` first; copy what you keep.
+  full. Its quota is shared by every Hyak user, so when it fills, any write
+  there fails with "Disk quota exceeded" however little you use; on
+  2026-11-25 that killed the FALLET2022 and GAWRA2023 runs at 98%. Keep the
+  **work directory, `NXF_TEMP` and logs on the lab fileset,
+  `/gscratch/srlab`** (the profile's default work directory); staged FASTQ,
+  which is only read, can stay on scrubbed. Check `hyakstorage
+  /gscratch/scrubbed` and `hyakstorage /gscratch/srlab` first, and clear a
+  study's work directory once its run is recorded.
+- To move a run that has already started, point `WHALE_WORKDIR` at the new
+  directory and relaunch with `-resume`: Nextflow reuses finished tasks
+  where they are and writes only new tasks to the new directory (tested on
+  klone, Nextflow 26.04).
 - Read-sized intermediates go to the node's `/scr`.
 - ENA downloads through the cluster proxy ran at ~12 MB/s aggregate in
   October 2026: plan ~15 h per 600 GB, as a job on a non-preemptible
@@ -140,7 +151,8 @@ Apptainer is enabled by the profile. Lessons carried from AREE
 ```bash
 #SBATCH --account=coenv --partition=compute --cpus-per-task=2 --mem=8G --time=4-00:00:00
 export NXF_HOME=/gscratch/scrubbed/$USER/whale/nxf-home
-export NXF_TEMP=/gscratch/scrubbed/$USER/whale/tmp
+export NXF_TEMP=/gscratch/srlab/$USER/whale/tmp
+export WHALE_WORKDIR=/gscratch/srlab/$USER/whale/work
 export WHALE_RAW=/gscratch/scrubbed/$USER/whale/raw
 export WHALE_REFERENCE=/gscratch/scrubbed/$USER/whale/reference
 export WHALE_METHYLOMES=/gscratch/scrubbed/$USER/whale/methylomes

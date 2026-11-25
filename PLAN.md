@@ -298,7 +298,7 @@ Additions for this project:
 |---|---|---|---|---|
 | `desktop` | lab Macs / workstations | local | `$WHALE_WORKDIR` on a fast internal/SSD drive | small studies (≤ 150 GB), QC, summaries, Quarto |
 | `raven` | Roberts Lab server | local, high `maxForks` | raven's local scratch | medium studies (150–500 GB), whole-study Bismark without chunking |
-| `klone` | UW Hyak | Slurm `ckpt-all`, 4.5 h tasks, chunked alignment, Apptainer | `/scr` per node; `/gscratch/scrubbed/$USER/whale` | the deep studies (PRJEB60400, PRJEB81880, PRJEB105019, PRJNA609264) |
+| `klone` | UW Hyak | Slurm `ckpt-all`, 4.5 h tasks, chunked alignment, Apptainer | `/scr` per node; work on `/gscratch/srlab/$USER/whale`, staged FASTQ on `/gscratch/scrubbed/$USER/whale` | the deep studies (PRJEB60400, PRJEB81880, PRJEB105019, PRJNA609264) |
 
 Every profile reads the same four environment variables
 (`WHALE_WORKDIR`, `WHALE_RAW`, `WHALE_REFERENCE`, `WHALE_METHYLOMES`) so a
