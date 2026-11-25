@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="atlas.css">
 <style>
   .heat-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  #heat { max-width: 100%; height: auto; min-width: 0; }
   .studies-key { font-size: 13px; color: var(--text-secondary); margin: 0; padding: 0; list-style: none; }
   .studies-key li { margin: 2px 0; }
   .studies-key b { font-variant-numeric: tabular-nums; color: var(--text-primary); }
@@ -87,13 +88,19 @@ function blocks(data) {
 
 function heat(data) {
   const c = data.concordance, n = c.units.length;
-  const off = c.rho.flatMap((r, i) => r.filter((v, j) => i !== j && v != null));
   // Scale over the off-diagonal range; the diagonal (a sample with itself) is drawn as a gap.
-  const lo = Math.floor(Math.min(...off) * 100) / 100, hi = Math.ceil(Math.max(...off) * 100) / 100;
+  // A loop, not Math.min(...values): n^2 values exceed Safari's 65,536-argument limit
+  // (304 samples is ~92,000) and the spread throws a RangeError there.
+  let vmin = Infinity, vmax = -Infinity;
+  c.rho.forEach((r, i) => r.forEach((v, j) => {
+    if (i !== j && v != null) { if (v < vmin) vmin = v; if (v > vmax) vmax = v; }
+  }));
+  const lo = Math.floor(vmin * 100) / 100, hi = Math.ceil(vmax * 100) / 100;
   const cell = Math.max(3, Math.min(14, Math.floor(560 / n)));
   const size = cell * n;
   const cv = $("heat"), dpr = window.devicePixelRatio || 1;
-  cv.width = size * dpr; cv.height = size * dpr; cv.style.width = `${size}px`; cv.style.height = `${size}px`;
+  // CSS width only: max-width and height:auto keep it square when it shrinks on a narrow screen.
+  cv.width = size * dpr; cv.height = size * dpr; cv.style.width = `${size}px`;
   cv.setAttribute("aria-label", `Heatmap of Spearman rho between ${n} samples, ordered by study`);
   const g = cv.getContext("2d");
   g.scale(dpr, dpr);
@@ -121,7 +128,8 @@ function heat(data) {
   $("heat-lede").textContent = `Rows and columns are samples, grouped by study in the order listed; darker is closer agreement. Hover a cell for the two samples.`;
   cv.addEventListener("mousemove", (e) => {
     const r = cv.getBoundingClientRect();
-    const j = Math.floor((e.clientX - r.left) / cell), i = Math.floor((e.clientY - r.top) / cell);
+    const shown = r.width / n;   // the drawn cell size, smaller than `cell` when the canvas is scaled down
+    const j = Math.floor((e.clientX - r.left) / shown), i = Math.floor((e.clientY - r.top) / shown);
     if (i < 0 || j < 0 || i >= n || j >= n || i === j) return hideTip();
     const a = c.units[i], b = c.units[j];
     showTip(e, `<b>rho ${num(c.rho[i][j], 3)}</b>${esc(a.unit_id)} · ${esc(a.study_id)} · ${esc(a.condition)}<br>${esc(b.unit_id)} · ${esc(b.study_id)} · ${esc(b.condition)}`);
