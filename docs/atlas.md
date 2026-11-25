@@ -1,6 +1,6 @@
 # The atlas: pooled tables, landscape and concordance
 
-The first cross-study views (PLAN.md §6.2, §7.1 items 1 and 4), built by
+The first cross-study views (PLAN.md §6.2, §7.1 items 1, 2 (genes only) and 4), built by
 `whale build-atlas` from the studies merged to `main` and published with the
 dashboard at `atlas/landscape.html`, `atlas/concordance.html` and `atlas/genes.html`.
 
@@ -16,7 +16,7 @@ Every study on `main` with a `study_summary.yaml` and gene tables
   enrichment, not % methylation, and are shown on their own
   ([enrichment tier](enrichment.md#where-enrichment-studies-are-shown)).
 
-Left-out studies are listed on both pages with the reason. Study branches are
+Left-out studies are listed on every atlas page with the reason. Study branches are
 not pooled: a study joins the atlas when its PR merges, and the Pages workflow
 rebuilds the atlas on every push to `main`.
 
@@ -81,6 +81,6 @@ Every statement carries the number of studies and samples it rests on.
 
 ## Not yet
 
-Variance partitioning (§7.1 item 2), and separating the gene classes' between-study
+Variance partitioning (§7.1 item 3), and separating the gene classes' between-study
 variation into tissue and life stage, need more than one study per tissue and life stage; 1 kb tiles need the
 `cpg_calls` table on the data host.

@@ -23,7 +23,7 @@ Check that it starts. It waits for a client on stdin; press Ctrl-C to stop it.
 whale mcp --repo /path/to/project-white-whale
 ```
 
-Without `--repo`, it serves the checkout around the current directory, or `$WHALE_REPO`.
+Without `--repo`, it serves `$WHALE_REPO` if that is set, else the checkout around the current directory.
 MCP clients start servers from their own working directory, so pass `--repo` in the
 client configuration.
 
@@ -112,30 +112,34 @@ starts, so the first question usually does not wait for all of it.
 
 The question "which genes are hypermethylated in gill across every study?" becomes
 `rank_genes(tissue="gill", min_study_pct=50, limit=5)`. This is the answer from `main`
-at the time of writing, shortened to the third of the five genes and the first source:
+on 2026-11-25, shortened to the first of the five genes and the first source:
 
 ```json
 {
-  "region": "gene_body", "ranked_by": "mean of study means",
-  "filters": {"tissue": "gill", "min_study_pct": 50.0},
+  "region": "gene_body", "order": "high", "ranked_by": "mean of study means",
+  "filters": {"tissue": "gill", "min_study_pct": 50},
   "studies": [{"study_id": "ROBERTS2022_PH_PLOIDY_WGBS", "units": 24},
+              {"study_id": "VALDIVIESO2025_POMS_RS_EMSEQ", "units": 20},
               {"study_id": "WANG2020_TIDAL_HEAT_WGBS", "units": 12},
               {"study_id": "WANG2023_TIDAL_TRANSGEN_WGBS", "units": 24}],
-  "min_studies": 3, "genes_passing": 4221,
-  "genes": [{"gene_id": "136269422", "symbol": "LOC136269422",
-             "description": "transcriptional adapter 2-alpha-like", "mean_pct": 88.99,
-             "per_study": {"ROBERTS2022_PH_PLOIDY_WGBS": 92.17, "WANG2020_TIDAL_HEAT_WGBS": 86.36,
-                           "WANG2023_TIDAL_TRANSGEN_WGBS": 88.43}}],
-  "page": {"total": 4221, "returned": 5, "cap": 200, "truncated": true, "next_offset": 5},
-  "notes": ["VALDIVIESO2025_POMS_RS_EMSEQ: 40 unit(s) left out because the filtered attribute is not recorded"],
+  "min_studies": 4, "genes_passing": 4151,
+  "genes": [{"gene_id": "109617331", "symbol": "LOC109617331",
+             "description": "uncharacterized LOC109617331",
+             "location": "NC_088857.1:8172898-8174282(+)", "mean_pct": 90.02,
+             "min_study_pct": 87.36, "max_study_pct": 93.44, "n_studies": 4,
+             "per_study": {"ROBERTS2022_PH_PLOIDY_WGBS": 93.44, "VALDIVIESO2025_POMS_RS_EMSEQ": 87.36,
+                           "WANG2020_TIDAL_HEAT_WGBS": 89.77, "WANG2023_TIDAL_TRANSGEN_WGBS": 89.52}}],
+  "page": {"total": 4151, "offset": 0, "returned": 5, "limit": 5, "cap": 200,
+           "truncated": true, "next_offset": 5},
+  "notes": [],
   "sources": [{"study_id": "ROBERTS2022_PH_PLOIDY_WGBS", "nextflow_run": "curious_mestorf",
                "snp_mask": "GCF_963853765.1.snpmask.v1", "genome_assembly": "GCF_963853765.1"}]
 }
 ```
 
-The note matters. VALDIVIESO2025 sampled gill too, but its tissue is not recorded per
-library on `main`, so it is left out and the note says so. Once its
-`sample_curation.tsv` is merged, its gill libraries are included.
+VALDIVIESO2025 contributes only its 20 gill libraries: its tissue per library comes from
+its `sample_curation.tsv`. A study whose libraries lack the filtered attribute is left
+out, and `notes` names it and how many units it lost.
 
 ## Development
 

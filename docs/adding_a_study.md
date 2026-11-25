@@ -129,7 +129,8 @@
    matrices (`genes/`, [gene-level methylation](gene_methylation.md)) under
    `data/studies/<STUDY_ID>/`, uploads the per-sample methylomes to the data
    host, moves `status.yaml` through `aligned`, `called`, `qc_passed` and
-   `summarized`, pushes, and marks the PR ready. The dashboard shows the
+   `summarized`, pushes, and marks the PR ready (where the `gh` CLI is
+   installed; raven has none, so mark a raven study's PR ready from another machine). The dashboard shows the
    study's finding from `study_summary.yaml` within three hours. If the
    upload failed (the machine has no key for gannet), the study stops at
    `qc_passed`; run `whale record-run --results <WHALE_METHYLOMES>/<STUDY_ID>`

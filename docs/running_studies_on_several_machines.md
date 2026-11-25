@@ -26,7 +26,7 @@ whale start-study --accession PRJNA682817 --study-id ROBERTS2022_PH_PLOIDY_WGBS 
 1. fetches `origin/main` and refuses if the study or accession is already
    registered there, or already used by a pushed (or local) `study/` branch;
 2. creates the branch in its own worktree, `../white-whale-<STUDY_ID>` by
-   default (`--dir` to change it), so one machine can hold several studies;
+   default (`../white-whale-<STUDY_ID>-<PART>` for a part) (`--dir` to change it), so one machine can hold several studies;
 3. writes `registry/studies/<STUDY_ID>.yaml` from the template,
    `config/<STUDY_ID>.config` for the chosen profile, and
    `data/studies/<STUDY_ID>/status.yaml` at stage `claimed`;
@@ -57,7 +57,7 @@ Progress is recorded by the commands that make it, never by hand:
 * `whale fetch-fastq --mark-staged` sets `fastq_staged` once every file is
   verified (`--launch` does the same, then starts the run on desktop and
   raven claims);
-* a successful workflow run calls `whale record-run` itself
+* a successful workflow run calls `whale record-run` itself (`whale record-enrichment` for `workflows/enrichment`)
   (workflows/methylation/main.nf, `onComplete`). It commits the QC table, run
   manifest, methylome manifest, `study_summary.yaml` and the gene x sample
   matrices ([gene-level methylation](gene_methylation.md)), uploads the
@@ -80,7 +80,8 @@ Each call appends to the status file's history, commits and pushes. Stages
 
 `claimed → registered → fastq_staged → aligned → called → qc_passed → summarized → merged`
 
-plus `excluded` (will not be processed; say why in `--note`). The machine recorded with
+plus `excluded` (will not be processed; say why in `--note`) and `released`
+(the claim was given up with `whale release-study`). The machine recorded with
 each stage is the host name, except that a cluster is recorded by its name:
 inside a Slurm job `SLURM_CLUSTER_NAME` (klone, not the compute node `n3441`),
 and a login node by its cluster (`klone-login03` → klone). Set
@@ -109,14 +110,18 @@ downloaded data.
 
 ## Big studies in parts
 
-A study too large for one machine (PRJEB60400, 246 runs) is claimed whole
-first, registered (YAML, sample sheet, design), and that PR merged. Parts are
-then claimed against the registered study:
+A study too large for one machine is claimed whole first, registered (YAML,
+sample sheet, design), and that PR merged. Parts are then claimed against the
+registered study (illustrative IDs):
 
 ```bash
-whale start-study --accession PRJEB60400 --study-id POMS2023_ADAPTATION_WGBS --part gill --profile klone
-whale start-study --accession PRJEB60400 --study-id POMS2023_ADAPTATION_WGBS --part mantle --profile raven
+whale start-study --accession <PRJ…> --study-id <REGISTERED_ID> --part gill --profile klone
+whale start-study --accession <PRJ…> --study-id <REGISTERED_ID> --part mantle --profile raven
 ```
+
+No study has needed parts so far: PRJEB60400 (246 runs), the case this was
+built for, was registered and run whole on klone as
+`GAWRA2023_POMS_ADAPTATION_BSCAPTURE`.
 
 A part owns only `data/studies/<STUDY_ID>/parts/<PART>/` and
 `config/<STUDY_ID>.part-<PART>.config`, so parts merge independently. A part

@@ -21,9 +21,10 @@ assay family.
 > place. Studies are being run across machines; the first,
 > ROBERTS2022_PH_PLOIDY_WGBS, is merged with a gene-level analysis in
 > [`analysis/ROBERTS2022_PH_PLOIDY_WGBS/`](analysis/ROBERTS2022_PH_PLOIDY_WGBS/README.md).
-> Three studies are merged and pooled; the first cross-study views (Phase 5)
-> are the [methylation landscape](https://robertslab.github.io/project-white-whale/atlas/landscape.html)
-> and [cross-study concordance](https://robertslab.github.io/project-white-whale/atlas/concordance.html)
+> Eight studies are merged and pooled; the cross-study views (Phase 5) are the
+> [methylation landscape](https://robertslab.github.io/project-white-whale/atlas/landscape.html),
+> [cross-study concordance](https://robertslab.github.io/project-white-whale/atlas/concordance.html)
+> and [gene methylation classes](https://robertslab.github.io/project-white-whale/atlas/genes.html)
 > ([docs/atlas.md](docs/atlas.md)), rebuilt whenever a study merges.
 > Per-study progress is on the [dashboard](https://robertslab.github.io/project-white-whale/).
 > See [PLAN.md §9](PLAN.md#9-phases).
@@ -73,7 +74,7 @@ whale fetch-fastq --mark-staged      # from the gannet mirror (else ENA), MD5-ve
 nextflow run workflows/methylation -c config/ROBERTS2022_PH_PLOIDY_WGBS.config -profile raven
 #   or both at once (desktop, raven): whale fetch-fastq --launch
 #   on success the run records itself: QC gate, summaries and methylomes committed or uploaded,
-#   stage -> summarized, PR marked ready, finding on the dashboard (`whale record-run`)
+#   stage -> summarized, PR marked ready where `gh` is installed, finding on the dashboard (`whale record-run`)
 whale claims                        # every claimed study, its machine and stage
 ```
 
@@ -105,6 +106,13 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 | `whale build-dashboard [--no-claims] [--no-mirror]` | Write `site/data.json` for the progress dashboard (`site/index.html`, published to GitHub Pages) |
 | `whale build-atlas [--out DIR]` | Pool the merged, SNP-masked studies' gene tables and write the atlas pages' data (`site/atlas/data/`): pooled tables, landscape, concordance |
 | `whale fetch-rnaseq-samplesheet --study <ID> --condition-attribute <a> [--show-attributes]` | RNA-seq sample sheet and FASTQ manifest for a study's `paired_rnaseq.bioproject`, in `data/studies/<ID>/rnaseq/` ([docs/rnaseq.md](docs/rnaseq.md)) |
+| `whale record-run --results <dir>` | Record a finished methylation run on its study branch: QC gate, summaries, methylomes uploaded, stage (the workflow runs it itself) |
+| `whale record-enrichment --results <dir>` | The same for a MeDIP / MBD run (`workflows/enrichment`; [docs/enrichment.md](docs/enrichment.md)) |
+| `whale record-mask <mask_dir>` | Upload a C/T SNP mask to the data host and register it in `data/reference/snp_masks.yaml` ([docs/snp_mask.md](docs/snp_mask.md)) |
+| `whale replicate` | Test each study's published claims (`claims.yaml`) against its re-derived results ([docs/replication.md](docs/replication.md)) |
+| `whale validate-curation` | Validate the curated sample tables (`data/studies/*/sample_curation.tsv`; [docs/sample_curation.md](docs/sample_curation.md)) |
+| `whale build-gene-info` | Write `data/reference/gene_info/<ACCESSION>.tsv.gz` (GeneID, symbol, description) from the GTF |
+| `whale autopilot tick --dry-run` | Print the next transition of every study, with a digest ([docs/autopilot.md](docs/autopilot.md)) |
 | `whale record-rnaseq --results <dir>` | Record a finished `workflows/rnaseq` run: commit gene matrices and QC, upload the rest (the workflow runs it itself) |
 | `whale differential [--study <ID> … \| --all] [--plan] [--engine docker\|apptainer\|local]` | Re-derive differential methylation per gene with one shared DSS model (PLAN.md §6.3); writes `data/studies/<ID>/differential/` |
 | `whale mcp [--repo DIR]` | Read-only MCP server over the summarized results, for Claude Code and Claude Desktop (`pip install -e ".[mcp]"`; [docs/mcp.md](docs/mcp.md)) |
@@ -119,13 +127,15 @@ Details: [running studies on several machines](docs/running_studies_on_several_m
 ```
 registry/        backlog.tsv, studies/<STUDY_ID>.yaml, controlled_vocabularies/
 schemas/         study and status JSON schemas
-workflows/       methylation/, rnaseq/ (paired expression, Goal 2), snp_mask/ (Nextflow DSL2);
+workflows/       methylation/, rnaseq/ (paired expression, Goal 2), enrichment/ (MeDIP / MBD),
+                 snp_mask/ (Nextflow DSL2);
                  differential/dss.R (shared DSS model, `whale differential`)
 modules/         Nextflow processes
 config/          base.config (profiles) and one config per study
 data/            reference/ (assembly registry), studies/<STUDY_ID>/ (small committed outputs);
                  raw/, methylomes/ and reference bundles are per-machine symlinks
 src/whale/       the `whale` CLI
+analysis/        per-study analyses (analysis/<STUDY_ID>/)
 tests/           pytest suite and workflow fixtures
 docs/            how-tos
 ```

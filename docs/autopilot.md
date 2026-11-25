@@ -69,7 +69,7 @@ transition per study (`src/whale/autopilot/decide.py`):
 |---|---|---|
 | free | `whale start-study` on the first machine for the backlog's profile that has room; at most one claim per machine per tick | autopilot |
 | free, unnamed / "claim in parts" / needs a run list | blocked: name it, split it, list its runs | person (register agent in step C) |
-| free, enrichment chemistry | waiting for the enrichment workflow on main | — |
+| free, enrichment chemistry | claimed like any other now that `workflows/enrichment` is on main (it waits only while that workflow is missing) | autopilot |
 | claimed | blocked: registration (study YAML, condition attributes) | person (step C) |
 | registered | `whale fetch-fastq --mark-staged` (sbatch on klone), after the chemistry check and the disk floor | autopilot |
 | fastq_staged | launch the run (tmux locally, `sbatch` head job on klone) with `-resume`, if the machine has a free run slot | autopilot |
@@ -136,8 +136,8 @@ tail of its stderr.
 `src/whale/autopilot/library.py` reads a finished run's `qc_summary.tsv` and
 `run_manifest.json` and **proposes** config changes (never applies them):
 
-- **Non-directional libraries** (Zymo Pico): every library maps below 40%
-  in directional mode, tightly grouped. Proposal: confirm read 1 is ~9% C in
+- **Non-directional libraries** (Zymo Pico): median mapping below 40%
+  in directional mode, within a 15-point spread. Proposal: confirm read 1 is ~9% C in
   FastQC, add `--non_directional` to `bismark_align_args`, re-run.
 - **Synthetic read-2 tail**: at least 80% of libraries sit at 1.5-5%
   non-CpG methylation within a 2.5-point spread. Proposal: confirm in the

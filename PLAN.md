@@ -577,8 +577,9 @@ Decided since, in the course of the work:
 
 Open:
 
-1. **QC gate policy for whole-study failures.** PESTO2022 fails the 98%
-   conversion gate in 35 of 48 libraries with unstated chemistry; GAWRA2023
+1. **QC gate policy for whole-study failures.** PESTO2022 fails the QC
+   gate in 35 of 48 libraries (34 on the 98% conversion gate, one on mapping),
+   with unstated chemistry; GAWRA2023
    passes 132 of 246. Options: keep the single gate and pool only what
    passes (current behaviour), or allow a recorded per-study gate with a
    quality flag. Affects how many samples the atlas rests on.

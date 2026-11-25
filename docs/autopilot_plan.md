@@ -1,6 +1,9 @@
 # Autopilot: running White Whale with limited human input
 
-*Draft, 2026-11-18. Status: proposal, nothing built yet.*
+*Draft 2026-11-18; status updated 2026-11-25. Step A is built: `whale autopilot tick
+--dry-run`, the known-failure playbook, reading klone's queue, and the sbatch / `-resume`
+launch commands with `WHALE_SNP_MASK` (docs/autopilot.md). Steps B-F (live ticks and the
+register, diagnose, review and curate agents) are not built.*
 
 ## Goal
 
@@ -28,9 +31,9 @@ Much of the pipeline is already hands-off once a run starts:
 | Merge | Person | No |
 | Dashboard, atlas | `pages.yml` on push + every 3 h | **Yes** |
 
-State today: 6 of 21 backlog studies `summarized`; 2 sit at `fastq_staged`
-(DECICOMP2025 on klone, ROBERTSLAB2013 on Hete); 13 are unclaimed. The work
-that remains is mostly the "No" rows above, repeated 13+ times.
+State on 2026-11-25: 8 of 21 backlog studies merged as `summarized`, 3 in flight
+(ROBERTSLAB2013 on Hete, FALLET2022 on klone, OUC2024_SEX_REVERSAL on raven), 10
+unclaimed. The work that remains is mostly the "No" rows above, repeated 13 times.
 
 ## Design
 
@@ -94,7 +97,7 @@ retried once, then becomes a human gate.
 |---|---|---|
 | **raven** | Controller: `autopilot tick`, model calls, GitHub API, launches raven runs, `ssh klone` to submit `sbatch` head jobs, already runs the mirror cron | cron, hourly |
 | **klone** | Executes deep studies; head job runs `record-run` on success (already) | via `sbatch` from raven |
-| **Hete / desktop** | Optional worker for small studies; its own hourly tick limited to `--profile desktop` | cron / launchd |
+| **Hete / desktop** | Optional worker for small studies; its own hourly tick (`--machine Hete`, profile desktop) | cron / launchd |
 | **GitHub Actions** | CI, scope check, dashboard/atlas (unchanged); add a `review` job on study PRs that posts the review agent's verdict | on PR |
 
 The controller never runs two transitions on the same study at once (lock
@@ -134,8 +137,8 @@ when short), and a klone core-hour budget.
 
 | Step | Deliverable | Done when |
 |---|---|---|
-| **A. Deterministic tick** | `whale autopilot tick --dry-run` printing the next transition per study; playbook for the known failures; launch + relaunch from raven (incl. `ssh klone sbatch`) | Dry-run output matches what a person would do for every study in `whale claims` |
-| **B. Unattended runs** | Tick live for `fastq_staged → running → summarized` only; digest issue | DECICOMP2025 and ROBERTSLAB2013 reach `summarized` with no terminal session |
+| **A. Deterministic tick** | `whale autopilot tick --dry-run` printing the next transition per study; playbook for the known failures; launch and relaunch commands, printed, not run (submitting `sbatch` on klone over SSH is step B and needs a live ControlMaster session, as Duo cannot prompt) | **Built (dry run).** Dry-run output matches what a person would do for every study in `whale claims` |
+| **B. Unattended runs** | Tick live for `fastq_staged → running → summarized` only; digest issue | Two staged studies reach `summarized` with no terminal session (DECICOMP2025, named here first, was finished by hand) |
 | **C. Register agent** | `register` step with validators; human approves each generated YAML (PR comment "approve") | 3 studies registered where the person made no edits |
 | **D. Review agent** | PR review job + hard thresholds; still human merge | Agent and person agree on 5 consecutive PRs |
 | **E. Full loop** | Claim → merge for small/medium WGBS studies; auto-merge enabled under gate 1 | Backlog drains with only digests and gate approvals |
