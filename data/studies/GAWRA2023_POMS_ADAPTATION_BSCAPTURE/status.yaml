@@ -3,7 +3,7 @@
 study_id: GAWRA2023_POMS_ADAPTATION_BSCAPTURE
 accession: PRJEB60400
 part: null
-stage: summarized
+stage: fastq_staged
 profile: klone
 machine: klone
 claimed_by: STEVEN
@@ -58,3 +58,8 @@ history:
   date: '2026-11-24'
   machine: klone
   note: summaries committed; 2952 files on gannet
+- stage: fastq_staged
+  date: '2026-11-25'
+  machine: klone
+  note: 'rerun: 110 libraries added to swap_mates after gigantic_lorenz (132 of 246
+    passed)'
