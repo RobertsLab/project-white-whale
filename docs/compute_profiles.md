@@ -16,7 +16,7 @@ variables instead.
 | `WHALE_WORKDIR` | Nextflow work directory, on fast local disk | `work` (klone: `/gscratch/srlab/$USER/whale/work`) |
 | `WHALE_MAX_CPUS`, `WHALE_MAX_MEMORY` | local executor limits (desktop, raven) | 10 / 28 GB; 36 / 180 GB |
 | `WHALE_SLURM_ACCOUNT`, `WHALE_SLURM_QUEUE` | klone | `srlab`, `ckpt-all` |
-| `WHALE_APPTAINER_CACHEDIR` | klone | `/gscratch/scrubbed/$USER/whale/apptainer-cache` |
+| `WHALE_APPTAINER_CACHEDIR` | klone | `/gscratch/srlab/$USER/whale/apptainer-cache` |
 
 Alternatively symlink `data/raw`, `data/methylomes` and
 `data/reference/GCF_963853765.1` to the machine's drives; `start-study`
@@ -128,17 +128,28 @@ Apptainer is enabled by the profile. Lessons carried from AREE
 - `/gscratch/scrubbed` deletes files untouched for 21 days and is often >97%
   full. Its quota is shared by every Hyak user, so when it fills, any write
   there fails with "Disk quota exceeded" however little you use; on
-  2026-11-25 that killed the FALLET2022 and GAWRA2023 runs at 98%. Keep the
-  **work directory, `NXF_TEMP` and logs on the lab fileset,
-  `/gscratch/srlab`** (the profile's default work directory); staged FASTQ,
-  which is only read, can stay on scrubbed. Check `hyakstorage
+  2026-11-25 that killed the FALLET2022 and GAWRA2023 runs at 98%. Keep
+  everything written during a run (**work directory, `WHALE_METHYLOMES`,
+  `WHALE_REFERENCE`, `NXF_HOME`, `NXF_TEMP`, `WHALE_APPTAINER_CACHEDIR` and
+  logs**) on the lab fileset, `/gscratch/srlab`. Staged FASTQ (`WHALE_RAW`),
+  which is only read during a run, can stay on scrubbed. Check `hyakstorage
   /gscratch/scrubbed` and `hyakstorage /gscratch/srlab` first, and clear a
   study's work directory once its run is recorded.
 - To move a run that has already started, point `WHALE_WORKDIR` at the new
   directory and relaunch with `-resume`: Nextflow reuses finished tasks
   where they are and writes only new tasks to the new directory (tested on
   klone, Nextflow 26.04).
-- Read-sized intermediates go to the node's `/scr`.
+- Heavy processes (`TRIM_GALORE`, `BISMARK_ALIGN`, `BISMARK_DEDUPLICATE`,
+  `BISMARK_METHYLATION_EXTRACTOR`, `FASTP`, `BOWTIE2_ALIGN`, `MARKDUP`) use
+  the compute node's local `/scr` for temporaries, and `TRIM_GALORE` is capped
+  at `maxForks = 12` so trimmed FASTQs do not pile up for the whole study
+  before alignment starts.
+- For large studies where `/gscratch/srlab` space is tight, pass
+  `-c config/klone_cleanup.config` last to enable mid-run work-directory
+  cleanup via the `nf-boost` plugin (`boost.cleanup = true`), which deletes
+  upstream task outputs once their downstream consumers finish. Trade-off:
+  cleaned tasks are not available for `-resume` if a later failure needs them
+  again, so it is opt-in.
 - ENA downloads through the cluster proxy ran at ~12 MB/s aggregate in
   October 2026: plan ~15 h per 600 GB, as a job on a non-preemptible
   partition (the first with room, as for the head job), not `ckpt-all`.
@@ -150,13 +161,15 @@ Apptainer is enabled by the profile. Lessons carried from AREE
 
 ```bash
 #SBATCH --account=coenv --partition=compute --cpus-per-task=2 --mem=8G --time=4-00:00:00
-export NXF_HOME=/gscratch/scrubbed/$USER/whale/nxf-home
+export NXF_HOME=/gscratch/srlab/$USER/whale/nxf-home
 export NXF_TEMP=/gscratch/srlab/$USER/whale/tmp
 export WHALE_WORKDIR=/gscratch/srlab/$USER/whale/work
 export WHALE_RAW=/gscratch/scrubbed/$USER/whale/raw
-export WHALE_REFERENCE=/gscratch/scrubbed/$USER/whale/reference
-export WHALE_METHYLOMES=/gscratch/scrubbed/$USER/whale/methylomes
+export WHALE_REFERENCE=/gscratch/srlab/$USER/whale/reference
+export WHALE_METHYLOMES=/gscratch/srlab/$USER/whale/methylomes
+export WHALE_APPTAINER_CACHEDIR=/gscratch/srlab/$USER/whale/apptainer-cache
 nextflow run workflows/methylation -c config/<STUDY_ID>.config -profile klone
+# Add `-c config/klone_cleanup.config` for mid-run work cleanup on tight-disk studies.
 ```
 
 Stage the FASTQ beforehand the same way, as its own job on the first

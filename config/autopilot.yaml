@@ -58,9 +58,11 @@ machines:
       WHALE_WORKDIR: /home/shared/16TB_HDD_01/$USER/whale/work
   klone:
     profile: klone
-    max_concurrent_runs: 2
-    disk_floor_gb: 2000
-    disk_path: /gscratch/scrubbed
+    # One large study at a time keeps peak workDir usage inside /gscratch/srlab;
+    # raise back to 2 if using config/klone_cleanup.config or running small studies.
+    max_concurrent_runs: 1
+    disk_floor_gb: 1000
+    disk_path: /gscratch/srlab
     launch: sbatch
     ssh_host: klone.hyak.uw.edu
     gannet_key: false
@@ -72,15 +74,18 @@ machines:
     setup: unset TMPDIR
     log_dir: /gscratch/srlab/$USER/whale/logs
     snp_mask_root: /gscratch/srlab/$USER/whale/snp_mask
-    # Work, Nextflow's temp files and logs on the lab fileset: a full /gscratch/scrubbed
-    # (shared by every Hyak user) fails any write there and kills the run
-    # (config/base.config, klone profile). Staged FASTQ stays on scrubbed: it is read only.
+    # Everything written during a run (work, published methylomes, reference/index,
+    # Nextflow home/temp, Apptainer cache, logs) lives on the lab fileset,
+    # /gscratch/srlab: a full /gscratch/scrubbed (shared by every Hyak user, 21-day
+    # purge) fails any write there and kills the run (config/base.config, klone
+    # profile). Staged FASTQ stays on scrubbed: it is read-only during a run.
     env:
       WHALE_RAW: /gscratch/scrubbed/$USER/whale/raw
-      WHALE_REFERENCE: /gscratch/scrubbed/$USER/whale/reference
-      WHALE_METHYLOMES: /gscratch/scrubbed/$USER/whale/methylomes
+      WHALE_REFERENCE: /gscratch/srlab/$USER/whale/reference
+      WHALE_METHYLOMES: /gscratch/srlab/$USER/whale/methylomes
       WHALE_WORKDIR: /gscratch/srlab/$USER/whale/work
-      NXF_HOME: /gscratch/scrubbed/$USER/whale/nxf-home
+      WHALE_APPTAINER_CACHEDIR: /gscratch/srlab/$USER/whale/apptainer-cache
+      NXF_HOME: /gscratch/srlab/$USER/whale/nxf-home
       NXF_TEMP: /gscratch/srlab/$USER/whale/tmp
     # docs/compute_profiles.md, "Choosing a partition". Each partition has its own account,
     # named <partition>-<group> (`sacctmgr show assoc user=$USER`). sbatch also accepts the

@@ -196,6 +196,11 @@ def test_klone_head_job_runs_in_the_worktree_with_its_tools():
     assert steps[0] == "export PATH=/mmfs1/gscratch/srlab/$USER/miniforge3/envs/whale/bin:$PATH"
     assert steps[1] == "unset TMPDIR" and "WHALE_WORKDIR=/gscratch/srlab/$USER/whale/work" in steps[2]
     assert steps[3].startswith("nextflow run workflows/methylation") and steps[3].endswith("-resume")
+    # Every path written during a klone run stays off /gscratch/scrubbed.
+    assert klone.disk_path == "/gscratch/srlab"
+    for var in ("WHALE_WORKDIR", "WHALE_METHYLOMES", "WHALE_REFERENCE", "WHALE_APPTAINER_CACHEDIR",
+                "NXF_HOME", "NXF_TEMP"):
+        assert klone.env[var].startswith("/gscratch/srlab/"), var
     # The queue reader attributes the job to the study by its name and working directory.
     job = SlurmJob("1", "whale-head-TESTER2099_X_WGBS", "compute", "compute-coenv", "RUNNING", "0:01",
                    "/mmfs1/gscratch/srlab/sr320/github/white-whale-TESTER2099_X_WGBS")
